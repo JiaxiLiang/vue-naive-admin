@@ -2,10 +2,12 @@ import { createPageLoadingGuard } from './page-loading-guard'
 // 导入页面加载状态守卫的创建函数
 import { createPageTitleGuard } from './page-title-guard'
 // 导入页面标题设置守卫的创建函数
+// 监听路由变化，自动读取路由配置中的 meta.title，并将其设置到浏览器标签页的标题（document.title）上。
 import { createPermissionGuard } from './permission-guard'
-// 导入权限控制守卫的创建函数
+// 导入权限控制守卫的创建函数在
+// 路由跳转前，判断用户是否登录、是否拥有访问该页面的权限。如果没有权限，强制跳转到登录页或 403 页面
 import { createTabGuard } from './tab-guard'
-// 导入多标签页管理守卫的创建函数
+// 导入多标签页管理守卫的创建函数  多标签
 
 export function setupRouterGuards(router) { // 导出一个设置函数，用于初始化路由守卫，接收路由实例作为参数
   createPageLoadingGuard(router) // 注册页面加载守卫，通常在路由开始时显示 Loading，结束时关闭

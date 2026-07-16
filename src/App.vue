@@ -1,11 +1,7 @@
-<!--------------------------------
- - @Author: Ronnie Zhang
- - @LastEditor: Ronnie Zhang
- - @LastEditTime: 2023/12/16 18:49:42
- - @Email: zclzone@outlook.com
- - Copyright © 2023 Ronnie Zhang(大脸怪) | https://isme.top
- --------------------------------->
-
+// App.vue是唯一直接挂载在dom上的vue组件 是页面的地基
+//  views里面的vue本质上不是完整的一个页面而是设计好的模板直接套到app.vue上
+// vue router路由就是根据url决定套那个模板如何套
+// pinia状态管理就是管理组件状态
 <template>
   <n-config-provider
     class="wh-full"
