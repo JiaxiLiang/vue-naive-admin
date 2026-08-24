@@ -74,7 +74,7 @@ export const useAppStore = defineStore('app', { // 定义并导出名为 'app' �
 /*
 🎨 浏览器内核层次关系全景知识点 (HTML + CSS + DOM + Vue)
 
-🎯 1. 浏览器窗口 window浏览器窗口的全局对象 所有其他的组件对象都是挂载在这上的
+🎯 1. 浏览器窗口
    │
    │  🧠 (幕后英雄：渲染引擎 & JS引擎)
    │     ├── 渲染引擎：负责解析 HTML/CSS，画出页面
@@ -145,7 +145,7 @@ export const useAppStore = defineStore('app', { // 定义并导出名为 'app' �
 */
 
 /*
- JS 里改变 this 的“三剑客”知识点
+ JS 里改变 this 的“三剑客”
 // 1. 准备一个目标对象（我们想让 this 指向它）
 const car = { name: '宝马' }
 // 2. 准备一个普通函数，它内部用到了 this

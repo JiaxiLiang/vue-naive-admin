@@ -178,46 +178,4 @@ splice()
       const removed = arr.splice(1, 2, 5, 6); // 从索引1开始删除2个元素，添加5和6
       console.log(arr); // [1, 5, 6, 4]（原数组被修改）
       console.log(removed); // [2, 3]
-
- some（）
-   它会遍历数组，只要找到任何一个元素符合条件（回调函数返回 true）
-   它就立刻停止遍历并返回 true。如果遍历完都没找到符合条件的，才返回 false
-
-  includes ()
-判断一个数组是否包含某个特定的值，或者一个字符串是否包含另一个子串。
-效果： 返回一个布尔值。找到返回 true，找不到返回 false。
-*/
-/*
- * JS 核心操作符知识点
- * 涵盖：?: (三元) | ?. (可选链) | ?? (空值合并) | ! (非) | !! (转布尔)
-
-// 1. ?: 三元运算符 (条件 ? 真返回 : 假返回)
-// 作用：单行简化 if...else 判断
-const status = 20 >= 18 ? '成年' : '未成年';
-console.log(status); // 输出: 成年
-
-// 2. ?. 可选链操作符 (防报错取深层值)
-// 作用：深层取值时，若中间环节为 null/undefined，直接短路返回 undefined，防止程序崩溃
-const apiData = { res: { user: null } };
-console.log(apiData?.res?.user?.name); // 输出: undefined (即使 user 是 null，也不会报错红屏)
-
-// 3. ?? 空值合并运算符 (精准兜底默认值)
-// 作用：仅当左侧为 null 或 undefined 时，才取右侧值。
-// 典型场景：后端返回的 0、''、false 是有效业务值，不能用默认值覆盖 (这正是与 || 的核心区别)
-const price = 0; // 0 是有效价格
-console.log(price ?? 99); // 输出: 0 (若用 || 会错误输出 99)
-
-const nickName = null; // null 表示没数据
-console.log(nickName ?? '默认游客'); // 输出: 默认游客
-
-// 4. ! 逻辑非 (布尔取反)
-// 作用：将布尔值翻转，true 变 false，false 变 true
-const isLogin = false;
-console.log(!isLogin); // 输出: true
-
-// 5. !! 双非 (强制转布尔值)
-// 作用：把任意类型强制转为布尔值 (假值如 0/''/null 转 false，其余转 true)，常用于条件判断
-const input = 'hello';
-console.log(!!input); // 输出: true
-
 */

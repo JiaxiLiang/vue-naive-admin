@@ -1,127 +1,30 @@
-const lastDataMap = new Map() // 创建全局 Map 对象，用于跨组件缓存和共享状态数据
+/**********************************
+ * @Author: Ronnie Zhang
+ * @LastEditor: Ronnie Zhang
+ * @LastEditTime: 2023/12/05 21:22:28
+ * @Email: zclzone@outlook.com
+ * Copyright © 2023 Ronnie Zhang(大脸怪) | https://isme.top
+ **********************************/
 
-export function useAliveData(initData = {}, key) { // 定义组合式函数，接收默认初始数据和可选的缓存键名
-  key = key ?? useRoute().name // 若未传入 key，则默认使用当前路由的 name 作为唯一缓存标识
-  const lastData = lastDataMap.get(key) // 尝试从全局缓存中获取该 key 对应的历史数据
-  const aliveData = ref(lastData || { ...initData }) // 定义响应式数据：优先使用缓存数据，无缓存则使用初始数据副本
+const lastDataMap = new Map()
+export function useAliveData(initData = {}, key) {
+  key = key ?? useRoute().name
+  const lastData = lastDataMap.get(key)
+  const aliveData = ref(lastData || { ...initData })
 
-  watch( // 开启监听器，实现数据的持久化同步
-    // 是vue自带函数 正常来说是要导入的
-    aliveData, // 监听源：响应式对象 aliveData
+  watch(
+    aliveData,
     (v) => {
-      lastDataMap.set(key, v) // 数据变化时，将最新值同步更新到全局 Map 缓存中
+      lastDataMap.set(key, v)
     },
-    { deep: true }, // 监听选项：开启深度监听，确保对象内部嵌套属性的变化也能触发保存
+    { deep: true },
   )
 
-  return { // 返回组合式函数的结果对象
-    aliveData, // 暴露响应式数据引用给组件使用
-    reset() { // 提供重置状态的方法 reset自定义函数
-      aliveData.value = { ...initData } // 将数据重置为初始值的副本（解耦引用，避免修改原对象）
-      lastDataMap.delete(key) // 从全局缓存中移除该 key，彻底清除历史痕迹
+  return {
+    aliveData,
+    reset() {
+      aliveData.value = { ...initData }
+      lastDataMap.delete(key)
     },
   }
 }
-/*
-// ---------------------------------------------------------
-// 第一步：从 Vue 工具箱中导入这 5 个常用工具
-// ---------------------------------------------------------
-import { ref, reactive, computed, watch, onMounted } from 'vue' 一般都是要导入的
-
-export default {
-  name: 'VueCoreDemo',
-  setup() {
-    // =========================================================
-    // 1. ref：定义【基础类型】响应式数据 (数字、字符串、布尔值)
-    // =========================================================
-    // 【作用】：让普通变量变成“响应式”，页面能自动更新。
-    // 【用法】：ref(初始值)
-    // 【关键】：在 script 中修改/读取必须加 .value
-    const count = ref(0)
-
-    const addCount = () => {
-      count.value++ // 修改：必须加 .value
-      console.log('读取：', count.value) // 读取：必须加 .value
-    }
-
-    // =========================================================
-    // 2. reactive：定义【复杂类型】响应式数据 (对象、数组)
-    // =========================================================
-    // 【作用】：让对象内部的属性变成响应式。
-    // 【用法】：reactive({ 初始对象 })
-    // 【关键】：不需要 .value，直接操作属性 (user.name)
-    const user = reactive({
-      name: '张三',
-      age: 18,
-      skills: ['JS', 'HTML']
-    })
-
-    const growUp = () => {
-      user.age++ // 修改：直接改属性，不需要 .value
-    }
-
-    // =========================================================
-    // 3. computed：计算属性 (自动计算的“公式”)
-    // =========================================================
-    // 【作用】：基于已有数据，计算出一个新结果。有缓存，效率高。
-    // 【用法】：computed(() => { return 计算逻辑 })
-    // 【关键】：就像数学公式，依赖变了结果自动变，不要手动改它。
-    const doubleCount = computed(() => {
-      return count.value * 2 // 当 count 变化时，doubleCount 自动变成 2倍
-    })
-
-    // =========================================================
-    // 4. watch：监听器 (数据的“监控摄像头”)
-    // =========================================================
-    // 【作用】：当数据变化时，执行一些副作用（存缓存、发请求、打日志）。
-    // 【语法】：watch(监听源, 回调函数, 配置项)
-    // 场景 A：监听 ref 基础类型
-    watch(count, (newValue, oldValue) => {
-      console.log(`监听到数字变了：${oldValue} -> ${newValue}`)
-      // 这里可以做副作用，比如存本地存储
-    })
-
-    // 场景 B：监听 reactive 对象的某个属性 (必须用箭头函数返回)
-    watch(
-      () => user.age, // 监听源：用函数返回具体属性
-      (newAge) => {
-        console.log(`监听到年龄变了：${newAge}`)
-      }
-    )
-
-    // 场景 C：深度监听整个对象
-    watch(
-      user,
-      (newUser) => {
-        console.log('用户对象的任何属性变了都会触发', newUser)
-      },
-      { deep: true } // 配置项：开启深度监听
-    )
-
-    // =========================================================
-    // 5. onMounted：生命周期钩子 (页面加载完做的事)
-    // =========================================================
-    // 【作用】：组件挂载完成（DOM 生成完毕）后执行。
-    // 【场景】：页面加载时请求数据、初始化图表等。
-    onMounted(() => {
-      console.log('页面加载完成！DOM 已经准备好了。')
-      // 比如这里可以发起一个 AJAX 请求获取用户信息
-    })
-
-    // ---------------------------------------------------------
-    // 返回：模板 template 需要用的数据和方法
-    // ---------------------------------------------------------
-    return {
-      // ref 数据
-      count,
-      addCount,
-      // reactive 数据
-      user,
-      growUp,
-      // computed 数据
-      doubleCount
-    }
-  }
-}
-
-*/
