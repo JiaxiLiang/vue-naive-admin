@@ -48,41 +48,41 @@
 </template>
 
 <script setup>
-import { NDataTable } from 'naive-ui'
-import { utils, writeFile } from 'xlsx'
+import { NDataTable } from 'naive-ui' // 从 naive-ui 导入数据表格组件
+import { utils, writeFile } from 'xlsx' // 从 xlsx 导入工具方法和文件写入方法
 
-const props = defineProps({
+const props = defineProps({ // 定义组件接收的属性
   /**
    * @remote true: 后端分页  false： 前端分页
    */
-  remote: {
-    type: Boolean,
-    default: true,
+  remote: { // 分页模式：true 后端分页 / false 前端分页
+    type: Boolean, // 类型为布尔值
+    default: true, // 默认后端分页
   },
   /**
    * @isPagination 是否分页
    */
-  isPagination: {
-    type: Boolean,
-    default: true,
+  isPagination: { // 是否启用分页
+    type: Boolean, // 类型为布尔值
+    default: true, // 默认启用分页
   },
-  scrollX: {
-    type: Number,
-    default: 1200,
+  scrollX: { // 表格横向滚动宽度
+    type: Number, // 类型为数字
+    default: 1200, // 默认 1200px
   },
-  rowKey: {
-    type: String,
-    default: 'id',
+  rowKey: { // 行数据的唯一标识字段名
+    type: String, // 类型为字符串
+    default: 'id', // 默认使用 id 字段
   },
-  columns: {
-    type: Array,
-    required: true,
+  columns: { // 表格列配置数组
+    type: Array, // 类型为数组
+    required: true, // 必传属性
   },
   /** queryBar中的参数 */
-  queryItems: {
-    type: Object,
-    default() {
-      return {}
+  queryItems: { // 搜索栏的查询条件对象
+    type: Object, // 类型为对象
+    default() { // 默认值工厂函数
+      return {} // 返回空对象
     },
   },
   /**
@@ -94,108 +94,109 @@ const props = defineProps({
    *    @pageData 分页模式必须,非分页模式如果没有pageData则取上一层data
    *    @total    分页模式必须，非分页模式如果没有total则取上一层data.length
    */
-  getData: {
-    type: Function,
-    required: true,
+  getData: { // 获取表格数据的接口函数
+    type: Function, // 类型为函数
+    required: true, // 必传属性
   },
   /** 是否支持展开 */
-  expand: Boolean,
+  expand: Boolean, // 搜索栏是否支持展开/收起
 })
 
-const emit = defineEmits(['update:queryItems', 'onChecked', 'onDataChange'])
-const loading = ref(false)
-const initQuery = { ...props.queryItems }
-const tableData = ref([])
-const pagination = reactive({
-  page: 1,
-  pageSize: 10,
-  prefix({ itemCount }) {
-    return `共 ${itemCount} 条数据`
+const emit = defineEmits(['update:queryItems', 'onChecked', 'onDataChange']) // 声明组件可触发的事件
+const loading = ref(false) // 表格加载状态（ref 为自动导入）
+const initQuery = { ...props.queryItems } // 备份初始查询条件，供重置时恢复
+const tableData = ref([]) // 表格数据列表，默认为空数组
+const pagination = reactive({ // 分页配置对象（reactive 为自动导入）
+  page: 1, // 当前页码，默认第 1 页
+  pageSize: 10, // 每页显示条数，默认 10 条
+  prefix({ itemCount }) { // 分页器左侧前缀渲染函数
+    return `共 ${itemCount} 条数据` // 显示总数据条数
   },
 })
 
-// 是否展开
-const isExpanded = ref(false)
+const isExpanded = ref(false) // 搜索项展开状态，默认收起
 
-function toggleExpand() {
-  isExpanded.value = !isExpanded.value
+function toggleExpand() { // 切换展开/收起的方法
+  isExpanded.value = !isExpanded.value // 状态取反
 }
 
-async function handleQuery() {
-  try {
-    loading.value = true
-    let paginationParams = {}
-    // 如果非分页模式或者使用前端分页,则无需传分页参数
-    if (props.isPagination && props.remote) {
-      paginationParams = { pageNo: pagination.page, pageSize: pagination.pageSize }
+async function handleQuery() { // 核心查询函数（异步）
+  try { // 尝试执行查询
+    loading.value = true // 开启表格加载状态
+    let paginationParams = {} // 初始化分页参数为空对象
+    if (props.isPagination && props.remote) { // 若启用分页且为后端分页才传分页参数
+      paginationParams = { pageNo: pagination.page, pageSize: pagination.pageSize } // 组装页码和每页条数
     }
-    const { data } = await props.getData({
-      ...props.queryItems,
-      ...paginationParams,
+    const { data } = await props.getData({ // 调用传入的接口函数并解构出 data
+      ...props.queryItems, // 展开传入所有查询条件
+      ...paginationParams, // 展开传入分页参数
     })
-    tableData.value = data?.pageData || data
-    pagination.itemCount = data.total ?? data.length
-    if (pagination.itemCount && !tableData.value.length && pagination.page > 1) {
-      // 如果当前页数据为空，且总条数不为0，则返回上一页数据
-      onPageChange(pagination.page - 1)
+    tableData.value = data?.pageData || data // 有 pageData 就取它，否则直接取 data
+    pagination.itemCount = data.total ?? data.length // 总条数优先取 total，否则取数组长度
+    if (pagination.itemCount && !tableData.value.length && pagination.page > 1) { // 当前页无数据且不在第一页时
+      onPageChange(pagination.page - 1) // 自动跳回上一页重新查询
     }
   }
-  catch (error) {
-    console.error(error)
-    tableData.value = []
-    pagination.itemCount = 0
+  catch (error) { // 捕获请求异常
+    console.error(error) // 控制台打印错误信息
+    tableData.value = [] // 清空表格数据
+    pagination.itemCount = 0 // 总条数置为 0
   }
-  finally {
-    emit('onDataChange', tableData.value)
-    loading.value = false
+  finally { // 无论成功失败都执行
+    emit('onDataChange', tableData.value) // 向父组件派发数据变化事件
+    loading.value = false // 关闭表格加载状态
   }
 }
 
-function handleSearch(keepCurrentPage = false) {
-  if (keepCurrentPage || !props.remote) {
-    handleQuery()
+function handleSearch(keepCurrentPage = false) { // 搜索方法，参数决定是否保留当前页
+  if (keepCurrentPage || !props.remote) { // 保留当前页或前端分页时
+    handleQuery() // 直接按当前页码查询
   }
-  else {
-    onPageChange(1)
+  else { // 否则（后端分页的普通搜索）
+    onPageChange(1) // 重置回第 1 页再查询
   }
-}
-async function handleReset() {
-  const queryItems = { ...props.queryItems }
-  for (const key in queryItems) {
-    queryItems[key] = null
-  }
-  emit('update:queryItems', { ...queryItems, ...initQuery })
-  await nextTick()
-  pagination.page = 1
-  handleQuery()
-}
-function onPageChange(currentPage) {
-  pagination.page = currentPage
-  if (props.remote) {
-    handleQuery()
-  }
-}
-function onChecked(rowKeys) {
-  if (props.columns.some(item => item.type === 'selection')) {
-    emit('onChecked', rowKeys)
-  }
-}
-function handleExport(columns = props.columns, data = tableData.value) {
-  if (!data?.length)
-    return $message.warning('没有数据')
-  const columnsData = columns.filter(item => !!item.title && !item.hideInExcel)
-  const thKeys = columnsData.map(item => item.key)
-  const thData = columnsData.map(item => item.title)
-  const trData = data.map(item => thKeys.map(key => item[key]))
-  const sheet = utils.aoa_to_sheet([thData, ...trData])
-  const workBook = utils.book_new()
-  utils.book_append_sheet(workBook, sheet, '数据报表')
-  writeFile(workBook, '数据报表.xlsx')
 }
 
-defineExpose({
-  handleSearch,
-  handleReset,
-  handleExport,
+async function handleReset() { // 重置查询条件的方法（异步）
+  const queryItems = { ...props.queryItems } // 复制一份当前查询条件
+  for (const key in queryItems) { // 遍历每个查询字段
+    queryItems[key] = null // 将字段值全部置为 null
+  }
+  emit('update:queryItems', { ...queryItems, ...initQuery }) // 通知父组件恢复为初始查询条件
+  await nextTick() // 等待响应式更新完成（nextTick 为自动导入）
+  pagination.page = 1 // 页码重置为第 1 页
+  handleQuery() // 重新发起查询
+}
+
+function onPageChange(currentPage) { // 页码变化回调
+  pagination.page = currentPage // 更新当前页码
+  if (props.remote) { // 若为后端分页
+    handleQuery() // 重新请求该页数据（前端分页则由 naive-ui 自行处理）
+  }
+}
+
+function onChecked(rowKeys) { // 行勾选变化的回调
+  if (props.columns.some(item => item.type === 'selection')) { // 确认列配置中存在多选列
+    emit('onChecked', rowKeys) // 向父组件派发选中行 key 数组
+  }
+}
+
+function handleExport(columns = props.columns, data = tableData.value) { // 导出 Excel，可自定义列和数据
+  if (!data?.length) // 若没有数据
+    return $message.warning('没有数据') // 弹出警告提示并终止导出
+  const columnsData = columns.filter(item => !!item.title && !item.hideInExcel) // 过滤有标题且不隐藏的列
+  const thKeys = columnsData.map(item => item.key) // 提取列字段名数组（表头 key）
+  const thData = columnsData.map(item => item.title) // 提取列标题数组（表头文字）
+  const trData = data.map(item => thKeys.map(key => item[key])) // 每行数据按表头顺序映射为二维数组
+  const sheet = utils.aoa_to_sheet([thData, ...trData]) // 将二维数组（表头+数据）转为工作表
+  const workBook = utils.book_new() // 创建一个新工作簿
+  utils.book_append_sheet(workBook, sheet, '数据报表') // 把工作表以"数据报表"命名加入工作簿
+  writeFile(workBook, '数据报表.xlsx') // 生成并下载 Excel 文件
+}
+
+defineExpose({ // 对外暴露以下方法供父组件调用
+  handleSearch, // 搜索方法
+  handleReset, // 重置方法
+  handleExport, // 导出方法
 })
 </script>
