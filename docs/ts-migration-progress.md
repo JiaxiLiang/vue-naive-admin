@@ -8,7 +8,7 @@
 - [x] 阶段 1：settings + utils 工具层（settings、is、common、storage）
 - [x] 阶段 2：http 层（utils/http/\*、naiveTools）
 - [x] 阶段 3：实体模型 + api 层（src/types/models.ts、src/api、views/\*/api）
-- [ ] 阶段 4：composables 泛型化（useModal/useForm/useCrud/useAliveData）
+- [x] 阶段 4：composables 泛型化（useModal/useForm/useCrud/useAliveData）
 - [ ] 阶段 5：Pinia store（store/modules/\* 6 个模块 + helper）
 - [ ] 阶段 6：共享组件（MeCrud/MeModal/MeQueryItem/common 8 个）
 - [ ] 阶段 7：router + directives + layouts
@@ -23,6 +23,7 @@
 | 1    | 见 git log `refactor(ts): phase 1` | settings + utils      |
 | 2    | 见 git log `refactor(ts): phase 2` | http 层               |
 | 3    | 见 git log `refactor(ts): phase 3` | 实体模型 + api 层     |
+| 4    | 见 git log `refactor(ts): phase 4` | composables 泛型化    |
 
 ## 阶段记录与遗留问题
 
@@ -77,6 +78,16 @@
 - `api/index.ts`、5 个页面级 `api.ts`（login/profile/user/role/resource）全部迁移；`PageResult` 放在 models.ts（非 utils/http），http 层 `ApiResult` 不动
 - 自检通过：临时 .ts 中 `api.read()` 的 `res.data` 推导为 `PageResult<UserInfo> | UserInfo[]` 联合，直接 `.pageData` 报错、`Array.isArray` 收窄后可用——符合 MeCrud 分页契约设计
 - `login/api.ts` 的 `toggleRole` 无任何调用方，payload 类型保持 `Record<string, unknown>` 宽松处理
+
+### 阶段 4（2026-10-03）
+
+完成内容：
+
+- 新建 `src/types/me-components.ts`（ModalOptions + MeModalExposed，阶段 6 的 MeModal 必须满足该暴露契约）
+- `useModal.ts`：getter 加 `?? false`（语义补全 undefined → false，参考文档推荐项）；setter 保留 `!` 非空断言以维持"未挂载时抛错"的原行为
+- `useForm.ts`：泛型 `<T extends object = Record<string, any>>`；`ref(cloneDeep(...)) as Ref<T>`（ref 对泛型返回 Ref<UnwrapRef<T>> 的标准断言）；validation 返回值类型用 `ReturnType<NonNullable<FormInst['validate']>>`——naive-ui validate 返回的是 warnings 对象的 Promise 而非 void（参考文档的 `() => Promise<void>` 与现实不符）
+- `useCrud.ts`：ModalAction 用 `string & {}` 保留字面量提示；`modalAction.value = action ?? ''`（原实现赋 undefined，'' 语义等价，已在守卫与 ACTIONS 索引两处验证无观察差异）；`actions[modalAction.value as 'add' | 'edit']`（守卫逻辑保证运行时安全）
+- `useAliveData.ts`：key 用 String() 归一化做 Map 键（null → 'null' 字符串键的微小行为差异，参考文档认可）
 
 ### 阶段 9 遗留备忘（前置记录）
 
