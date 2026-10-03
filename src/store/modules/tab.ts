@@ -90,8 +90,7 @@ export const useTabStore = defineStore('tab', { // 定义并导出一个名为 '
       const curIndex = this.tabs.findIndex(item => item.path === curPath) // 找到当前页签的索引
       const filterTabs = this.tabs.filter((item, index) => index <= curIndex) // 截取当前索引及之前的标签页
       this.setTabs(filterTabs) // 更新标签页列表
-      // TODO: 原代码误写 this.activeTab.value（state 属性无 .value，恒为 undefined），按"不改运行时行为"保留，as any 仅为通过 typecheck
-      if (!filterTabs.some(item => item.path === (this.activeTab as any).value)) { // 如果激活的标签页被关闭了（注意：此处原代码有.value，可能是为了响应式引用，但在Pinia state中通常直接访问属性即可）
+      if (!filterTabs.some(item => item.path === this.activeTab)) { // 如果激活的标签页被关闭了（修复：原代码误写 this.activeTab.value，恒为 undefined，导致"关闭右侧"总是跳到最右侧标签页）
         useRouterStore().router?.push(filterTabs[filterTabs.length - 1].path) // 跳转到新的末尾标签页
       }
     },

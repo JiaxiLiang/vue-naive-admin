@@ -41,7 +41,7 @@
           <n-input
             v-model:value="loginInfo.captcha"
             class="h-40 items-center"
-            palceholder="请输入验证码"
+            placeholder="请输入验证码"
             :maxlength="4"
             @keydown.enter="handleLogin()"
           >

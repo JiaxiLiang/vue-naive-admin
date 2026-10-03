@@ -32,6 +32,17 @@
 
 ## 阶段记录与遗留问题
 
+### 测试验收记录（2026-10-03，阶段 9 手测补做）
+
+迁移完成后由 ZCode 补做了全流程验收（后端用 .env.production 同款 apifox 云端 mock，浏览器 GUI 实测 dev + 生产 preview 两种模式）：
+
+- **静态三绿**：`pnpm typecheck` 0 错误、`pnpm build` 通过、改动文件 eslint 0 error
+- **功能实测通过**：登录（验证码）→ 首页（ECharts）→ 用户/角色/资源三页 CRUD 交互与校验 → 个人资料 → 标签页增删 → 主题切换 → 刷新持久化与路由补录 → 登出 → 404 页 → 外链内嵌 → KeepAlive/上传/MeModal 演示页
+- **性能对比**（与迁移前 f08f795 基线、同一工具链构建）：产物**完全一致**（dist 均 2.4M / 55 文件 / 2436KB，入口 chunk 532.27 vs 532.21KB）；dev 冷启动 ~2.2s；新增成本仅 typecheck ~12s。运行时性能与 JS 版无差异（产物即 JS）
+- **修复的 3 个 bug**（见工作区改动）：login 页 `palceholder` 拼写（基线就有的老 bug）、tab.removeRight 的 `this.activeTab.value` 恒 undefined（基线老 bug）、permission-guard 的 validateMenuPath 无异常兜底（接口挂时导航中断、URL 与页面脱节）
+- **环境限制记录**：apifox mock 不支持写操作（返回 30001）、缺 `GET /permission/menu/validate`、忽略列表过滤参数；此三项为 mock 限制而非项目 bug
+- **dev 模式说明**：首次访问懒加载页面时，vite 按需编译 chunk 需 2~5s，期间旧页面保持显示（生产构建无此现象，切页 ~500ms）
+
 ### 阶段 0（2026-10-03）
 
 完成内容：

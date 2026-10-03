@@ -98,13 +98,21 @@ export function createPermissionGuard(router: Router): void { // 导出创建权
       return true // 若是已注册的合法路由，直接放行
 
     // 判断是无权限还是404 // 注释说明：走到这里说明路由未注册，需排查是权限不足还是页面不存在
-    const { data: hasMenu } = await api.validateMenuPath(to.path)
-    // 请求后端接口，校验当前用户是否有该路径对应的菜单权限
-    // 从右边查找data的值 把值给到hasmenu
-    // api就是对象 函数是网络请求函数 验证to是否有权限
+    // 修复：接口异常（网络错误/后端不可用）时原先会让导航中断、URL 与页面脱节，这里兜底按 404 处理
+    let hasMenu: boolean | undefined
+    try {
+      const { data } = await api.validateMenuPath(to.path)
+      // 请求后端接口，校验当前用户是否有该路径对应的菜单权限
+      // 从右边查找data的值 把值给到hasmenu
+      // api就是对象 函数是网络请求函数 验证to是否有权限
+      hasMenu = data
+    }
+    catch (error) {
+      console.error(error)
+    }
     return hasMenu // 根据后端返回结果进行判断  是后端data传回来的数据要么对要么错
       ? { name: '403', query: { path: to.fullPath }, state: { from: 'permission-guard' } } // 有菜单权限但路由未注册（可能是路由配置缺失），重定向到 403 无权限页，携带原路径和来源标识
-      : { name: '404', query: { path: to.fullPath } } // 无菜单权限且路由未注册，说明页面不存在，重定向到 404 页面，携带原路径
+      : { name: '404', query: { path: to.fullPath } } // 无菜单权限且路由未注册（或校验接口异常），说明页面不存在，重定向到 404 页面，携带原路径
         // return a?b :c 这个结构  重定向query是URL 查询参数 网址中?后面的内容 fullPath用户原本想跳转的地址
         // state：历史记录状态 后面是备注开发者可见
   })
