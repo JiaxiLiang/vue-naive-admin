@@ -3,10 +3,11 @@ import type { RouteRecordName } from 'vue-router'
 import { defineStore } from 'pinia' // 引入 Pinia 的状态管理定义函数
 import { useRouterStore } from './router' // 引入路由状态管理仓库，用于编程式导航
 
-/** 标签页条目（实际字段以 guards/tab-guard 的 addTab 调用为准，迁移 tab-guard 时回填） */
+/** 标签页条目（实际字段以 guards/tab-guard 的 addTab 调用为准） */
 export interface TabItem {
   path: string
-  name?: RouteRecordName
+  /** to.name 可为 null（vue-router 类型），此处如实放宽 */
+  name?: RouteRecordName | null
   title?: string
   keepAlive?: boolean
   [key: string]: unknown

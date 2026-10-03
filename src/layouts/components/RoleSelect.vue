@@ -34,7 +34,7 @@
   </MeModal>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import api from '@/api'
 import { MeModal } from '@/components'
 import { useModal } from '@/composables'

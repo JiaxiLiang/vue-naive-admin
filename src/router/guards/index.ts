@@ -1,3 +1,4 @@
+import type { Router } from 'vue-router'
 import { createPageLoadingGuard } from './page-loading-guard'
 // 导入页面加载状态守卫的创建函数
 import { createPageTitleGuard } from './page-title-guard'
@@ -9,7 +10,7 @@ import { createPermissionGuard } from './permission-guard'
 import { createTabGuard } from './tab-guard'
 // 导入多标签页管理守卫的创建函数  多标签
 
-export function setupRouterGuards(router) { // 导出一个设置函数，用于初始化路由守卫，接收路由实例作为参数
+export function setupRouterGuards(router: Router): void { // 导出一个设置函数，用于初始化路由守卫，接收路由实例作为参数
   createPageLoadingGuard(router) // 注册页面加载守卫，通常在路由开始时显示 Loading，结束时关闭
   createPermissionGuard(router) // 注册权限守卫，用于判断用户是否登录，是否有权访问当前页面
   createPageTitleGuard(router) // 注册页面标题守卫，根据路由配置动态修改浏览器标签页的 title

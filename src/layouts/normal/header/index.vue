@@ -29,7 +29,7 @@
   </AppCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ToggleTheme } from '@/components'
 import { AppTab, BeginnerGuide, Fullscreen, MenuCollapse, UserAvatar } from '@/layouts/components'
 

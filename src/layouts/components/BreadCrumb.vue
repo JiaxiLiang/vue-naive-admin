@@ -23,7 +23,7 @@
   </n-breadcrumb>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { usePermissionStore } from '@/store'
 
 const router = useRouter()

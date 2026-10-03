@@ -1,5 +1,7 @@
 // 数组的格式是vue router规定的配置格式
 // 作用就是路由实例在接收不同的 url 的时候就会在 basicRoutes 中调用对应页面的配置信息
+import type { RouteRecordRaw } from 'vue-router'
+
 export const basicRoutes = [ // 导出常量basicRoutes，定义为数组，包含应用的基础路由配置（无需权限的公共路由）
   { // 登录页路由配置对象
     name: 'Login', // 路由名称：Login，用于路由跳转标识（如router.push({ name: 'Login' })）
@@ -40,7 +42,7 @@ export const basicRoutes = [ // 导出常量basicRoutes，定义为数组，包�
       layout: 'empty', // 布局设置：empty表示使用空白布局
     }, // meta元信息定义结束
   }, // 403路由配置结束
-] // basicRoutes数组定义结束
+] satisfies RouteRecordRaw[] // basicRoutes数组定义结束（satisfies 保留字面量精确类型）
 /*
   代码执行步骤顺序：
 

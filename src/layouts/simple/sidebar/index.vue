@@ -7,7 +7,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { MenuCollapse, SideLogo, SideMenu, UserAvatar } from '@/layouts/components'
 import { useAppStore } from '@/store'
 

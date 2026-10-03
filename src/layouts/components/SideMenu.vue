@@ -7,13 +7,14 @@
     :collapsed-icon-size="22"
     :collapsed-width="64"
     :collapsed="appStore.collapsed"
-    :options="permissionStore.menus"
-    :value="activeKey"
+    :options="(permissionStore.menus as any)"
+    :value="(activeKey as any)"
     @update:value="handleMenuSelect"
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { MenuOption } from 'naive-ui'
 import { useAppStore, usePermissionStore } from '@/store'
 import { isExternal } from '@/utils'
 
@@ -24,31 +25,31 @@ const permissionStore = usePermissionStore()
 
 const activeKey = computed(() => route.meta?.parentKey || route.name)
 
-const menu = ref(null)
+const menu = ref<{ showOption: () => void } | null>(null)
 watch(route, async () => {
   await nextTick()
   menu.value?.showOption()
 })
 
-function handleMenuSelect(key, item) {
-  if (isExternal(item.originPath)) {
+function handleMenuSelect(key: string, item: MenuOption | null) {
+  if (isExternal(item?.originPath as string)) {
     $dialog.confirm({
       type: 'info',
       title: `请选择打开方式`,
       positiveText: '外链打开',
       negativeText: '在本站内嵌打开',
       confirm() {
-        window.open(item.originPath)
+        window.open(item?.originPath as string)
       },
       cancel: () => {
-        router.push(item.path)
+        router.push(item?.path as string)
       },
     })
   }
   else {
-    if (!item.path)
+    if (!item?.path)
       return
-    router.push(item.path)
+    router.push(item?.path as string)
   }
 }
 </script>

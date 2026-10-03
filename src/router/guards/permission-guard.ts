@@ -11,6 +11,7 @@
 // url改变浏览器只是在网址显示的地方做改变 网页其实不会切换 由路由改变组件 服务器主要提供数据
 // 每次url改变 路由都会生成一个新的对象（to）to本质就是一个路由配置对象（就是配置表那种 没方法就是数据）
 // 后端发送的就是纯数据 页面跳转url是组件发出 路由根据url找pinia的路由配置表配对 如果空就会调取后端纯数据
+import type { RouteLocationRaw, Router, RouteRecordRaw } from 'vue-router'
 import api from '@/api'
 // 导入封装好的 API 请求模块，用于后端接口调用
 // 导入获取用户信息和权限列表的辅助函数
@@ -22,10 +23,10 @@ import { useAuthStore, usePermissionStore, useUserStore } from '@/store'
 import { getPermissions, getUserInfo } from '@/store/helper'
 // 专门负责“要”数据。它负责和后端接口打交道，发起 HTTP 请求，拿到后端返回的数据。
 
-const WHITE_LIST = ['/login', '/404']// 就是不需要权限也可以访问的页面
+const WHITE_LIST: string[] = ['/login', '/404']// 就是不需要权限也可以访问的页面
 // 定义路由白名单常量，包含无需登录即可访问的路径
 // 函数是开发者调用的参数是路由对象 里面的箭头函数（to）是 Vue Router 框架调用的
-export function createPermissionGuard(router) { // 导出创建权限守卫的函数，接收 router 实例作为参数
+export function createPermissionGuard(router: Router): void { // 导出创建权限守卫的函数，接收 router 实例作为参数
   router.beforeEach(async (to) => {
     // 注册全局前置守卫，使用 async 使内部支持异步操作，to 为目标路由对象
     const authStore = useAuthStore() // 获取认证状态管理实例
@@ -72,15 +73,16 @@ export function createPermissionGuard(router) { // 导出创建权限守卫的�
         // foreach是accessRoutes调用 route就是数组里的元素 for函数的作用就是把数组内每个元素都做参数调用箭头
         // acc调用的箭头函数 acc就是路由配置数组和basicRoutes一样 之是前者是后端发出的里面的com只是字符串后者是开发者写的直接拿到函数
         // glob的作用就是把组件目录的文件写成键位 []取值字符串就找到对应的函数
-        route.component = routeComponents[route.component] || undefined
+        // component 在 store 阶段是字符串（AccessRoute），此处替换为 glob 的懒加载组件
+        route.component = routeComponents[route.component as string] || undefined
         // 将路由配置中的组件路径字符串，替换为 glob 映射出的实际懒加载组件函数；若未匹配到则设为 undefined
         // component 后端接口返回表示组件位置的字符串
         // routeComponents[route.component]中 []就是取值 从前者中根据键位取值 com还只是字符串
         // || undefined 就是或者基于und防止没有值
-        !router.hasRoute(route.name) && router.addRoute(route)
+        !router.hasRoute(route.name!) && router.addRoute(route as RouteRecordRaw)
         // &&与 在这里其实就是if的作用 hasRoute路由检查器   addRoute路由添加
       })
-      return { ...to, replace: true }
+      return { ...to, replace: true } as RouteLocationRaw
       // 返回目标路由对象并设置 replace: true 会变成返回到类似这样{ path: '/b', query: ..., replace: true }。
       // replace: true替换当前记录[A, B, B] 变成[A, B]为了后退键
       // 去到用户信息后重新去到b页面 也就是重新执行一次这个路由 第二次运行直接跳到下面

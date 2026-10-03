@@ -1,5 +1,7 @@
 // 导入页面加载状态守卫的创建函数
-export function createPageLoadingGuard(router) {
+import type { Router } from 'vue-router'
+
+export function createPageLoadingGuard(router: Router): void {
   router.beforeEach(() => { // 注册全局前置守卫：beforeEach插件自带钩子函数在路由跳转即将开始时触发
   // 全局前置守卫beforeEach 作用：在任何路由跳转发生之前，都会触发这个函数
     $loadingBar.start() // 调用全局加载进度条对象 $loadingBar 的 start 方法，开始显示加载动画

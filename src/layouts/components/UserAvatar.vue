@@ -1,5 +1,5 @@
 <template>
-  <n-dropdown :options="options" @select="handleSelect">
+  <n-dropdown :options="(options as any)" @select="handleSelect">
     <div id="user-dropdown" class="flex cursor-pointer items-center">
       <n-avatar round :size="36" :src="userStore.avatar" />
       <div v-if="userStore.userInfo" class="ml-12 flex-col flex-shrink-0 items-center">
@@ -12,7 +12,7 @@
   <RoleSelect ref="roleSelectRef" />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import api from '@/api'
 import { RoleSelect } from '@/layouts/components'
 import { useAuthStore, usePermissionStore, useUserStore } from '@/store'
@@ -43,7 +43,7 @@ const options = reactive([
 ])
 
 const roleSelectRef = ref(null)
-function handleSelect(key) {
+function handleSelect(key: string | number) {
   switch (key) {
     case 'profile':
       router.push('/profile')

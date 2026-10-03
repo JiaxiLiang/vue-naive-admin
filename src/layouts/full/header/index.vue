@@ -27,7 +27,7 @@
   </AppCard>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ToggleTheme } from '@/components'
 import { BeginnerGuide, BreadCrumb, Fullscreen, MenuCollapse, UserAvatar } from '@/layouts/components'
 

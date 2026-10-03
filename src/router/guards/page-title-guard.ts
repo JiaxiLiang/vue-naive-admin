@@ -1,7 +1,9 @@
 // 页面标题守卫
+import type { Router } from 'vue-router'
+
 const baseTitle = import.meta.env.VITE_TITLE // 定义常量 baseTitle，从 Vite 环境变量中读取应用的全局基础标题
 
-export function createPageTitleGuard(router) { // 导出函数 createPageTitleGuard，接收 router 实例作为参数，用于设置页面标题守卫
+export function createPageTitleGuard(router: Router): void { // 导出函数 createPageTitleGuard，接收 router 实例作为参数，用于设置页面标题守卫
   router.afterEach((to) => {
     // afterEach钩子函数 他的参数就是整个箭头函数
     // afterEach就是一个触发节点 不同的函数只要使用了这个节点就会触发 加载条或者是这里的标题等都是

@@ -11,21 +11,22 @@
 - [x] 阶段 4：composables 泛型化（useModal/useForm/useCrud/useAliveData）
 - [x] 阶段 5：Pinia store（store/modules/\* 6 个模块 + helper）
 - [x] 阶段 6：共享组件（MeCrud/MeModal/MeQueryItem/common 8 个）
-- [ ] 阶段 7：router + directives + layouts
+- [x] 阶段 7：router + directives + layouts
 - [ ] 阶段 8：views 逐页迁移（24 个页面，从 user 页开始）
 - [ ] 阶段 9：收尾（main.ts、jsconfig 删除、strict 全开、README 更新）
 
 ## 各阶段 commit 索引
 
-| 阶段 | commit                             | 说明                   |
-| ---- | ---------------------------------- | ---------------------- |
-| 0    | 见 git log `refactor(ts): phase 0` | tsconfig + types 地基  |
-| 1    | 见 git log `refactor(ts): phase 1` | settings + utils       |
-| 2    | 见 git log `refactor(ts): phase 2` | http 层                |
-| 3    | 见 git log `refactor(ts): phase 3` | 实体模型 + api 层      |
-| 4    | 见 git log `refactor(ts): phase 4` | composables 泛型化     |
-| 5    | 见 git log `refactor(ts): phase 5` | Pinia store            |
-| 6    | 见 git log `refactor(ts): phase 6` | 共享组件 + 泛型 MeCrud |
+| 阶段 | commit                             | 说明                      |
+| ---- | ---------------------------------- | ------------------------- |
+| 0    | 见 git log `refactor(ts): phase 0` | tsconfig + types 地基     |
+| 1    | 见 git log `refactor(ts): phase 1` | settings + utils          |
+| 2    | 见 git log `refactor(ts): phase 2` | http 层                   |
+| 3    | 见 git log `refactor(ts): phase 3` | 实体模型 + api 层         |
+| 4    | 见 git log `refactor(ts): phase 4` | composables 泛型化        |
+| 5    | 见 git log `refactor(ts): phase 5` | Pinia store               |
+| 6    | 见 git log `refactor(ts): phase 6` | 共享组件 + 泛型 MeCrud    |
+| 7    | 见 git log `refactor(ts): phase 7` | router/directives/layouts |
 
 ## 阶段记录与遗留问题
 
@@ -117,6 +118,18 @@
   - emit/onDataChange 及 handleExport 的 data 用 `as T[]`（ref 的 UnwrapRefSimple<T> 收窄妥协）
   - ThemeSetting 的 getPresetColors 返回值无类型，断言 `{ primary: string }`
 - TheFooter/TheLogo 无 script 块，无需迁移
+
+### 阶段 7（2026-10-03）
+
+完成内容：
+
+- RouteMeta 声明合并已于阶段 5 提前完成，本阶段核对字段齐全
+- `basic-routes.ts` 用 `satisfies RouteRecordRaw[]` 保留字面量精确类型
+- `permission-guard.ts`：`route.component`（AccessRoute.component 为 unknown）赋值 glob 懒加载组件处用 `route.component as string` 做键、赋值本身无需断言；`addRoute(route as RouteRecordRaw)`；`return { ...to, replace: true } as RouteLocationRaw`（vue-router 类型历史包袱）
+- `TabItem.name` 回填放宽为 `RouteRecordName | null`（to.name 可为 null）
+- `directives/index.ts`：`Directive<HTMLElement, string>` + `setupDirectives(app: App)` + `withPermission(vnode: VNode, code: string)`
+- layouts 18 个 .vue 统一 `<script setup lang="ts">`；模板断言妥协：SideMenu 的 options/value、UserAvatar 的 dropdown options（show: ComputedRef 是项目自定义扩展，naive 类型不认）均 `as any`
+- BeginnerGuide 的 prev/next 补可选参数（模板多传实参，TS2554）
 
 ### 阶段 9 遗留备忘（前置记录）
 

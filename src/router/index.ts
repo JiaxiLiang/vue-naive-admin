@@ -1,3 +1,4 @@
+import type { App } from 'vue'
 import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
 // 路由本质就是做到url切换的时候做到全局组件不变只更新个别的组件这个动作就是路由
 // 路由守卫就是路由在切换的时候做到那些是要切换那些不可以的设置
@@ -45,7 +46,7 @@ export const router = createRouter({
 // app.use就是把插件安装到vue实例中
 // js中变量就是盒子 里面可以放函数、对象、数组、字符串、数字等
 // setupRouterGuards在本文件就是一个存着对应文件set函数的地址的变量 因为是盒子所以这里变量做函数使用
-export async function setupRouter(app) { // 只是形参 传入是字符串也可以没有方法use
+export async function setupRouter(app: App): Promise<void> { // 只是形参 传入是字符串也可以没有方法use
   app.use(router) // 在Vue应用实例中注册这个实例路由器  use 方法，专门用来注册插件
   setupRouterGuards(router) // 调用路由守卫设置函数，配置路由守卫 自定义函数
 }

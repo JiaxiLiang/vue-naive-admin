@@ -18,7 +18,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { AppTab } from '@/layouts/components'
 import { useAppStore } from '@/store'
 import AppHeader from './header/index.vue'

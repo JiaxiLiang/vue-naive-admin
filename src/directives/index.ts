@@ -1,8 +1,9 @@
+import type { App, Directive, VNode } from 'vue'
 import { withDirectives } from 'vue' // 从vue中导入withDirectives函数
 // 用于给虚拟节点添加指令
 import { router } from '@/router' // 从路由模块导入router实例
 
-const permission = { // 定义权限指令对象
+const permission: Directive<HTMLElement, string> = { // 定义权限指令对象
   mounted(el, binding) { // 指令挂载时执行的钩子函数
     const currentRoute = unref(router.currentRoute) // 获取当前路由信息（使用unref解包响应式对象）
     const btns = currentRoute.meta?.btns?.map(item => item.code) || [] // 获取当前路由元信息中的按钮权限数组，提取code属性
@@ -12,7 +13,7 @@ const permission = { // 定义权限指令对象
   },
 }
 
-export function setupDirectives(app) { // 导出设置指令的函数
+export function setupDirectives(app: App): void { // 导出设置指令的函数
   app.directive('permission', permission) // 在Vue应用中注册'permission'自定义指令
 }
 
@@ -26,7 +27,7 @@ export function setupDirectives(app) { // 导出设置指令的函数
  * 使用示例：withPermission(h('button', {class: 'text-red-500'}, '删除'), 'user:delete')
  *
  */
-export function withPermission(vnode, code) { // 导出withPermission函数，用于在h函数中使用权限指令
+export function withPermission(vnode: VNode, code: string): VNode { // 导出withPermission函数，用于在h函数中使用权限指令
   return withDirectives(vnode, [[permission, code]]) // 使用withDirectives给虚拟节点添加permission指令，传入权限码
 }
 

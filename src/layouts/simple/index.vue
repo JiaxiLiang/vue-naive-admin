@@ -14,7 +14,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useAppStore } from '@/store'
 import SideBar from './sidebar/index.vue'
 

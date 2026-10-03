@@ -1,8 +1,9 @@
+import type { Router } from 'vue-router'
 import { useTabStore } from '@/store' // 用于操作标签页数据
 
 export const EXCLUDE_TAB = ['/404', '/403', '/login'] // 导出常量 EXCLUDE_TAB，定义不需要在标签栏中显示的路由路径黑名单
 
-export function createTabGuard(router) { // 导出函数 createTabGuard，接收 router 实例作为参数，用于创建标签页管理守卫
+export function createTabGuard(router: Router): void { // 导出函数 createTabGuard，接收 router 实例作为参数，用于创建标签页管理守卫
   router.afterEach((to) => {
     if (EXCLUDE_TAB.includes(to.path)) // 判断目标路由路径是否存在于黑名单中
       return // 若在黑名单中，则直接返回，不执行后续添加标签页的逻辑

@@ -10,7 +10,7 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useTabStore } from '@/store'
 
 const props = defineProps({
