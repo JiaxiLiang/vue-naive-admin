@@ -5,7 +5,7 @@
 ## 阶段清单
 
 - [x] 阶段 0：工具链与类型地基（tsconfig、vite dts、src/types/\*、typecheck 脚本）
-- [ ] 阶段 1：settings + utils 工具层（settings、is、common、storage）
+- [x] 阶段 1：settings + utils 工具层（settings、is、common、storage）
 - [ ] 阶段 2：http 层（utils/http/\*、naiveTools）
 - [ ] 阶段 3：实体模型 + api 层（src/types/models.ts、src/api、views/\*/api）
 - [ ] 阶段 4：composables 泛型化（useModal/useForm/useCrud/useAliveData）
@@ -20,6 +20,7 @@
 | 阶段 | commit                             | 说明                  |
 | ---- | ---------------------------------- | --------------------- |
 | 0    | 见 git log `refactor(ts): phase 0` | tsconfig + types 地基 |
+| 1    | 见 git log `refactor(ts): phase 1` | settings + utils      |
 
 ## 阶段记录与遗留问题
 
@@ -39,6 +40,18 @@
 
 - pnpm 11.25 的 `trustPolicy: no-downgrade` 会把 lockfile 里的老包 `chokidar@4.0.3`、`semver@6.3.1` 误报为 trust downgrade，阻塞一切 pnpm 脚本。已在 `pnpm-workspace.yaml` 增加 `trustPolicyIgnoreAfter: 1440`（发布超过 1 天的包豁免）和 `verifyDepsBeforeRun: false`（跑脚本前不自动 install）
 - `declare global` 里的 `var` 环境声明会触发 eslint `vars-on-top` 误报，已在 global.d.ts 逐行内联豁免
+
+### 阶段 1（2026-10-03）
+
+完成内容：
+
+- `settings.ts`：导出 `LayoutMode` 类型（阶段 7 复用）；`basePermissions: PermissionItem[]`
+- `src/types/models.ts` 新建，先落 `PermissionItem` 占位（对齐 settings 静态数据形状），阶段 3 完善
+- `is.ts` 全部函数加类型谓词；`isArray` 原实现 `val && Array.isArray(val)` 真值时返回原数组，因类型谓词必须返回 boolean，改为 `!!val && Array.isArray(val)`（全项目无调用方依赖返回原数组，真值语义不变）
+- `isPromise` 通过 `isObject` 收窄后 `val.then` 为 unknown，`isFunction` 参数是 unknown，无需 as any
+- `common.ts`：formatDateTime/formatDate 参数用 dayjs `ConfigType`；throttle/debounce 保留 function 声明 + `this: unknown` 透传
+- `storage.ts`：类名 `Storage` 遮蔽 DOM Storage，用 `type StorageLike = globalThis.Storage` 规避；`getItem` 默认值 `def: T = null as T`；`get()` 内部 `getItem(key, {})` 的解构加 `as { value: T | undefined }` 断言（原实现解构 value，行为不变）
+- `createStorage` 去掉了参考文档写的 `<T = unknown>`（泛型未被使用，eslint no-unused-vars 报错，且无调用方传类型参数）
 
 ### 阶段 9 遗留备忘（前置记录）
 

@@ -1,30 +1,32 @@
+import type { ConfigType } from 'dayjs'
 import dayjs from 'dayjs'
 
 /**
- * @param {(object | string | number)} time
- * @param {string} format
- * @returns {string | null} 格式化后的时间字符串
+ * @param time 待格式化的时间
+ * @param format 格式
+ * @returns 格式化后的时间字符串
  *
  */
-export function formatDateTime(time = undefined, format = 'YYYY-MM-DD HH:mm:ss') {
+export function formatDateTime(time: ConfigType = undefined, format = 'YYYY-MM-DD HH:mm:ss'): string {
   return dayjs(time).format(format)
 }
 
-export function formatDate(date = undefined, format = 'YYYY-MM-DD') {
+export function formatDate(date: ConfigType = undefined, format = 'YYYY-MM-DD'): string {
   return formatDateTime(date, format)
 }
 
 /**
- * @param {Function} fn
- * @param {number} wait
- * @returns {Function}  节流函数
+ * @param fn 需要节流的函数
+ * @param wait 间隔时间（毫秒）
+ * @returns 节流函数
  *
  */
-export function throttle(fn, wait) {
-  let context, args
+export function throttle<T extends (...args: any[]) => any>(fn: T, wait: number): (...args: Parameters<T>) => void {
+  let context: unknown
+  let args: Parameters<T>
   let previous = 0
 
-  return function (...argArr) {
+  return function (this: unknown, ...argArr: Parameters<T>) {
     const now = Date.now()
     context = this
     args = argArr
@@ -36,14 +38,14 @@ export function throttle(fn, wait) {
 }
 
 /**
- * @param {Function} method
- * @param {number} wait
- * @param {boolean} immediate
- * @return {*} 防抖函数
+ * @param method 需要防抖的函数
+ * @param wait 间隔时间（毫秒）
+ * @param immediate 是否立即执行
+ * @returns 防抖函数
  */
-export function debounce(method, wait, immediate) {
-  let timeout
-  return function (...args) {
+export function debounce<T extends (...args: any[]) => any>(method: T, wait: number, immediate?: boolean): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null
+  return function (this: unknown, ...args: Parameters<T>) {
     const context = this
     if (timeout) {
       clearTimeout(timeout)
@@ -76,19 +78,19 @@ export function debounce(method, wait, immediate) {
 }
 
 /**
- * @param {number} time 毫秒数
+ * @param time 毫秒数
  * @returns 睡一会儿，让子弹暂停一下
  */
-export function sleep(time) {
+export function sleep(time: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, time))
 }
 
 /**
- * @param {HTMLElement} el
- * @param {Function} cb
- * @return {ResizeObserver}
+ * @param el 监听的元素
+ * @param cb 尺寸变化回调
+ * @returns ResizeObserver 实例
  */
-export function useResize(el, cb) {
+export function useResize(el: HTMLElement, cb: (rect: DOMRectReadOnly) => void): ResizeObserver {
   const observer = new ResizeObserver((entries) => {
     cb(entries[0].contentRect)
   })

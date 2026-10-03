@@ -1,11 +1,16 @@
-export const defaultLayout = 'normal'
+import type { GlobalThemeOverrides } from 'naive-ui'
+import type { PermissionItem } from '@/types/models'
+
+export type LayoutMode = 'normal' | 'full' | 'empty' | 'simple'
+
+export const defaultLayout: LayoutMode = 'normal'
 
 export const defaultPrimaryColor = '#316C72'
 
 // 控制 LayoutSetting 组件是否可见
 export const layoutSettingVisible = true
 
-export const naiveThemeOverrides = {
+export const naiveThemeOverrides: GlobalThemeOverrides = {
   common: {
     primaryColor: '#316C72FF',
     primaryColorHover: '#316C72E3',
@@ -14,7 +19,7 @@ export const naiveThemeOverrides = {
   },
 }
 
-export const basePermissions = [
+export const basePermissions: PermissionItem[] = [
   {
     code: 'ExternalLink',
     name: '外链(可内嵌打开)',
