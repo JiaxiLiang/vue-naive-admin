@@ -4,8 +4,8 @@ import { request } from '@/utils'
 
 export default {
   getMenuTree: () => request.get<PermissionItem[]>('/permission/menu/tree'),
-  // 按钮权限列表（resource 页 MeCrud 数据源，query-items 传 { parentId }）
-  getButtons: ({ parentId }: { parentId: number | string }) => request.get<PermissionItem[]>(`/permission/button/${parentId}`),
+  // 按钮权限列表（resource 页 MeCrud 数据源，MeCrud 会把分页参数一并合入 params）
+  getButtons: (params: Record<string, any>) => request.get<PermissionItem[]>(`/permission/button/${params.parentId}`),
   // 原生 axios（非项目封装），返回的是 AxiosResponse，注意没有经过拦截器加工
   getComponents: () => axios.get(`${import.meta.env.VITE_PUBLIC_PATH}components.json`),
   addPermission: (data: Partial<PermissionItem>) => request.post('/permission', data),

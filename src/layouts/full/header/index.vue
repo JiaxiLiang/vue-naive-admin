@@ -31,7 +31,7 @@
 import { ToggleTheme } from '@/components'
 import { BeginnerGuide, BreadCrumb, Fullscreen, MenuCollapse, UserAvatar } from '@/layouts/components'
 
-function handleLinkClick(link) {
+function handleLinkClick(link: string) {
   window.open(link)
 }
 </script>

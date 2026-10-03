@@ -174,7 +174,7 @@ const btnsColumns: DataTableColumns<BtnRow> = [
             size: 'small',
             type: 'error',
             style: 'margin-left: 12px;',
-            onClick: () => handleDeleteBtn(row.id),
+            onClick: () => handleDeleteBtn(row.id!),
           },
           {
             default: () => '删除',
@@ -199,7 +199,7 @@ function handleAddBtn() {
   modalRef.value?.handleOpen({
     action: 'add',
     title: '新增按钮',
-    row: { type: 'BUTTON', parentId: currentMenu.value?.id },
+    row: { type: 'BUTTON', parentId: currentMenu.value?.id ?? null },
     okText: '保存',
   })
 }
@@ -238,7 +238,7 @@ function handleDeleteBtn(id: number | string) {
 async function handleEnable(item: BtnRow) {
   try {
     item.enableLoading = true
-    await api.savePermission(item.id, {
+    await api.savePermission(item.id!, {
       enable: !item.enable,
     })
     $message.success('操作成功')

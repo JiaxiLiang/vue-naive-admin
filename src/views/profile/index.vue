@@ -7,13 +7,13 @@
           <div class="flex items-center text-16">
             <span>用户名:</span>
             <span class="ml-12 opacity-80">{{ userStore.username }}</span>
-            <n-button class="ml-32" type="primary" text @click="pwdModalRef.open()">
+            <n-button class="ml-32" type="primary" text @click="pwdModalRef?.open()">
               <i class="i-fe:edit mr-4" />
               修改密码
             </n-button>
           </div>
           <div class="mt-16 flex items-center">
-            <n-button type="primary" ghost @click="avatarModalRef.open()">
+            <n-button type="primary" ghost @click="avatarModalRef?.open()">
               更改头像
             </n-button>
             <span class="ml-12 opacity-60">
@@ -26,7 +26,7 @@
 
     <n-card class="mt-20" title="个人资料信息">
       <template #header-extra>
-        <n-button type="primary" text @click="profileModalRef.open()">
+        <n-button type="primary" text @click="profileModalRef?.open()">
           <i class="i-fe:edit mr-4" />
           修改资料
         </n-button>
@@ -97,6 +97,7 @@
 </template>
 
 <script setup lang="ts">
+import type { UserInfo } from '@/types/models'
 import { MeModal } from '@/components'
 import { useForm, useModal } from '@/composables'
 import { useUserStore } from '@/store'
@@ -127,7 +128,7 @@ async function handleAvatarSave() {
     $message.error('请输入头像地址')
     return false
   }
-  await api.updateProfile({ id: userStore.userId, avatar: newAvatar.value })
+  await api.updateProfile({ id: userStore.userId!, avatar: newAvatar.value })
   $message.success('头像修改成功')
   refreshUserInfo()
 }
@@ -147,7 +148,7 @@ const [profileFormRef, profileForm, profileValidation] = useForm({
 })
 async function handleProfileSave() {
   await profileValidation()
-  await api.updateProfile(profileForm.value)
+  await api.updateProfile(profileForm.value as Partial<UserInfo> & { id: number })
   $message.success('资料修改成功')
   refreshUserInfo()
 }

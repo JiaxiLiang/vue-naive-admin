@@ -20,8 +20,9 @@ export const useTabStore = defineStore('tab', { // 定义并导出一个名为 '
     reloading: false, // 标识是否正在重新加载（刷新）当前页面
   }),
   getters: { // 定义计算属性
-    activeIndex() { // 计算当前激活标签页在列表中的索引位置
-      return this.tabs.findIndex(item => item.path === this.activeTab)
+    // strict 模式下用 state 参数替代 this（运行时等价）
+    activeIndex: (state) => { // 计算当前激活标签页在列表中的索引位置
+      return state.tabs.findIndex(item => item.path === state.activeTab)
       // 查找并返回索引值 find方法查找 符合条件就返回索引不符合就是-1
     },
   },
@@ -70,7 +71,8 @@ export const useTabStore = defineStore('tab', { // 定义并导出一个名为 '
         useRouterStore().router?.push(this.tabs[this.tabs.length - 1].path) // 自动跳转到列表中最后一个标签页
       }
     },
-    removeOther(curPath = this.activeTab) { // 关闭除当前页签外的其他所有页签
+    removeOther(curPath?: string) { // 关闭除当前页签外的其他所有页签
+      curPath = curPath ?? this.activeTab // 与原默认参数等价
       this.setTabs(this.tabs.filter(tab => tab.path === curPath)) // 只保留当前路径的标签页
       if (curPath !== this.activeTab) { // 如果当前路径不是激活路径（说明之前激活的标签页被关闭了）
         useRouterStore().router?.push(this.tabs[this.tabs.length - 1].path) // 跳转到保留下来的标签页

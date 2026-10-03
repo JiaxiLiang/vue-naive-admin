@@ -28,6 +28,7 @@
 </template>
 
 <script setup lang="ts">
+import type { TabItem } from '@/store'
 import { useTabStore } from '@/store'
 import ContextMenu from './ContextMenu.vue'
 
@@ -41,7 +42,7 @@ const contextMenuOption = reactive({
   currentPath: '',
 })
 
-function handleItemClick(path) {
+function handleItemClick(path: string) {
   tabStore.setActiveTab(path)
   router.push(path)
 }
@@ -52,12 +53,12 @@ function showContextMenu() {
 function hideContextMenu() {
   contextMenuOption.show = false
 }
-function setContextMenu(x, y, currentPath) {
+function setContextMenu(x: number, y: number, currentPath: string) {
   Object.assign(contextMenuOption, { x, y, currentPath })
 }
 
 // 右击菜单
-async function handleContextMenu(e, tagItem) {
+async function handleContextMenu(e: MouseEvent, tagItem: TabItem) {
   const { clientX, clientY } = e
   hideContextMenu()
   setContextMenu(clientX, clientY, tagItem.path)

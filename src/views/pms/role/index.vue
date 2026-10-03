@@ -89,6 +89,7 @@
 <script setup lang="ts">
 import type { DataTableColumns } from 'naive-ui'
 import type { PermissionItem, Role } from '@/types/models'
+import type { ApiResult } from '@/utils/http'
 import { NButton, NSwitch } from 'naive-ui'
 import { MeCrud, MeModal, MeQueryItem } from '@/components'
 import { useCrud } from '@/composables'
@@ -115,8 +116,8 @@ const { modalRef, modalFormRef, modalAction, modalForm, handleAdd, handleDelete,
   = useCrud<RoleForm>({
     name: '角色',
     doCreate: api.create,
-    doDelete: api.delete,
-    doUpdate: api.update,
+    doDelete: api.delete as (id: number | string) => Promise<ApiResult<unknown>>,
+    doUpdate: (data: RoleForm) => api.update(data as Partial<Role> & { id: number }),
     initForm: { enable: true },
     refresh: (_, keepCurrentPage) => $table.value?.handleSearch(keepCurrentPage),
   })

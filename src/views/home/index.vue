@@ -233,7 +233,7 @@ const trendOption = {
 const skillOption = {
   tooltip: {
     trigger: 'item',
-    formatter({ name, value }) {
+    formatter({ name, value }: { name: string, value: number }) {
       return `${name} ${value}%`
     },
   },

@@ -108,5 +108,5 @@ export interface AccessRoute {
   redirect?: string
   /** store 阶段为字符串路径，permission-guard 替换为懒加载组件 */
   component?: unknown
-  meta?: RouteMeta
+  meta: RouteMeta
 }

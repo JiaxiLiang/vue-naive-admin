@@ -14,7 +14,7 @@
         :show-irrelevant-nodes="false"
         :pattern="pattern"
         :data="(treeData as any)"
-        :selected-keys="[currentMenu?.code]"
+        :selected-keys="([currentMenu?.code] as any)"
         :render-prefix="renderPrefix"
         :render-suffix="renderSuffix"
         :on-update:selected-keys="(onSelect as any)"

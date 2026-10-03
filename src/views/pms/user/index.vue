@@ -104,6 +104,7 @@
 <script setup lang="ts">
 import type { DataTableColumn } from 'naive-ui'
 import type { Role, UserInfo } from '@/types/models'
+import type { ApiResult } from '@/utils/http'
 import { NAvatar, NButton, NSwitch, NTag } from 'naive-ui'
 import { MeCrud, MeModal, MeQueryItem } from '@/components'
 import { useCrud } from '@/composables'
@@ -146,8 +147,9 @@ const {
   name: '用户',
   initForm: { enable: true },
   doCreate: api.create,
-  doDelete: api.delete,
-  doUpdate: api.update,
+  // 编辑态表单必带 id，包装一层对齐 api 形状（运行时不变）
+  doDelete: api.delete as (id: number | string) => Promise<ApiResult<unknown>>,
+  doUpdate: (data: UserForm) => api.update(data as Partial<UserInfo> & { id: number }),
   refresh: () => $table.value?.handleSearch(),
 })
 

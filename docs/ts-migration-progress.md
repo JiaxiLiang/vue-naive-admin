@@ -13,7 +13,7 @@
 - [x] 阶段 6：共享组件（MeCrud/MeModal/MeQueryItem/common 8 个）
 - [x] 阶段 7：router + directives + layouts
 - [x] 阶段 8：views 逐页迁移（24 个页面，从 user 页开始）
-- [ ] 阶段 9：收尾（main.ts、jsconfig 删除、strict 全开、README 更新）
+- [x] 阶段 9：收尾（main.ts、jsconfig 删除、strict 全开、README 更新）
 
 ## 各阶段 commit 索引
 
@@ -28,6 +28,7 @@
 | 6    | 见 git log `refactor(ts): phase 6` | 共享组件 + 泛型 MeCrud    |
 | 7    | 见 git log `refactor(ts): phase 7` | router/directives/layouts |
 | 8    | 见 git log `refactor(ts): phase 8` | views 逐页迁移            |
+| 9    | 见 git log `refactor(ts): phase 9` | 收尾 strict 全开          |
 
 ## 阶段记录与遗留问题
 
@@ -144,7 +145,28 @@
 - 页面级类型：user 页 `UserRow`/`UserForm`（password、roleIds 运行时字段）、role 页 `RoleRow`/`RoleForm`（permissionIds）、resource 页 `BtnRow`、role-user 的 `userIds: number[]`
 - 表单值传 api 处用断言（如 `api.update(modalForm.value as Partial<UserInfo> & { id: number })`，编辑时必带 id）
 
-### 阶段 9 遗留备忘（前置记录）
+### 阶段 9（2026-10-03）
 
-- `store/modules/user.js` 的 `userInfo: null` 需要改 `null as UserInfo | null`
-- `tab.js` 的 `this.tabs[length - 1].path`：`noUncheckedIndexedAccess` 建议先不开启，见阶段 9
+完成内容：
+
+- `main.js → main.ts`（与 `index.html` 的 `/src/main.ts` 改动同 commit）；顺手修正注释中把 Pinia 写成 Vuex 的错误表述
+- 删除 `jsconfig.json`
+- `tsconfig.json` 收紧：`strict: true`、`allowJs: false`；`noUncheckedIndexedAccess` **未开启**（见下方遗留项）
+- 修复 strict 暴露的 87 处错误，关键模式：
+  - options store 的 getters 在 strict 下无法用 this，改用 `state` 参数形式（user/tab，运行时等价）；getter 的 `|| {}` 兜底改 `?? ({} as Role)` 保住类型
+  - actions 默认参数里的 `this`（app.setThemeColor、tab.removeOther）改为可选参数 + 函数体内 `??` 兜底（运行时等价）
+  - 新建 `src/types/arco-design-color.d.ts`（该包无类型声明）
+  - Message 类 content 参数放宽 `string | string[]`（WrappedMessage 契约同步）
+  - DataTableColumn 联合类型导致 render 解构参数无法上下文推断，各页显式标注参数类型
+  - useCrud 的 doDelete/doUpdate 在 strict 函数协变下不匹配，页面侧包装一层对齐 api 形状（运行时不变）
+- 三绿：`pnpm typecheck` 0 错误、`pnpm build` 通过、`pnpm lint:fix` 0 error（1 条 pre-existing 的 vue/no-template-shadow warning）
+- `pnpm dev` 启动正常（HTTP 200，main.ts 正常编译）
+
+### 遗留项（阶段 9 收尾记录）
+
+- **手测未完全执行**：自动化环境无后端（VITE_PROXY_TARGET=localhost:8085）与浏览器交互验证，登录 → pms 三页 CRUD → 角色分配 → 资源菜单 → 标签页 → 主题切换 → 刷新补录 → 登出 → 404/403 全流程手测需要用户本地执行；已验证 dev 启动、build 产物、类型全绿
+- `noUncheckedIndexedAccess` 未开启（开启后 `this.tabs[length - 1].path` 等 30+ 处索引访问需收窄，收益/成本比低）
+- 更严格的候选：`exactOptionalPropertyTypes`、`noImplicitOverride` 未评估开启
+- `enable: boolean | 0 | 1` 的后端契约妥协保留（统一为 boolean 属接口变更）
+- `App.vue` 中 `layout === 'default'` 的旧持久化值兼容逻辑带断言保留（疑似死代码，按"不改运行时行为"原则未清理）
+- `login/api.ts` 的 `toggleRole` 无调用方，payload 保持 `Record<string, unknown>` 宽松类型

@@ -35,6 +35,7 @@
 </template>
 
 <script setup lang="ts">
+import type { ModalOptions } from '@/types/me-components'
 import api from '@/api'
 import { MeModal } from '@/components'
 import { useModal } from '@/composables'
@@ -47,7 +48,7 @@ const roles = ref(userStore.roles || [])
 const roleCode = ref(userStore.currentRole?.code ?? roles.value[0]?.code ?? '')
 
 const [modalRef, okLoading] = useModal()
-function open(options) {
+function open(options: Partial<ModalOptions> = {}) {
   modalRef.value?.open({
     ...options,
   })

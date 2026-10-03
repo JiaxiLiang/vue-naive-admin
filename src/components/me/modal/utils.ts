@@ -5,9 +5,9 @@ interface ElementWithCurrentStyle extends HTMLElement {
 }
 
 function getCss(element: HTMLElement, key: string): string | undefined {
-  return (element as ElementWithCurrentStyle).currentStyle
-    ? (element as ElementWithCurrentStyle).currentStyle?.[key]
-    : (window.getComputedStyle(element, null) as any)[key]
+  // CSSStyleDeclaration 无通用字符串索引签名，断言后按 key 取值
+  const style = (element as ElementWithCurrentStyle).currentStyle ?? window.getComputedStyle(element, null)
+  return (style as any)[key]
 }
 
 // 初始化拖拽

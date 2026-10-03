@@ -43,7 +43,10 @@ export const useAppStore = defineStore('app', { // 定义并导出名为 'app' �
     setPrimaryColor(color: string) { // 修改系统主题色的方法
       this.primaryColor = color // 将传入的颜色值赋给 primaryColor 状态
     },
-    setThemeColor(color: string = this.primaryColor, isDark: boolean = this.isDark) {
+    setThemeColor(color?: string, isDark?: boolean) {
+      // 与原默认参数 this.primaryColor / this.isDark 等价（strict 下 this 不能用于默认参数位）
+      color = color ?? this.primaryColor
+      isDark = isDark ?? this.isDark
       // 生成并应用主题色到全局 CSS 变量和组件库的方法
       const colors = generate(color, { // 调用第三方库生成对应的页面的调色板（一个数组存储）
         list: true, // 以数组形式返回色板

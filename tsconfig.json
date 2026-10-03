@@ -12,9 +12,9 @@
       "~/*": ["./*"]
     },
     "resolveJsonModule": true,
-    "allowJs": true,
+    "allowJs": false,
     "checkJs": false,
-    "strict": false,
+    "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
     "isolatedModules": true,

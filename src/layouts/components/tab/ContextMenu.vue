@@ -109,8 +109,8 @@ function handleHideDropdown() {
   emit('update:show', false)
 }
 
-function handleSelect(key) {
-  const actionFn = actionMap.get(key)
+function handleSelect(key: string | number) {
+  const actionFn = actionMap.get(key as string)
   if (typeof actionFn === 'function')
     actionFn()
   handleHideDropdown()

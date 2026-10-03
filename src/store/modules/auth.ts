@@ -26,7 +26,7 @@ export const useAuthStore = defineStore('auth', { // 定义并导出名为 'auth
         query: route.query, // 携带当前路由的 query 参数（url  ？后面的）
       })
     },
-    async switchCurrentRole(data) { // 异步切换当前用户角色的方法（通常用于多角色账号切换）
+    async switchCurrentRole(data: { accessToken: string }) { // 异步切换当前用户角色的方法（通常用于多角色账号切换）
       this.resetLoginState() // 1. 先重置所有与登录相关的状态（清空旧角色数据）
       await nextTick() // 2. 等待 Vue 的 DOM 更新和状态重置完成  next函数返回是pro（凭证）得结合await
       this.setToken(data) // 3. 设置新角色的 token 数据

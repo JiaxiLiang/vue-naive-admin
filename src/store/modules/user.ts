@@ -1,4 +1,4 @@
-import type { UserInfo } from '@/types/models'
+import type { Role, UserInfo } from '@/types/models'
 import { defineStore } from 'pinia' // 从 pinia 库中导入 defineStore 方法，用于定义状态管理仓库
 
 export const useUserStore = defineStore('user', { // 定义并导出一个名为 useUserStore 的仓库，id 为 'user'
@@ -6,24 +6,13 @@ export const useUserStore = defineStore('user', { // 定义并导出一个名为
     userInfo: null as UserInfo | null, // 存储用户信息对象，初始值为 null，登录成功后存入
   }),
   getters: { // 定义 getters 计算属性，用于基于 state 派生数据
-    userId() { // 定义计算属性 userId，获取用户 ID
-      return this.userInfo?.id // 使用可选链操作符返回用户 ID，防止 userInfo 为 null 时报错
-    },
-    username() { // 定义计算属性 username，获取用户名
-      return this.userInfo?.username // 返回用户名
-    },
-    nickName() { // 定义计算属性 nickName，获取用户昵称
-      return this.userInfo?.nickName // 返回用户昵称
-    },
-    avatar() { // 定义计算属性 avatar，获取用户头像地址
-      return this.userInfo?.avatar // 返回用户头像 URL
-    },
-    currentRole() { // 定义计算属性 currentRole，获取当前角色信息
-      return this.userInfo?.currentRole || {} // 返回当前角色对象，若不存在则返回空对象作为默认值
-    },
-    roles() { // 定义计算属性 roles，获取用户角色列表
-      return this.userInfo?.roles || [] // 返回角色数组，若不存在则返回空数组作为默认值
-    },
+    // strict 模式下 options store 的 getters 需用 state 参数替代 this（运行时等价）
+    userId: state => state.userInfo?.id, // 定义计算属性 userId，获取用户 ID，可选链防止 userInfo 为 null 时报错
+    username: state => state.userInfo?.username, // 返回用户名
+    nickName: state => state.userInfo?.nickName, // 返回用户昵称
+    avatar: state => state.userInfo?.avatar, // 返回用户头像 URL
+    currentRole: state => state.userInfo?.currentRole ?? ({} as Role), // 返回当前角色对象，若不存在则返回空对象作为默认值（?? 与原 || 对对象等价）
+    roles: state => state.userInfo?.roles || [], // 返回角色数组，若不存在则返回空数组作为默认值
   },
   actions: { // 定义 actions 方法，用于修改 state 中的状态
     setUser(user: UserInfo) { // 定义 setUser 方法，接收用户对象作为参数

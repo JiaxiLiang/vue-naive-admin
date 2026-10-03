@@ -24,22 +24,23 @@
 </template>
 
 <script setup lang="ts">
+import type { PermissionItem } from '@/types/models'
 import { usePermissionStore } from '@/store'
 
 const router = useRouter()
 const route = useRoute()
 const permissionStore = usePermissionStore()
 
-const breadItems = ref([])
+const breadItems = ref<PermissionItem[]>([])
 watch(
   () => route.name,
   (v) => {
-    breadItems.value = findMatchs(permissionStore.permissions, v)
+    breadItems.value = findMatchs(permissionStore.permissions, v) || []
   },
   { immediate: true },
 )
 
-function findMatchs(tree, code, parents = []) {
+function findMatchs(tree: PermissionItem[], code: unknown, parents: PermissionItem[] = []): PermissionItem[] | null {
   for (const item of tree) {
     if (item.code === code) {
       return [...parents, item]
@@ -54,13 +55,13 @@ function findMatchs(tree, code, parents = []) {
   return null
 }
 
-function handleItemClick(item) {
+function handleItemClick(item: PermissionItem) {
   if (item.path && item.code !== route.name) {
     router.push(item.path)
   }
 }
 
-function getDropOptions(list = []) {
+function getDropOptions(list: PermissionItem[] = []) {
   return list
     .filter(item => item.show)
     .map(child => ({
@@ -70,9 +71,9 @@ function getDropOptions(list = []) {
     }))
 }
 
-function handleDropSelect(code) {
+function handleDropSelect(code: string | number) {
   if (code && code !== route.name) {
-    router.push({ name: code })
+    router.push({ name: code as string })
   }
 }
 </script>

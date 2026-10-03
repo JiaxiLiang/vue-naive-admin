@@ -16,8 +16,8 @@ type MessageType = 'loading' | 'success' | 'error' | 'info' | 'warning'
 export function setupMessage(NMessage: MessageApi): WrappedMessage {
   class Message {
     static instance: Message | undefined
-    private message: Record<string, MessageReactive>
-    private removeTimer: Record<string, ReturnType<typeof setTimeout>>
+    private message!: Record<string, MessageReactive>
+    private removeTimer!: Record<string, ReturnType<typeof setTimeout>>
 
     constructor() {
       // 单例模式
@@ -69,27 +69,27 @@ export function setupMessage(NMessage: MessageApi): WrappedMessage {
       return undefined
     }
 
-    loading(content: string, option?: KeyedMessageOptions): MessageReactive | undefined {
+    loading(content: string | string[], option?: KeyedMessageOptions): MessageReactive | undefined {
       this.showMessage('loading', content, option)
       return undefined
     }
 
-    success(content: string | (() => VNodeChild), option?: KeyedMessageOptions): MessageReactive | undefined {
+    success(content: string | string[] | (() => VNodeChild), option?: KeyedMessageOptions): MessageReactive | undefined {
       this.showMessage('success', content as string, option)
       return undefined
     }
 
-    error(content: string, option?: KeyedMessageOptions): MessageReactive | undefined {
+    error(content: string | string[], option?: KeyedMessageOptions): MessageReactive | undefined {
       this.showMessage('error', content, option)
       return undefined
     }
 
-    info(content: string, option?: KeyedMessageOptions): MessageReactive | undefined {
+    info(content: string | string[], option?: KeyedMessageOptions): MessageReactive | undefined {
       this.showMessage('info', content, option)
       return undefined
     }
 
-    warning(content: string, option?: KeyedMessageOptions): MessageReactive | undefined {
+    warning(content: string | string[], option?: KeyedMessageOptions): MessageReactive | undefined {
       this.showMessage('warning', content, option)
       return undefined
     }
@@ -103,7 +103,8 @@ export function setupDialog(NDialog: DialogApi): WrappedDialog {
   const dialog = NDialog as WrappedDialog
   dialog.confirm = function (option: Partial<DialogOptions> & { confirm?: () => void, cancel?: () => void } = {}) {
     const showIcon = !isNullOrUndef(option.title)
-    return NDialog[option.type || 'warning']({
+    // DialogOptions['type'] 含 'default'，DialogApi 无对应方法，索引断言绕过
+    return (NDialog as any)[option.type || 'warning']({
       showIcon,
       positiveText: '确定',
       negativeText: '取消',

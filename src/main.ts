@@ -8,7 +8,7 @@ import { setupDirectives } from './directives' // 从directives目录导入setup
 import { setupRouter } from './router' // 从router目录导入setupRouter函数
 // 用于设置路由配置和路由守卫
 import { setupStore } from './store' // 从store目录导入setupStore函数
-// 用于设置Vuex状态管理
+// 用于设置Pinia状态管理（原注释误写为 Vuex，实际项目用的是 Pinia，顺手修正）
 import { setupNaiveDiscreteApi } from './utils' // 从utils目录导入setupNaiveDiscreteApi函数，
 // 用于设置NaiveUI的独立API调用方式
 
@@ -21,7 +21,7 @@ async function bootstrap() { // 定义异步bootstrap函数，作为应用的启
 // async：声明函数为异步函数 异步操作：不阻塞主线程的代码执行，允许程序在等待结果时继续执行其他任务
   const app = createApp(App) // createApp函数创建Vue应用实例，
   // 传入根组件App，返回的app对象包含mount、use等方法
-  setupStore(app) // 注册 Vuex 状态管理，将 Vuex store 挂载到 Vue 实例上。
+  setupStore(app) // 注册 Pinia 状态管理，将 Pinia store 挂载到 Vue 实例上。
   setupDirectives(app) // 设置自定义指令，注册如v-permission、v-role等权限相关指令
   await setupRouter(app) // 设置路由系统
   // await 关键字：暂停 bootstrap 函数的执行，等待 setupRouter(app) 完成后再继续。

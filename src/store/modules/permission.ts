@@ -42,7 +42,7 @@ export const usePermissionStore = defineStore('permission', { // 定义并导出
     getMenuItem(item: PermissionItem, parent?: MenuItem): MenuItem | null { // 递归生成菜单项的方法
       // item就是后端发出的json转换成的js对象（里面有属性和数组的纯数据）
       // pare是代表父菜单第一次初始化调用的时候就是直接赋予null（用于递归 子菜单挂载父上）
-      const route = this.generateRoute(item, item.show ? null : parent?.key)
+      const route = this.generateRoute(item, item.show ? null : (parent?.key as string | null))
       // show是显示属性  key唯一标识符 item就是
       // 生成路由对象函数 下面，第二参数是？：判断选择
       // ?: 三元运算符（只判断值的对错不判断这个值是否存在）  ?.可选链(就看后面是隔开还是) ?? 空值合并
@@ -87,7 +87,7 @@ export const usePermissionStore = defineStore('permission', { // 定义并导出
     generateRoute(item: PermissionItem, parentKey: string | null): AccessRoute { // 生成标准的 Vue Router 路由对象
       // parentKey父菜单唯一标识 就是id
       let originPath // 声明变量存储原始路径
-      if (isExternal(item.path)) { // 如果是外部链接
+      if (isExternal(item.path!)) { // 如果是外部链接
         // isE函数导入函数 判断字符串是否是外部链接
         originPath = item.path // 保存原始外部链接地址
         item.component = '/src/views/iframe/index.vue'

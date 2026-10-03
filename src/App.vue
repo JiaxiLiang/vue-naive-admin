@@ -24,17 +24,19 @@
   </n-config-provider>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { Component } from 'vue'
+import type { LayoutMode } from './settings'
 import { darkTheme, dateZhCN, zhCN } from 'naive-ui'
 import { LayoutSetting } from '@/components'
 import { useAppStore, useTabStore } from '@/store'
 import { layoutSettingVisible } from './settings'
 
-const layouts = new Map()
-function getLayout(name) {
+const layouts = new Map<string, Component>()
+function getLayout(name: string): Component {
   // 利用map将加载过的layout缓存起来，防止重新加载layout导致页面闪烁
   if (layouts.get(name))
-    return layouts.get(name)
+    return layouts.get(name)!
   const layout = markRaw(defineAsyncComponent(() => import(`@/layouts/${name}/index.vue`)))
   layouts.set(name, layout)
   return layout
@@ -42,8 +44,9 @@ function getLayout(name) {
 
 const route = useRoute()
 const appStore = useAppStore()
-if (appStore.layout === 'default')
-  appStore.setLayout('')
+// TODO: 原实现的兼容旧持久化值逻辑，'default'/'' 不在 LayoutMode 联合内，保持原行为用断言
+if ((appStore.layout as string) === 'default')
+  appStore.setLayout('' as LayoutMode)
 const Layout = computed(() => {
   if (!route.matched?.length)
     return null
@@ -52,7 +55,7 @@ const Layout = computed(() => {
 
 const tabStore = useTabStore()
 const keepAliveNames = computed(() => {
-  return tabStore.tabs.filter(item => item.keepAlive).map(item => item.name)
+  return tabStore.tabs.filter(item => item.keepAlive).map(item => item.name as string)
 })
 
 watchEffect(() => {

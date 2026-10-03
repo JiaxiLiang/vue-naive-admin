@@ -56,7 +56,7 @@ async function resReject(error: AxiosError<any>): Promise<RequestError> {
   if (!error || !error.response) {
     const code = error?.code
     /** 根据code处理对应的操作，并返回处理后的message */
-    const message = resolveResError(code, error.message)
+    const message = resolveResError(code as number | string, error.message)
     return Promise.reject({ code, message, error })
   }
 

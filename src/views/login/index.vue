@@ -149,8 +149,8 @@ async function handleLogin(isQuick?: boolean) {
     onLoginSuccess(data)
   }
   catch (error) {
-    // 10003为验证码错误专属业务码
-    if (error?.code === 10003) {
+    // 10003为验证码错误专属业务码（reject 的是拦截器构造的 RequestError 形状）
+    if ((error as { code?: number }).code === 10003) {
       // 为防止爆破，验证码错误则刷新验证码
       initCaptcha()
     }

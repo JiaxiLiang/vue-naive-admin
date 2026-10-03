@@ -48,20 +48,22 @@
 </template>
 
 <script setup lang="ts">
+import type { UploadCustomRequestOptions, UploadFileInfo } from 'naive-ui'
 import { useClipboard } from '@vueuse/core'
 
 defineOptions({ name: 'ImgUpload' })
 
 const { copy, copied } = useClipboard()
 
-const imgList = reactive([])
+/** 已上传图片列表：文件名 + 本地预览 url */
+const imgList = reactive<Array<{ fileName: string, url: string }>>([])
 
 watch(copied, (val) => {
   if (val)
     $message.success('已复制到剪切板')
 })
 
-function onBeforeUpload({ file }) {
+function onBeforeUpload({ file }: { file: UploadFileInfo }) {
   if (!file.file?.type.startsWith('image/')) {
     $message.error('只能上传图片')
     return false
@@ -69,7 +71,7 @@ function onBeforeUpload({ file }) {
   return true
 }
 
-async function handleUpload({ file, onFinish }) {
+async function handleUpload({ file, onFinish }: UploadCustomRequestOptions) {
   if (!file || !file.type) {
     $message.error('请选择文件')
   }
@@ -78,7 +80,7 @@ async function handleUpload({ file, onFinish }) {
   $message.loading('上传中...')
   setTimeout(() => {
     $message.success('上传成功')
-    imgList.push({ fileName: file.name, url: URL.createObjectURL(file.file) })
+    imgList.push({ fileName: file.name, url: URL.createObjectURL(file.file!) })
     onFinish()
   }, 1500)
 }

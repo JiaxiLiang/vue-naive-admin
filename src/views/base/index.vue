@@ -119,7 +119,7 @@ function handleMultiMessage() {
   $message.error(['用户名不能为空！', '密码不能为空！', '密码必须大于6位！'])
 }
 
-function notify(type) {
+function notify(type: 'info' | 'success' | 'warning' | 'error') {
   $notification[type]({
     content: '说点啥呢',
     meta: '想不出来',

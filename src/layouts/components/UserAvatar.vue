@@ -42,7 +42,7 @@ const options = reactive([
   },
 ])
 
-const roleSelectRef = ref(null)
+const roleSelectRef = ref<InstanceType<typeof RoleSelect> | null>(null)
 function handleSelect(key: string | number) {
   switch (key) {
     case 'profile':
