@@ -41,24 +41,16 @@
   </main>
 </template>
 
-<script setup>
-defineProps({
-  back: {
-    type: Boolean,
-    default: false,
-  },
-  showFooter: {
-    type: Boolean,
-    default: false,
-  },
-  showHeader: {
-    type: Boolean,
-    default: true,
-  },
-  title: {
-    type: String,
-    default: undefined,
-  },
+<script setup lang="ts">
+withDefaults(defineProps<{
+  back?: boolean
+  showFooter?: boolean
+  showHeader?: boolean
+  title?: string
+}>(), {
+  back: false,
+  showFooter: false,
+  showHeader: true,
 })
 const route = useRoute()
 const router = useRouter()

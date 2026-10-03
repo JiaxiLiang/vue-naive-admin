@@ -4,8 +4,8 @@
   </div>
 </template>
 
-<script setup>
-defineProps({
-  bordered: Boolean,
-})
+<script setup lang="ts">
+defineProps<{
+  bordered?: boolean
+}>()
 </script>

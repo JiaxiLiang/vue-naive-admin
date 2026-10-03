@@ -10,15 +10,12 @@
   </main>
 </template>
 
-<script setup>
-defineProps({
-  full: {
-    type: Boolean,
-    default: false,
-  },
-  showFooter: {
-    type: Boolean,
-    default: false,
-  },
+<script setup lang="ts">
+withDefaults(defineProps<{
+  full?: boolean
+  showFooter?: boolean
+}>(), {
+  full: false,
+  showFooter: false,
 })
 </script>

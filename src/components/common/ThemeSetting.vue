@@ -7,7 +7,7 @@
           class="h-32 w-32"
           :value="appStore.primaryColor"
           :swatches="primaryColors"
-          :on-update:value="(v) => appStore.setPrimaryColor(v)"
+          :on-update:value="(v: string) => appStore.setPrimaryColor(v)"
           :render-label="() => ''"
         />
       </template>
@@ -16,11 +16,11 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { getPresetColors } from '@arco-design/color'
 import { useAppStore } from '@/store'
 
 const appStore = useAppStore()
 
-const primaryColors = Object.entries(getPresetColors()).map(([, value]) => value.primary)
+const primaryColors = Object.entries(getPresetColors()).map(([, value]) => (value as { primary: string }).primary)
 </script>

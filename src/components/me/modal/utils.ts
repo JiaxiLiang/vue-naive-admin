@@ -1,27 +1,33 @@
 // 获取元素的CSS样式
-function getCss(element, key) {
-  return element.currentStyle
-    ? element.currentStyle[key]
-    : window.getComputedStyle(element, null)[key]
+interface ElementWithCurrentStyle extends HTMLElement {
+  /** IE 专属属性，现代浏览器走 getComputedStyle */
+  currentStyle?: CSSStyleDeclaration
+}
+
+function getCss(element: HTMLElement, key: string): string | undefined {
+  return (element as ElementWithCurrentStyle).currentStyle
+    ? (element as ElementWithCurrentStyle).currentStyle?.[key]
+    : (window.getComputedStyle(element, null) as any)[key]
 }
 
 // 初始化拖拽
-export function initDrag(bar, box) {
+export function initDrag(bar: HTMLElement | null | undefined, box: HTMLElement | null | undefined): void {
   if (!bar || !box)
     return
+  // left/top 运行时可能是 '10px' 这类字符串（getCss 的返回值），parseInt 时统一处理
   const params = {
-    left: 0,
-    top: 0,
+    left: 0 as number | string,
+    top: 0 as number | string,
     currentX: 0,
     currentY: 0,
     flag: false,
   }
 
   if (getCss(box, 'left') !== 'auto') {
-    params.left = getCss(box, 'left')
+    params.left = getCss(box, 'left')!
   }
   if (getCss(box, 'top') !== 'auto') {
-    params.top = getCss(box, 'top')
+    params.top = getCss(box, 'top')!
   }
 
   // 设置触发拖动元素的鼠标样式为移动图标
@@ -36,10 +42,10 @@ export function initDrag(bar, box) {
   document.onmouseup = function () {
     params.flag = false // 设置拖拽标志为false
     if (getCss(box, 'left') !== 'auto') {
-      params.left = getCss(box, 'left')
+      params.left = getCss(box, 'left')!
     }
     if (getCss(box, 'top') !== 'auto') {
-      params.top = getCss(box, 'top')
+      params.top = getCss(box, 'top')!
     }
   }
   document.onmousemove = function (e) {
@@ -54,8 +60,8 @@ export function initDrag(bar, box) {
       const disX = nowX - params.currentX // 鼠标移动的X距离
       const disY = nowY - params.currentY // 鼠标移动的Y距离
 
-      const left = Number.parseInt(params.left) + disX // 盒子元素的新left值
-      const top = Number.parseInt(params.top) + disY // 盒子元素的新top值
+      const left = Number.parseInt(params.left as string) + disX // 盒子元素的新left值
+      const top = Number.parseInt(params.top as string) + disY // 盒子元素的新top值
 
       box.style.left = `${left}px`
       box.style.top = `${top}px`

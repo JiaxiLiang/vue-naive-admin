@@ -7,13 +7,13 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useDark, useToggle } from '@vueuse/core'
 import { useAppStore } from '@/store'
 
 const appStore = useAppStore()
 const isDark = useDark()
-async function toggleDark({ clientX, clientY }) {
+async function toggleDark({ clientX, clientY }: MouseEvent) {
   function handler() {
     appStore.toggleDark()
     useToggle(isDark)()

@@ -2,7 +2,7 @@
   <div>
     <n-tooltip trigger="hover" placement="left">
       <template #trigger>
-        <div id="layout-setting" class="f-c-c rounded-4 bg-primary p-8" @click="modalRef.open()">
+        <div id="layout-setting" class="f-c-c rounded-4 bg-primary p-8" @click="modalRef?.open()">
           <i class="i-fe:settings cursor-pointer bg-white text-20" />
         </div>
       </template>
@@ -21,7 +21,7 @@
           <n-button
             class="mt-12"
             size="small"
-            :type="appStore.layout === 'simple' ? 'primary' : ''"
+            :type="(appStore.layout === 'simple' ? 'primary' : '') as any"
             ghost
           >
             简约
@@ -38,7 +38,7 @@
           <n-button
             class="mt-12"
             size="small"
-            :type="appStore.layout === 'normal' ? 'primary' : ''"
+            :type="(appStore.layout === 'normal' ? 'primary' : '') as any"
             ghost
           >
             通用
@@ -57,7 +57,7 @@
           <n-button
             class="mt-12"
             size="small"
-            :type="appStore.layout === 'full' ? 'primary' : ''"
+            :type="(appStore.layout === 'full' ? 'primary' : '') as any"
             ghost
           >
             全面
@@ -70,7 +70,7 @@
           <n-button
             class="mt-12"
             size="small"
-            :type="appStore.layout === 'empty' ? 'primary' : ''"
+            :type="(appStore.layout === 'empty' ? 'primary' : '') as any"
             ghost
           >
             空白
@@ -84,7 +84,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { MeModal } from '@/components'
 import { useModal } from '@/composables'
 import { useAppStore } from '@/store'

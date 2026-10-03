@@ -10,21 +10,22 @@
 - [x] 阶段 3：实体模型 + api 层（src/types/models.ts、src/api、views/\*/api）
 - [x] 阶段 4：composables 泛型化（useModal/useForm/useCrud/useAliveData）
 - [x] 阶段 5：Pinia store（store/modules/\* 6 个模块 + helper）
-- [ ] 阶段 6：共享组件（MeCrud/MeModal/MeQueryItem/common 8 个）
+- [x] 阶段 6：共享组件（MeCrud/MeModal/MeQueryItem/common 8 个）
 - [ ] 阶段 7：router + directives + layouts
 - [ ] 阶段 8：views 逐页迁移（24 个页面，从 user 页开始）
 - [ ] 阶段 9：收尾（main.ts、jsconfig 删除、strict 全开、README 更新）
 
 ## 各阶段 commit 索引
 
-| 阶段 | commit                             | 说明                  |
-| ---- | ---------------------------------- | --------------------- |
-| 0    | 见 git log `refactor(ts): phase 0` | tsconfig + types 地基 |
-| 1    | 见 git log `refactor(ts): phase 1` | settings + utils      |
-| 2    | 见 git log `refactor(ts): phase 2` | http 层               |
-| 3    | 见 git log `refactor(ts): phase 3` | 实体模型 + api 层     |
-| 4    | 见 git log `refactor(ts): phase 4` | composables 泛型化    |
-| 5    | 见 git log `refactor(ts): phase 5` | Pinia store           |
+| 阶段 | commit                             | 说明                   |
+| ---- | ---------------------------------- | ---------------------- |
+| 0    | 见 git log `refactor(ts): phase 0` | tsconfig + types 地基  |
+| 1    | 见 git log `refactor(ts): phase 1` | settings + utils       |
+| 2    | 见 git log `refactor(ts): phase 2` | http 层                |
+| 3    | 见 git log `refactor(ts): phase 3` | 实体模型 + api 层      |
+| 4    | 见 git log `refactor(ts): phase 4` | composables 泛型化     |
+| 5    | 见 git log `refactor(ts): phase 5` | Pinia store            |
+| 6    | 见 git log `refactor(ts): phase 6` | 共享组件 + 泛型 MeCrud |
 
 ## 阶段记录与遗留问题
 
@@ -102,6 +103,20 @@
 - `auth.ts` persist key 的 'naivue' 拼写错误保留（修了会丢持久化数据），已加 TODO
 - `tab.ts` removeRight 的 `this.activeTab.value` 原逻辑 bug 保留（恒 undefined），`(this.activeTab as any).value` + TODO 通过 typecheck
 - `permission.ts` 两个 filter 用类型谓词 `(item): item is MenuItem => !!item`（运行时同 `!!item`）；`layout: item.layout as LayoutMode`（后端字符串与 LayoutMode 的契约妥协）
+
+### 阶段 6（2026-10-03）
+
+完成内容：
+
+- **MeCrud 泛型组件**（`generic="T extends Record<string, any>"`）：handleQuery 用 Array.isArray 收窄分页联合；泛型自检通过（临时 .vue 中 `DataTableColumns<UserInfo>` + `:get-data="api.read"`，render(row) 自动收窄）
+- `MeModal`：props 复用 ModalOptions 接口；原 `modalStyle/contentStyle` 的 `default: () => {}` 工厂返回 undefined 是原代码 bug，迁移后不设默认值（未传即 undefined），行为完全一致；`onOk/onCancel` 的 Function 类型 prop 默认值是函数本身（Vue 不调用工厂），与原实现一致
+- `QueryItem.vue`：label 类型放宽为 `string | number`（模板有 `label === 0` 判断，纯 string 会触发 TS2367）
+- 偏差与妥协：
+  - `TableColumn.type === 'selection'`、导出列 `hideInExcel`、行索引取值等处用 `as any` / 交叉类型从宽（naive-ui 列类型无这些自定义字段）
+  - LayoutSetting 四处 `:type="cond ? 'primary' : ''"` 用 `as any`（'' 不是 ButtonType，但改 'default' 有视觉差异风险，保持原值）
+  - emit/onDataChange 及 handleExport 的 data 用 `as T[]`（ref 的 UnwrapRefSimple<T> 收窄妥协）
+  - ThemeSetting 的 getPresetColors 返回值无类型，断言 `{ primary: string }`
+- TheFooter/TheLogo 无 script 块，无需迁移
 
 ### 阶段 9 遗留备忘（前置记录）
 
