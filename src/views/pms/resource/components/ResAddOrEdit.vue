@@ -150,7 +150,10 @@
   </MeModal>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { ModalAction } from '@/composables'
+import type { ModalOptions } from '@/types/me-components'
+import type { PermissionItem } from '@/types/models'
 import icons from 'isme:icons'
 import pagePathes from 'isme:page-pathes'
 import { MeModal } from '@/components'
@@ -158,16 +161,17 @@ import { useForm, useModal } from '@/composables'
 import api from '../api'
 import QuestionLabel from './QuestionLabel.vue'
 
-const props = defineProps({
-  menus: {
-    type: Array,
-    required: true,
-  },
-})
-const emit = defineEmits(['refresh'])
+const props = defineProps<{
+  /** 全量菜单树（含按钮） */
+  menus: PermissionItem[]
+}>()
+const emit = defineEmits<{
+  refresh: [data?: any]
+}>()
 
 const menuOptions = computed(() => {
-  return [{ name: '根菜单', id: '', children: props.menus || [] }]
+  // n-tree-select 的 TreeSelectOption 用 label/key 字段，这里用后端的 name/id，断言交给运行时字段名配置
+  return [{ name: '根菜单', id: '', children: props.menus || [] }] as any
 })
 const componentOptions = pagePathes.map(path => ({ label: path, value: path }))
 const iconOptions = icons.map(item => ({
@@ -192,14 +196,20 @@ const defaultForm = { enable: true, show: true, layout: '' }
 const [modalFormRef, modalForm, validation] = useForm()
 const [modalRef, okLoading] = useModal()
 
-const modalAction = ref('')
+const modalAction = ref<ModalAction>('')
 const parentIdDisabled = ref(false)
-function handleOpen(options = {}) {
+
+interface HandleOpenOptions extends Partial<ModalOptions> {
+  action?: ModalAction
+  row?: Partial<PermissionItem>
+}
+
+function handleOpen(options: HandleOpenOptions = {}) {
   const { action, row = {}, ...rest } = options
-  modalAction.value = action
+  modalAction.value = action ?? ''
   modalForm.value = { ...defaultForm, ...row }
   parentIdDisabled.value = !!row.parentId && row.type === 'BUTTON'
-  modalRef.value.open({ ...rest, onOk: onSave })
+  modalRef.value!.open({ ...rest, onOk: onSave })
 }
 
 async function onSave() {

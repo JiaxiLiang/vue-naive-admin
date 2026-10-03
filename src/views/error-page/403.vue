@@ -21,7 +21,7 @@
   </CommonPage>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const router = useRouter()
 const route = useRoute()
 
@@ -31,6 +31,6 @@ if (history.state.from === 'permission-guard') {
   delete history.state.from
 }
 else if (route.query.path) {
-  router.replace(route.query.path)
+  router.replace(route.query.path as string)
 }
 </script>

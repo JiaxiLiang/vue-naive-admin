@@ -47,7 +47,7 @@
   </CommonPage>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useClipboard } from '@vueuse/core'
 
 defineOptions({ name: 'ImgUpload' })

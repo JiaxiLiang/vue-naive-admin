@@ -13,11 +13,11 @@
       <n-tree
         :show-irrelevant-nodes="false"
         :pattern="pattern"
-        :data="treeData"
+        :data="(treeData as any)"
         :selected-keys="[currentMenu?.code]"
         :render-prefix="renderPrefix"
         :render-suffix="renderSuffix"
-        :on-update:selected-keys="onSelect"
+        :on-update:selected-keys="(onSelect as any)"
         key-field="code"
         label-field="name"
 
@@ -29,28 +29,30 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { TreeOption } from 'naive-ui'
+import type { PermissionItem } from '@/types/models'
 import { NButton } from 'naive-ui'
 import { withModifiers } from 'vue'
 import api from '../api'
 import ResAddOrEdit from './ResAddOrEdit.vue'
 
-defineProps({
-  treeData: {
-    type: Array,
-    default: () => [],
-  },
-  currentMenu: {
-    type: Object,
-    default: () => null,
-  },
+withDefaults(defineProps<{
+  treeData?: PermissionItem[]
+  currentMenu?: PermissionItem | null
+}>(), {
+  treeData: () => [],
+  currentMenu: null,
 })
-const emit = defineEmits(['refresh', 'update:currentMenu'])
+const emit = defineEmits<{
+  'refresh': [data?: any]
+  'update:currentMenu': [item: PermissionItem | null]
+}>()
 
 const pattern = ref('')
 
-const modalRef = ref(null)
-async function handleAdd(data = {}) {
+const modalRef = ref<InstanceType<typeof ResAddOrEdit> | null>(null)
+async function handleAdd(data: Partial<PermissionItem> = {}) {
   modalRef.value?.handleOpen({
     action: 'add',
     title: '新增菜单',
@@ -59,15 +61,17 @@ async function handleAdd(data = {}) {
   })
 }
 
-function onSelect(keys, option, { action, node }) {
-  emit('update:currentMenu', action === 'select' ? node : null)
+// n-tree 的 option 是 TreeOption（字段 unknown），实际数据是 PermissionItem，取字段时断言
+function onSelect(keys: Array<string | number>, option: TreeOption | null, meta: { action: string, node: TreeOption | null }) {
+  emit('update:currentMenu', meta.action === 'select' ? (meta.node as unknown as PermissionItem) : null)
 }
 
-function renderPrefix({ option }) {
-  return h('i', { class: `${option.icon}?mask text-16` })
+function renderPrefix({ option }: { option: TreeOption }) {
+  return h('i', { class: `${option.icon as string}?mask text-16` })
 }
 
-function renderSuffix({ option }) {
+function renderSuffix({ option }: { option: TreeOption }) {
+  const menu = option as unknown as PermissionItem
   return [
     h(
       NButton,
@@ -76,7 +80,7 @@ function renderSuffix({ option }) {
         type: 'primary',
         title: '新增下级菜单',
         size: 'tiny',
-        onClick: withModifiers(() => handleAdd({ parentId: option.id }), ['stop']),
+        onClick: withModifiers(() => handleAdd({ parentId: menu.id }), ['stop']),
       },
       { default: () => '新增' },
     ),
@@ -88,20 +92,20 @@ function renderSuffix({ option }) {
         type: 'error',
         size: 'tiny',
         style: 'margin-left: 12px;',
-        onClick: withModifiers(() => handleDelete(option), ['stop']),
+        onClick: withModifiers(() => handleDelete(menu), ['stop']),
       },
       { default: () => '删除' },
     ),
   ]
 }
 
-function handleDelete(item) {
+function handleDelete(item: PermissionItem) {
   $dialog.confirm({
     content: `确认删除【${item.name}】？`,
     async confirm() {
       try {
         $message.loading('正在删除', { key: 'deleteMenu' })
-        await api.deletePermission(item.id)
+        await api.deletePermission(item.id!)
         $message.success('删除成功', { key: 'deleteMenu' })
         emit('refresh')
         emit('update:currentMenu', null)

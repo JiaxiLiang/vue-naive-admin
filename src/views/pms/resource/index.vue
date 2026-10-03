@@ -83,20 +83,25 @@
   </CommonPage>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { DataTableColumns } from 'naive-ui'
+import type { PermissionItem } from '@/types/models'
 import { NButton, NSwitch } from 'naive-ui'
 import { MeCrud } from '@/components'
 import api from './api'
 import MenuTree from './components/MenuTree.vue'
 import ResAddOrEdit from './components/ResAddOrEdit.vue'
 
-const treeData = ref([])
+/** 按钮行数据：PermissionItem + 状态开关的运行时临时字段 */
+type BtnRow = PermissionItem & { enableLoading?: boolean }
+
+const treeData = ref<PermissionItem[]>([])
 const treeLoading = ref(false)
-const $table = ref(null)
-const currentMenu = ref(null)
-async function initData(data) {
+const $table = ref<{ handleSearch: (keepCurrentPage?: boolean) => void } | null>(null)
+const currentMenu = ref<PermissionItem | null>(null)
+async function initData(data?: PermissionItem) {
   if (data?.type === 'BUTTON') {
-    $table.value.handleSearch()
+    $table.value!.handleSearch()
     return
   }
   treeLoading.value = true
@@ -109,8 +114,8 @@ async function initData(data) {
 }
 initData()
 
-const modalRef = ref(null)
-function handleEdit(item = {}) {
+const modalRef = ref<InstanceType<typeof ResAddOrEdit> | null>(null)
+function handleEdit(item: PermissionItem = {} as PermissionItem) {
   modalRef.value?.handleOpen({
     action: 'edit',
     title: `编辑菜单 - ${item.name}`,
@@ -119,13 +124,13 @@ function handleEdit(item = {}) {
   })
 }
 
-const btnsColumns = [
+const btnsColumns: DataTableColumns<BtnRow> = [
   { title: '名称', key: 'name' },
   { title: '编码', key: 'code' },
   {
     title: '状态',
     key: 'enable',
-    render: row =>
+    render: (row: BtnRow) =>
       h(
         NSwitch,
         {
@@ -147,7 +152,7 @@ const btnsColumns = [
     width: 320,
     align: 'right',
     fixed: 'right',
-    render(row) {
+    render(row: BtnRow) {
       return [
         h(
           NButton,
@@ -186,7 +191,7 @@ watch(
   async (v) => {
     await nextTick()
     if (v)
-      $table.value.handleSearch()
+      $table.value!.handleSearch()
   },
 )
 
@@ -194,12 +199,12 @@ function handleAddBtn() {
   modalRef.value?.handleOpen({
     action: 'add',
     title: '新增按钮',
-    row: { type: 'BUTTON', parentId: currentMenu.value.id },
+    row: { type: 'BUTTON', parentId: currentMenu.value?.id },
     okText: '保存',
   })
 }
 
-function handleEditBtn(row) {
+function handleEditBtn(row: BtnRow) {
   modalRef.value?.handleOpen({
     action: 'edit',
     title: `编辑按钮 - ${row.name}`,
@@ -208,7 +213,7 @@ function handleEditBtn(row) {
   })
 }
 
-function handleDeleteBtn(id) {
+function handleDeleteBtn(id: number | string) {
   const d = $dialog.warning({
     content: '确定删除？',
     title: '提示',
@@ -219,7 +224,7 @@ function handleDeleteBtn(id) {
         d.loading = true
         await api.deletePermission(id)
         $message.success('删除成功')
-        $table.value.handleSearch()
+        $table.value!.handleSearch()
         d.loading = false
       }
       catch (error) {
@@ -230,7 +235,7 @@ function handleDeleteBtn(id) {
   })
 }
 
-async function handleEnable(item) {
+async function handleEnable(item: BtnRow) {
   try {
     item.enableLoading = true
     await api.savePermission(item.id, {

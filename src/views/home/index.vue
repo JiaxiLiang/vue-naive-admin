@@ -150,7 +150,7 @@
   </AppPage>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { BarChart, LineChart, PieChart } from 'echarts/charts'
 import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'

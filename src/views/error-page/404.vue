@@ -18,6 +18,6 @@
   </CommonPage>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const { replace } = useRouter()
 </script>

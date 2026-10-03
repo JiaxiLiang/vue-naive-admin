@@ -58,7 +58,9 @@
   </CommonPage>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { DataTableColumn } from 'naive-ui'
+import type { UserInfo } from '@/types/models'
 import { NAvatar, NButton, NSwitch, NTag } from 'naive-ui'
 import { h } from 'vue'
 import { MeCrud, MeQueryItem } from '@/components'
@@ -68,9 +70,12 @@ import api from './api'
 defineOptions({ name: 'RoleUser' })
 const route = useRoute()
 
-const $table = ref(null)
+/** 行数据：UserInfo + 列表接口返回的 createTime */
+type UserRow = UserInfo & { enableLoading?: boolean, createTime?: string }
+
+const $table = ref<{ handleSearch: (keepCurrentPage?: boolean) => void } | null>(null)
 /** QueryBar筛选参数（可选） */
-const queryItems = ref({})
+const queryItems = ref<Record<string, any>>({})
 
 onMounted(() => {
   $table.value?.handleSearch()
@@ -81,13 +86,14 @@ const genders = [
   { label: '女', value: 2 },
 ]
 
-const columns = [
+// hideInExcel 是 MeCrud 导出 Excel 的自定义字段，naive-ui 列类型上没有，交叉类型补上
+const columns: Array<DataTableColumn<UserRow> & { hideInExcel?: boolean }> = [
   { type: 'selection', fixed: 'left' },
   {
     title: '头像',
     key: 'avatar',
     width: 80,
-    render: ({ avatar }) =>
+    render: ({ avatar }: UserRow) =>
       h(NAvatar, {
         size: 'medium',
         src: avatar,
@@ -99,7 +105,7 @@ const columns = [
     key: 'roles',
     width: 200,
     ellipsis: { tooltip: true },
-    render: ({ roles }) => {
+    render: ({ roles }: UserRow) => {
       if (roles?.length) {
         return roles.map((item, index) =>
           h(
@@ -116,13 +122,13 @@ const columns = [
     title: '性别',
     key: 'gender',
     width: 80,
-    render: ({ gender }) => genders.find(item => gender === item.value)?.label ?? '',
+    render: ({ gender }: UserRow) => genders.find(item => gender === item.value)?.label ?? '',
   },
   {
     title: '创建时间',
     key: 'createDate',
     width: 180,
-    render(row) {
+    render(row: UserRow) {
       return h('span', formatDateTime(row.createTime))
     },
   },
@@ -131,7 +137,7 @@ const columns = [
     key: 'enable',
     width: 100,
 
-    render: row =>
+    render: (row: UserRow) =>
       h(
         NSwitch,
         {
@@ -152,7 +158,7 @@ const columns = [
     align: 'right',
     fixed: 'right',
     hideInExcel: true,
-    render(row) {
+    render(row: UserRow) {
       return row.roles?.some(item => item.id === +route.params.roleId)
         ? h(
             NButton,
@@ -184,13 +190,14 @@ const columns = [
   },
 ]
 
-const userIds = ref([])
-function onChecked(rowKeys) {
-  userIds.value = rowKeys || []
+const userIds = ref<number[]>([])
+function onChecked(rowKeys: Array<string | number>) {
+  // 行 key 是 id（number），MeCrud 事件类型是 string | number 的宽联合
+  userIds.value = (rowKeys || []) as number[]
 }
 
-function handleBatchAdd(ids = userIds.value) {
-  const roleId = route.params.roleId
+function handleBatchAdd(ids: number[] = userIds.value) {
+  const roleId = route.params.roleId as string
   if (!roleId)
     return $message.error('角色异常，请重新选择角色')
   if (!ids.length)
@@ -203,8 +210,8 @@ function handleBatchAdd(ids = userIds.value) {
     },
   })
 }
-function handleBatchRemove(ids = userIds.value) {
-  const roleId = route.params.roleId
+function handleBatchRemove(ids: number[] = userIds.value) {
+  const roleId = route.params.roleId as string
   if (!roleId)
     return $message.error('角色异常，请重新选择角色')
   if (!ids.length)

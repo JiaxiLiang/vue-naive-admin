@@ -96,7 +96,7 @@
   </AppPage>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { MeModal } from '@/components'
 import { useForm, useModal } from '@/composables'
 import { useUserStore } from '@/store'
@@ -115,7 +115,7 @@ const [pwdFormRef, pwdForm, pwdValidation] = useForm()
 
 async function handlePwdSave() {
   await pwdValidation()
-  await api.changePassword(pwdForm.value)
+  await api.changePassword(pwdForm.value as { oldPassword: string, newPassword: string })
   $message.success('密码修改成功')
   refreshUserInfo()
 }

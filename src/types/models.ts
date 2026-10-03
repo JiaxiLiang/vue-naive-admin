@@ -10,6 +10,8 @@ import type { RouteMeta, RouteRecordName } from 'vue-router'
 export interface Role {
   id: number
   name: string
+  /** 角色编码（如 SUPER_ADMIN，role 页禁用编辑用） */
+  code?: string
   enable?: boolean
 }
 
@@ -26,15 +28,21 @@ export interface UserInfo {
   gender?: number // 1 男 / 2 女（user 页 genders 常量，0 保密）
   address?: string
   email?: string
+  /** 账号启用状态（user 页状态开关；查询条件里用 1/0 数字，契约宽松） */
+  enable?: boolean
   roles: Role[]
   currentRole: Role
 }
 
 /** 权限/菜单项（后端权限树节点，settings.js basePermissions 与 permission store 共用） */
 export interface PermissionItem {
+  /** 后端主键（资源页行数据有 id；settings 静态数据无 id） */
+  id?: number
   code: string
   name: string
   type: 'DIR' | 'MENU' | 'BUTTON'
+  /** 父级菜单 id（资源页新增下级菜单用） */
+  parentId?: number | string | null
   icon?: string
   /** DIR/MENU 为路由路径；外链时为 http 开头 */
   path?: string

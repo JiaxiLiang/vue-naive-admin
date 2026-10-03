@@ -10,7 +10,7 @@
   </CommonPage>
 </template>
 
-<script setup>
+<script setup lang="ts">
 defineOptions({ name: 'KeepAlive' })
 
 const inputVal = ref('')

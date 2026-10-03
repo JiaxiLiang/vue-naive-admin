@@ -11,13 +11,15 @@ import type { VNodeChild } from 'vue'
 /** naive-ui 运行时支持 key 来复用/合并同一条 message，但 MessageOptions 类型未声明该字段，项目里大量使用，故在此补充 */
 export type KeyedMessageOptions = MessageOptions & { key?: string | number }
 
-/** setupMessage 包装后的 message（比原生多 key 复用/延时销毁能力） */
+/** setupMessage 包装后的 message（比原生多 key 复用/延时销毁能力；content 支持数组批量弹出） */
 export interface WrappedMessage {
-  loading: (content: string, option?: KeyedMessageOptions) => MessageReactive | undefined
-  success: (content: string | (() => VNodeChild), option?: KeyedMessageOptions) => MessageReactive | undefined
-  error: (content: string, option?: KeyedMessageOptions) => MessageReactive | undefined
-  info: (content: string, option?: KeyedMessageOptions) => MessageReactive | undefined
-  warning: (content: string, option?: KeyedMessageOptions) => MessageReactive | undefined
+  loading: (content: string | string[], option?: KeyedMessageOptions) => MessageReactive | undefined
+  success: (content: string | string[] | (() => VNodeChild), option?: KeyedMessageOptions) => MessageReactive | undefined
+  error: (content: string | string[], option?: KeyedMessageOptions) => MessageReactive | undefined
+  info: (content: string | string[], option?: KeyedMessageOptions) => MessageReactive | undefined
+  warning: (content: string | string[], option?: KeyedMessageOptions) => MessageReactive | undefined
+  /** 按 key 延时销毁消息（login 页验证码错误等场景使用） */
+  destroy: (key: string, duration?: number) => void
 }
 
 /** setupDialog 扩展后的 dialog：confirm 支持简化版 confirm/cancel 回调 */

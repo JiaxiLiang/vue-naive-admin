@@ -12,7 +12,7 @@
   </CommonPage>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { MeModal } from '@/components'
 import { useModal } from '@/composables'
 import { sleep } from '@/utils'

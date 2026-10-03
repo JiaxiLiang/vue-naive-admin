@@ -33,11 +33,12 @@ export interface UseCrudOptions<T extends object> {
 }
 
 export function useCrud<T extends object>(options: UseCrudOptions<T>) {
-  const { name, initForm = {}, doCreate, doDelete, doUpdate, refresh } = options
+  const { name, initForm, doCreate, doDelete, doUpdate, refresh } = options
 
   const modalAction = ref<ModalAction>('')
   const [modalRef, okLoading] = useModal()
-  const [modalFormRef, modalForm, validation] = useForm(initForm)
+  // 显式传 Partial<T>：泛型内的解构默认值会让 TS 把 initForm 推断成 {}，导致 modalForm 丢失字段类型
+  const [modalFormRef, modalForm, validation] = useForm<Partial<T>>(initForm ?? {})
 
   /** 新增 */
   function handleAdd(row: Partial<T> = {}, title?: string) {

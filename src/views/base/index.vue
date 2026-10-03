@@ -87,7 +87,7 @@
   </CommonPage>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { sleep } from '@/utils'
 
 function handleDelete() {

@@ -86,7 +86,9 @@
   </CommonPage>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { DataTableColumns } from 'naive-ui'
+import type { PermissionItem, Role } from '@/types/models'
 import { NButton, NSwitch } from 'naive-ui'
 import { MeCrud, MeModal, MeQueryItem } from '@/components'
 import { useCrud } from '@/composables'
@@ -96,16 +98,21 @@ defineOptions({ name: 'RoleMgt' })
 
 const router = useRouter()
 
-const $table = ref(null)
+/** 行数据：Role + 状态开关的运行时临时字段 */
+type RoleRow = Role & { enableLoading?: boolean }
+/** 弹窗表单：角色字段 + 分配权限时用的 permissionIds */
+type RoleForm = Partial<RoleRow> & { permissionIds?: number[] }
+
+const $table = ref<{ handleSearch: (keepCurrentPage?: boolean) => void } | null>(null)
 /** QueryBar筛选参数（可选） */
-const queryItems = ref({})
+const queryItems = ref<Record<string, any>>({})
 
 onMounted(() => {
   $table.value?.handleSearch()
 })
 
 const { modalRef, modalFormRef, modalAction, modalForm, handleAdd, handleDelete, handleEdit }
-  = useCrud({
+  = useCrud<RoleForm>({
     name: '角色',
     doCreate: api.create,
     doDelete: api.delete,
@@ -114,13 +121,13 @@ const { modalRef, modalFormRef, modalAction, modalForm, handleAdd, handleDelete,
     refresh: (_, keepCurrentPage) => $table.value?.handleSearch(keepCurrentPage),
   })
 
-const columns = [
+const columns: DataTableColumns<RoleRow> = [
   { title: '角色名', key: 'name' },
   { title: '角色编码', key: 'code' },
   {
     title: '状态',
     key: 'enable',
-    render: row =>
+    render: (row: RoleRow) =>
       h(
         NSwitch,
         {
@@ -143,7 +150,7 @@ const columns = [
     width: 320,
     align: 'right',
     fixed: 'right',
-    render(row) {
+    render(row: RoleRow) {
       return [
         h(
           NButton,
@@ -193,7 +200,7 @@ const columns = [
   },
 ]
 
-async function handleEnable(row) {
+async function handleEnable(row: RoleRow) {
   row.enableLoading = true
   try {
     await api.update({ id: row.id, enable: !row.enable })
@@ -207,6 +214,6 @@ async function handleEnable(row) {
   }
 }
 
-const permissionTree = ref([])
+const permissionTree = ref<PermissionItem[]>([])
 api.getAllPermissionTree().then(({ data = [] }) => (permissionTree.value = data))
 </script>

@@ -101,7 +101,9 @@
   </CommonPage>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { DataTableColumn } from 'naive-ui'
+import type { Role, UserInfo } from '@/types/models'
 import { NAvatar, NButton, NSwitch, NTag } from 'naive-ui'
 import { MeCrud, MeModal, MeQueryItem } from '@/components'
 import { useCrud } from '@/composables'
@@ -111,9 +113,14 @@ import api from './api'
 
 defineOptions({ name: 'UserMgt' })
 
-const $table = ref(null)
+/** 行数据：UserInfo + render 里的运行时临时字段 enableLoading、列表接口返回的 createTime */
+type UserRow = UserInfo & { enableLoading?: boolean, createTime?: string }
+/** 弹窗表单：用户字段 + 新增时的 password、分配角色时的 roleIds */
+type UserForm = Partial<UserRow> & { password?: string, roleIds?: number[] }
+
+const $table = ref<{ handleSearch: (keepCurrentPage?: boolean) => void } | null>(null)
 /** QueryBar筛选参数（可选） */
-const queryItems = ref({})
+const queryItems = ref<Record<string, any>>({})
 
 onMounted(() => {
   $table.value?.handleSearch()
@@ -123,7 +130,7 @@ const genders = [
   { label: '男', value: 1 },
   { label: '女', value: 2 },
 ]
-const roles = ref([])
+const roles = ref<Role[]>([])
 api.getAllRoles().then(({ data = [] }) => (roles.value = data))
 
 const {
@@ -135,7 +142,7 @@ const {
   handleDelete,
   handleOpen,
   handleSave,
-} = useCrud({
+} = useCrud<UserForm>({
   name: '用户',
   initForm: { enable: true },
   doCreate: api.create,
@@ -144,12 +151,13 @@ const {
   refresh: () => $table.value?.handleSearch(),
 })
 
-const columns = [
+// hideInExcel 是 MeCrud 导出 Excel 的自定义字段，naive-ui 列类型上没有，交叉类型补上
+const columns: Array<DataTableColumn<UserRow> & { hideInExcel?: boolean }> = [
   {
     title: '头像',
     key: 'avatar',
     width: 80,
-    render: ({ avatar }) =>
+    render: ({ avatar }: UserRow) =>
       h(NAvatar, {
         size: 'medium',
         src: avatar,
@@ -161,7 +169,7 @@ const columns = [
     key: 'roles',
     width: 200,
     ellipsis: { tooltip: true },
-    render: ({ roles }) => {
+    render: ({ roles }: UserRow) => {
       if (roles?.length) {
         return roles.map((item, index) =>
           h(
@@ -178,14 +186,14 @@ const columns = [
     title: '性别',
     key: 'gender',
     width: 80,
-    render: ({ gender }) => genders.find(item => gender === item.value)?.label ?? '',
+    render: ({ gender }: UserRow) => genders.find(item => gender === item.value)?.label ?? '',
   },
   { title: '邮箱', key: 'email', width: 150, ellipsis: { tooltip: true } },
   {
     title: '创建时间',
     key: 'createDate',
     width: 180,
-    render(row) {
+    render(row: UserRow) {
       return h('span', formatDateTime(row.createTime))
     },
   },
@@ -193,7 +201,7 @@ const columns = [
     title: '状态',
     key: 'enable',
     width: 120,
-    render: row =>
+    render: (row: UserRow) =>
       h(
         NSwitch,
         {
@@ -216,7 +224,7 @@ const columns = [
     align: 'right',
     fixed: 'right',
     hideInExcel: true,
-    render(row) {
+    render(row: UserRow) {
       return [
         withPermission(
           h(NButton, {
@@ -275,7 +283,7 @@ const columns = [
   },
 ]
 
-async function handleEnable(row) {
+async function handleEnable(row: UserRow) {
   row.enableLoading = true
   try {
     await api.update({ id: row.id, enable: !row.enable })
@@ -289,7 +297,7 @@ async function handleEnable(row) {
   }
 }
 
-function handleOpenRolesSet(row) {
+function handleOpenRolesSet(row: UserRow) {
   const roleIds = row.roles.map(item => item.id)
   handleOpen({
     action: 'setRole',
@@ -302,13 +310,14 @@ function handleOpenRolesSet(row) {
 function onSave() {
   if (modalAction.value === 'setRole') {
     return handleSave({
-      api: () => api.update(modalForm.value),
+      api: () => api.update(modalForm.value as Partial<UserInfo> & { id: number }),
       cb: () => $message.success('分配成功'),
     })
   }
   else if (modalAction.value === 'reset') {
+    // 编辑时表单必带 id/password，断言对齐 api 形状
     return handleSave({
-      api: () => api.resetPwd(modalForm.value.id, modalForm.value),
+      api: () => api.resetPwd(modalForm.value.id!, modalForm.value as { password: string }),
       cb: () => $message.success('密码重置成功'),
     })
   }

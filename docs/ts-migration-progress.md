@@ -12,7 +12,7 @@
 - [x] 阶段 5：Pinia store（store/modules/\* 6 个模块 + helper）
 - [x] 阶段 6：共享组件（MeCrud/MeModal/MeQueryItem/common 8 个）
 - [x] 阶段 7：router + directives + layouts
-- [ ] 阶段 8：views 逐页迁移（24 个页面，从 user 页开始）
+- [x] 阶段 8：views 逐页迁移（24 个页面，从 user 页开始）
 - [ ] 阶段 9：收尾（main.ts、jsconfig 删除、strict 全开、README 更新）
 
 ## 各阶段 commit 索引
@@ -27,6 +27,7 @@
 | 5    | 见 git log `refactor(ts): phase 5` | Pinia store               |
 | 6    | 见 git log `refactor(ts): phase 6` | 共享组件 + 泛型 MeCrud    |
 | 7    | 见 git log `refactor(ts): phase 7` | router/directives/layouts |
+| 8    | 见 git log `refactor(ts): phase 8` | views 逐页迁移            |
 
 ## 阶段记录与遗留问题
 
@@ -130,6 +131,18 @@
 - `directives/index.ts`：`Directive<HTMLElement, string>` + `setupDirectives(app: App)` + `withPermission(vnode: VNode, code: string)`
 - layouts 18 个 .vue 统一 `<script setup lang="ts">`；模板断言妥协：SideMenu 的 options/value、UserAvatar 的 dropdown options（show: ComputedRef 是项目自定义扩展，naive 类型不认）均 `as any`
 - BeginnerGuide 的 prev/next 补可选参数（模板多传实参，TS2554）
+
+### 阶段 8（2026-10-03）
+
+完成内容：
+
+- 18 个含 script 的页面全部 `<script setup lang="ts">`（unocss.vue 无 script 块，无需处理）
+- 实体按现实回填：`UserInfo.enable`（状态开关）、`Role.code`（SUPER_ADMIN 禁编）、`PermissionItem.id/parentId`（资源页行数据）
+- `global.d.ts` WrappedMessage 补 `destroy(key, duration?)`（login/resource 页实际在用）+ content 放宽 `string | string[]`（base 页数组弹多条）
+- **useCrud 泛型推断修复**：泛型函数内 `const { initForm = {} } = options` 的解构默认值会让 TS 把 initForm 推断成 `{}`，`useForm(initForm)` 的 modalForm 丢失全部字段类型——改为 `useForm<Partial<T>>(initForm ?? {})`
+- DataTableColumn 是联合类型，render 解构参数无法上下文推断（`({ avatar })` 变隐式 any 且赋值报错），各页显式标注参数类型（如 `({ avatar }: UserRow)`）
+- 页面级类型：user 页 `UserRow`/`UserForm`（password、roleIds 运行时字段）、role 页 `RoleRow`/`RoleForm`（permissionIds）、resource 页 `BtnRow`、role-user 的 `userIds: number[]`
+- 表单值传 api 处用断言（如 `api.update(modalForm.value as Partial<UserInfo> & { id: number })`，编辑时必带 id）
 
 ### 阶段 9 遗留备忘（前置记录）
 

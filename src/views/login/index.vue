@@ -92,7 +92,8 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { LoginToken } from '@/types/models'
 import { useStorage } from '@vueuse/core'
 import { useAuthStore } from '@/store'
 import { lStorage, throttle } from '@/utils'
@@ -106,6 +107,7 @@ const title = import.meta.env.VITE_TITLE
 const loginInfo = ref({
   username: '',
   password: '',
+  captcha: '',
 })
 
 const captchaUrl = ref('')
@@ -113,7 +115,7 @@ const initCaptcha = throttle(() => {
   captchaUrl.value = `${import.meta.env.VITE_AXIOS_BASE_URL}/auth/captcha?${Date.now()}`
 }, 500)
 
-const localLoginInfo = lStorage.get('loginInfo')
+const localLoginInfo = lStorage.get<{ username?: string, password?: string }>('loginInfo')
 if (localLoginInfo) {
   loginInfo.value.username = localLoginInfo.username || ''
   loginInfo.value.password = localLoginInfo.password || ''
@@ -128,7 +130,7 @@ function quickLogin() {
 
 const isRemember = useStorage('isRemember', true)
 const loading = ref(false)
-async function handleLogin(isQuick) {
+async function handleLogin(isQuick?: boolean) {
   const { username, password, captcha } = loginInfo.value
   if (!username || !password)
     return $message.warning('请输入用户名和密码')
@@ -158,13 +160,13 @@ async function handleLogin(isQuick) {
   loading.value = false
 }
 
-async function onLoginSuccess(data = {}) {
+async function onLoginSuccess(data: LoginToken = {} as LoginToken) {
   authStore.setToken(data)
   $message.loading('登录中...', { key: 'login' })
   try {
     $message.success('登录成功', { key: 'login' })
     if (route.query.redirect) {
-      const path = route.query.redirect
+      const path = route.query.redirect as string
       delete route.query.redirect
       router.push({ path, query: route.query })
     }
