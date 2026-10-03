@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/store'
 
 let isConfirming = false
-
+// 认证过期时弹出"是否重新登录"确认框（带防重复锁）
 function handleAuthExpired(content, needTip) {
   if (isConfirming || !needTip)
     return
@@ -21,7 +21,7 @@ function handleAuthExpired(content, needTip) {
   })
   return false
 }
-
+// 解析响应错误  拦截器调用
 export function resolveResError(code, message, needTip = true) {
   switch (code) {
     case 401:

@@ -1,3 +1,4 @@
+// 可拖拽万能弹窗壳
 <template>
   <n-modal
     v-model:show="show"

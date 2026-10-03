@@ -1,3 +1,4 @@
+// 保存和恢复组件数据 暂时没使用
 const lastDataMap = new Map()
 export function useAliveData(initData = {}, key) {
   key = key ?? useRoute().name

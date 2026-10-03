@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>vue-naive-admin 整体架构图</title>
+    <style>
+      :root {
+        --entry: #4f46e5;
+        --entry-b: #312e81;
+        --view: #0ea5e9;
+        --view-b: #0369a1;
+        --layout: #06b6d4;
+        --layout-b: #0e7490;
+        --comp: #10b981;
+        --comp-b: #047857;
+        --logic: #84cc16;
+        --logic-b: #4d7c0f;
+        --state: #f59e0b;
+        --state-b: #b45309;
+        --route: #f97316;
+        --route-b: #c2410c;
+        --api: #ef4444;
+        --api-b: #b91c1c;
+        --infra: #64748b;
+        --infra-b: #334155;
+        --dep: #a855f7;
+        --dep-b: #7e22ce;
+        --ink: #1e293b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: 'Microsoft YaHei', 'PingFang SC', 'Segoe UI', sans-serif;
+        background: linear-gradient(160deg, #f1f5f9 0%, #e2e8f0 100%);
+        color: var(--ink);
+        padding: 24px;
+      }
+      header {
+        max-width: 1280px;
+        margin: 0 auto 18px;
+      }
+      h1 {
+        font-size: 26px;
+        margin: 0 0 6px;
+        letter-spacing: 1px;
+      }
+      h1 span {
+        color: var(--entry);
+      }
+      .sub {
+        font-size: 13px;
+        color: #64748b;
+        line-height: 1.7;
+      }
+      .sub b {
+        color: #334155;
+      }
+
+      .wrap {
+        max-width: 1280px;
+        margin: 0 auto;
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 18px;
+      }
+
+      /* ===== 分层堆栈 ===== */
+      .stack {
+        display: flex;
+        flex-direction: column;
+      }
+      .layer {
+        position: relative;
+        background: #fff;
+        border: 2px solid var(--c);
+        border-left-width: 8px;
+        border-radius: 10px;
+        padding: 10px 14px 12px;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+        transition:
+          transform 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+      .layer:hover {
+        transform: translateX(4px);
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.14);
+      }
+      .layer .head {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 8px;
+      }
+      .num {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: var(--c);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 700;
+        flex: none;
+      }
+      .layer h2 {
+        font-size: 15px;
+        margin: 0;
+        color: var(--cb);
+      }
+      .path {
+        font-family: Consolas, monospace;
+        font-size: 12px;
+        color: #64748b;
+        background: #f1f5f9;
+        padding: 1px 7px;
+        border-radius: 4px;
+      }
+      .desc {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-left: auto;
+      }
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .chip {
+        font-size: 12px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--c) 12%, #fff);
+        border: 1px solid color-mix(in srgb, var(--c) 45%, #fff);
+        color: color-mix(in srgb, var(--cb) 85%, #000);
+        white-space: nowrap;
+      }
+      .chip.solid {
+        background: var(--c);
+        border-color: var(--cb);
+        color: #fff;
+        font-weight: 600;
+      }
+
+      .arrow {
+        align-self: center;
+        position: relative;
+        height: 34px;
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .arrow::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 8px;
+        left: 50%;
+        width: 2px;
+        background: linear-gradient(#cbd5e1, #94a3b8);
+        transform: translateX(-50%);
+      }
+      .arrow::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        border: 7px solid transparent;
+        border-top: 9px solid #94a3b8;
+      }
+      .arrow .lbl {
+        position: relative;
+        z-index: 1;
+        font-size: 11px;
+        color: #64748b;
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 999px;
+        padding: 1px 10px;
+        margin-left: 130px;
+      }
+
+      /* ===== 右栏 ===== */
+      aside {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 12px 14px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+      }
+      .card h3 {
+        font-size: 13px;
+        margin: 0 0 9px;
+        color: #334155;
+        border-left: 4px solid var(--entry);
+        padding-left: 8px;
+      }
+      .card ol,
+      .card ul {
+        margin: 0;
+        padding-left: 18px;
+        font-size: 12px;
+        line-height: 1.85;
+        color: #475569;
+      }
+      .card code {
+        font-family: Consolas, monospace;
+        font-size: 11px;
+        background: #f1f5f9;
+        padding: 0 4px;
+        border-radius: 3px;
+        color: #be123c;
+      }
+      .boot {
+        font-size: 12px;
+        line-height: 1.9;
+        font-family: Consolas, monospace;
+        color: #475569;
+      }
+      .boot b {
+        color: var(--entry);
+      }
+      .ext {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .ext span {
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 5px;
+        background: #faf5ff;
+        border: 1px solid #e9d5ff;
+        color: #7e22ce;
+      }
+      .backend {
+        background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        color: #fff;
+        border: none;
+        text-align: center;
+      }
+      .backend h3 {
+        color: #fff;
+        border-left-color: #fff;
+      }
+      .backend .t {
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .backend .s {
+        font-size: 11px;
+        opacity: 0.85;
+        font-family: Consolas, monospace;
+        margin-top: 4px;
+      }
+
+      /* ===== 底部运行时链路 ===== */
+      .flow {
+        max-width: 1280px;
+        margin: 18px auto 0;
+        background: #fff;
+        border-radius: 10px;
+        padding: 14px 16px;
+        border: 1px solid #e2e8f0;
+      }
+      .flow h3 {
+        font-size: 13px;
+        margin: 0 0 10px;
+        color: #334155;
+        border-left: 4px solid var(--api);
+        padding-left: 8px;
+      }
+      .flow .line {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        font-size: 12px;
+      }
+      .step {
+        padding: 6px 10px;
+        border-radius: 6px;
+        color: #fff;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .fa {
+        color: #94a3b8;
+        font-size: 14px;
+      }
+      .note {
+        margin-top: 8px;
+        font-size: 11px;
+        color: #94a3b8;
+      }
+      footer {
+        max-width: 1280px;
+        margin: 14px auto 0;
+        font-size: 11px;
+        color: #94a3b8;
+        text-align: right;
+      }
+
+      @media (max-width: 980px) {
+        .wrap {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>📐 vue-naive-admin <span>整体分层架构图</span></h1>
+      <div class="sub">
+        技术栈：<b>Vue 3.5</b> · <b>Vue Router 5</b> · <b>Pinia 3</b> · <b>Naive UI 2</b> · <b>Vite 8</b> ·
+        <b>UnoCSS</b> · Axios / ECharts / xlsx<br />
+        依赖方向：<b>自上而下</b> —— 上层可调用下层，下层禁止反向 import 上层（基础设施层公共工具除外）。
+      </div>
+    </header>
+
+    <div class="wrap">
+      <!-- ================= 分层堆栈 ================= -->
+      <div class="stack">
+        <div class="layer" style="--c: var(--entry); --cb: var(--entry-b)">
+          <div class="head">
+            <span class="num">1</span>
+            <h2>入口引导层</h2>
+            <span class="path">src/main.js · App.vue · directives/ · settings.js</span
+            ><span class="desc">装配应用</span>
+          </div>
+          <div class="chips">
+            <span class="chip solid">bootstrap() 启动编排</span>
+            <span class="chip">setupStore → setupDirectives → setupRouter → mount → setupNaiveDiscreteApi</span>
+            <span class="chip">v-permission / v-role 指令</span>
+            <span class="chip">settings.js 默认配置</span>
+          </div>
+        </div>
+
+        <div class="arrow"><span class="lbl">渲染路由出口</span></div>
+
+        <div class="layer" style="--c: var(--view); --cb: var(--view-b)">
+          <div class="head">
+            <span class="num">2</span>
+            <h2>页面视图层</h2>
+            <span class="path">src/views/**</span><span class="desc">纯业务页面，只写「配置 + 接口函数」</span>
+          </div>
+          <div class="chips">
+            <span class="chip solid">login 登录</span>
+            <span class="chip solid">home 首页</span>
+            <span class="chip">pms/user 用户</span>
+            <span class="chip">pms/role 角色</span>
+            <span class="chip">pms/resource 资源</span>
+            <span class="chip">profile 个人中心</span>
+            <span class="chip">base / demo 示例</span>
+            <span class="chip">error-page 403 / 404</span>
+            <span class="chip">iframe 内嵌页</span>
+          </div>
+        </div>
+
+        <div class="arrow"><span class="lbl">套用布局壳 + 使用组件</span></div>
+
+        <div class="layer" style="--c: var(--layout); --cb: var(--layout-b)">
+          <div class="head">
+            <span class="num">3</span>
+            <h2>布局层</h2>
+            <span class="path">src/layouts/**</span><span class="desc">4 套布局壳 + 框架级部件</span>
+          </div>
+          <div class="chips">
+            <span class="chip solid">normal 侧边栏+顶栏</span>
+            <span class="chip">full 顶栏模式</span>
+            <span class="chip">simple 简洁模式</span>
+            <span class="chip">empty 空白页</span>
+            <span class="chip">SideMenu / MenuCollapse</span>
+            <span class="chip">BreadCrumb</span>
+            <span class="chip">Tab 多标签 + 右键菜单</span>
+            <span class="chip">UserAvatar / RoleSelect</span>
+            <span class="chip">Fullscreen / BeginnerGuide</span>
+          </div>
+        </div>
+
+        <div class="arrow"><span class="lbl">复用</span></div>
+
+        <div class="layer" style="--c: var(--comp); --cb: var(--comp-b)">
+          <div class="head">
+            <span class="num">4</span>
+            <h2>组件层</h2>
+            <span class="path">src/components/**</span><span class="desc">通用件 + 业务标准件</span>
+          </div>
+          <div class="chips">
+            <span class="chip">common：AppPage / AppCard / CommonPage</span>
+            <span class="chip">common：ThemeSetting / ToggleTheme</span>
+            <span class="chip">common：TheLogo / TheFooter / LayoutSetting</span>
+            <span class="chip solid">me/crud：MeCrud 表格+搜索+分页+导出</span>
+            <span class="chip solid">me/crud：MeQueryItem 搜索项</span>
+            <span class="chip solid">me/modal：MeModal 可拖拽弹窗壳</span>
+          </div>
+        </div>
+
+        <div class="arrow"><span class="lbl">模板中使用 / setup 中调用</span></div>
+
+        <div class="layer" style="--c: var(--logic); --cb: var(--logic-b)">
+          <div class="head">
+            <span class="num">5</span>
+            <h2>组合式逻辑层</h2>
+            <span class="path">src/composables/**</span><span class="desc">把 CRUD 循环沉淀为可复用 Hook</span>
+          </div>
+          <div class="chips">
+            <span class="chip solid">useCrud ★ 总装：开窗→校验→调接口→提示→刷新</span>
+            <span class="chip">useModal 弹窗遥控（modalRef / okLoading）</span>
+            <span class="chip">useForm 表单状态与校验</span>
+            <span class="chip">useAliveData 路由级数据缓存（暂未用）</span>
+            <span class="chip">index.js 桶文件统一 re-export</span>
+          </div>
+        </div>
+
+        <div class="arrow"><span class="lbl">读写状态（modalRef → MeModal 为运行时连接，非 import）</span></div>
+
+        <div class="layer" style="--c: var(--state); --cb: var(--state-b)">
+          <div class="head">
+            <span class="num">6</span>
+            <h2>状态层</h2>
+            <span class="path">src/store/modules/**（Pinia）</span
+            ><span class="desc">只放全局 UI / 权限状态，业务数据不进 store</span>
+          </div>
+          <div class="chips">
+            <span class="chip">app 主题/语言/布局</span>
+            <span class="chip solid">auth 登录态 Token（不持久化）</span>
+            <span class="chip">user 用户信息</span>
+            <span class="chip solid">permission 菜单与权限码</span>
+            <span class="chip">router 动态路由表</span>
+            <span class="chip">tab 多标签页</span>
+            <span class="chip">pinia-plugin-persistedstate 本地持久化</span>
+          </div>
+        </div>
+
+        <div class="arrow"><span class="lbl">守卫只读 store · 按权限 addRoute</span></div>
+
+        <div class="layer" style="--c: var(--route); --cb: var(--route-b)">
+          <div class="head">
+            <span class="num">7</span>
+            <h2>路由层</h2>
+            <span class="path">src/router/**</span><span class="desc">静态路由 + 4 守卫 + 动态路由</span>
+          </div>
+          <div class="chips">
+            <span class="chip">index.js createRouter（Hash / History 由 .env 决定）</span>
+            <span class="chip">basic-routes.js 静态路由</span>
+            <span class="chip solid">permission-guard 权限与动态路由</span>
+            <span class="chip">tab-guard 多标签</span>
+            <span class="chip">page-loading-guard 加载态</span>
+            <span class="chip">page-title-guard 标题</span>
+          </div>
+        </div>
+
+        <div class="arrow"><span class="lbl">调用接口函数</span></div>
+
+        <div class="layer" style="--c: var(--api); --cb: var(--api-b)">
+          <div class="head">
+            <span class="num">8</span>
+            <h2>服务接口层</h2>
+            <span class="path">src/api/index.js + src/views/**/api.js</span
+            ><span class="desc">接口就近存放，统一聚合</span>
+          </div>
+          <div class="chips">
+            <span class="chip"
+              >api/index.js：getUser / refreshToken / logout / switchCurrentRole / getRolePermissions</span
+            >
+            <span class="chip">views/login/api.js</span>
+            <span class="chip">views/pms/{user,role,resource}/api.js</span>
+            <span class="chip">views/profile/api.js</span>
+          </div>
+        </div>
+
+        <div class="arrow"><span class="lbl">request 实例发请求</span></div>
+
+        <div class="layer" style="--c: var(--infra); --cb: var(--infra-b)">
+          <div class="head">
+            <span class="num">9</span>
+            <h2>基础设施层</h2>
+            <span class="path">src/utils/** · styles/ · assets/</span><span class="desc">平行基础设施，互不依赖</span>
+          </div>
+          <div class="chips">
+            <span class="chip solid">utils/http：createAxios → request / mockRequest</span>
+            <span class="chip">interceptors：附加 Bearer Token · 业务码 [0,200] 放行</span>
+            <span class="chip">helpers：resolveResError 401/403/404/500 → 中文提示</span>
+            <span class="chip solid">utils/storage：lStorage / sStorage（前缀 + 过期时间）</span>
+            <span class="chip">naiveTools / common / is 工具函数</span>
+            <span class="chip">setupNaiveDiscreteApi</span>
+            <span class="chip">styles：reset / global · assets：图标</span>
+          </div>
+        </div>
+
+        <div class="arrow"><span class="lbl">运行于</span></div>
+
+        <div class="layer" style="--c: var(--dep); --cb: var(--dep-b)">
+          <div class="head">
+            <span class="num">10</span>
+            <h2>框架与第三方依赖</h2>
+            <span class="path">package.json · vite.config.js · uno.config.js</span>
+          </div>
+          <div class="chips">
+            <span class="chip">Vue 3.5 + Vue Router 5</span>
+            <span class="chip">Pinia 3 + persistedstate</span>
+            <span class="chip">Naive UI 2（unplugin 自动导入）</span>
+            <span class="chip">Vite 8 + UnoCSS</span>
+            <span class="chip">unplugin-auto-import / vue-components</span>
+            <span class="chip">@vueuse / axios / echarts / lodash-es / dayjs / xlsx</span>
+            <span class="chip">build/plugin-isme 自定义图标与页面路径插件</span>
+            <span class="chip">ESLint 10 + simple-git-hooks + lint-staged</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= 右栏 ================= -->
+      <aside>
+        <div class="card backend">
+          <h3>后端接口</h3>
+          <div class="t">⬆ request → HTTP(S) API</div>
+          <div class="s">VITE_AXIOS_BASE_URL</div>
+          <div class="s">dev 代理：/api → VITE_PROXY_TARGET</div>
+          <div class="s">dev server：0.0.0.0:3200</div>
+        </div>
+
+        <div class="card">
+          <h3>应用启动流程</h3>
+          <div class="boot">
+            <b>main.js</b> bootstrap()<br />
+            ① createApp(App)<br />
+            ② setupStore(app)&nbsp;&nbsp;<span style="color: #94a3b8">Pinia + 持久化</span><br />
+            ③ setupDirectives(app)&nbsp;&nbsp;<span style="color: #94a3b8">权限指令</span><br />
+            ④ await setupRouter(app)&nbsp;&nbsp;<span style="color: #94a3b8">注册 4 个守卫</span><br />
+            ⑤ app.mount('#app')<br />
+            ⑥ setupNaiveDiscreteApi()
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>一次路由跳转</h3>
+          <ol>
+            <li>page-loading-guard 开加载</li>
+            <li>permission-guard 校验登录态，未登录 → <code>/login</code></li>
+            <li>按 <code>permission</code> store 动态 <code>addRoute</code></li>
+            <li>tab-guard 维护多标签页</li>
+            <li>page-title-guard 改标题</li>
+            <li>渲染 layouts + views</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <h3>关键依赖规则</h3>
+          <ul>
+            <li>单向依赖：<code>views → layouts → components → composables → store → api → utils</code></li>
+            <li>守卫只读 store，store 不 import router</li>
+            <li>接口就近：<code>views/**/api.js</code>，只经 <code>request</code> 发请求</li>
+            <li>业务数据不进 store</li>
+            <li>错误处理收口在 <code>helpers.js</code></li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3>三层蛋糕（CRUD 封装）</h3>
+          <ol>
+            <li>naive-ui 零件</li>
+            <li>components/me 半成品（MeCrud / MeModal）</li>
+            <li>views 业务页：只写配置 + 接口函数</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <h3>第三方依赖</h3>
+          <div class="ext">
+            <span>vue</span><span>vue-router</span><span>pinia</span><span>naive-ui</span> <span>axios</span
+            ><span>@vueuse/core</span><span>echarts</span><span>vue-echarts</span> <span>lodash-es</span
+            ><span>dayjs</span><span>xlsx</span><span>vue3-intro-step</span> <span>vite</span><span>unocss</span
+            ><span>rollup-plugin-visualizer</span>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ================= 运行时数据流 ================= -->
+    <div class="flow">
+      <h3>运行时数据流：一次「新增 / 编辑保存」</h3>
+      <div class="line">
+        <span class="step" style="background: var(--view)">业务页面</span><span class="fa">→</span>
+        <span class="step" style="background: var(--logic)">useCrud.handleAdd / handleEdit</span
+        ><span class="fa">→</span> <span class="step" style="background: var(--comp)">MeModal.open() + NForm 校验</span
+        ><span class="fa">→</span>
+        <span class="step" style="background: var(--api)">views/**/api.js doCreate / doUpdate</span
+        ><span class="fa">→</span>
+        <span class="step" style="background: var(--infra)">request 拦截器：附加 Bearer Token</span
+        ><span class="fa">→</span> <span class="step" style="background: #7c3aed">后端 API</span
+        ><span class="fa">→</span>
+        <span class="step" style="background: var(--infra)">code ∈ [0,200] 放行 / 异常 resolveResError</span
+        ><span class="fa">→</span>
+        <span class="step" style="background: var(--state)">提示 + 刷新列表（MeCrud.handleSearch）</span>
+      </div>
+      <div class="note">
+        401 / 11007 / 11008 → 带防重复锁的「重新登录」确认框；403 / 404 / 500 → $message.error 中文提示。
+      </div>
+    </div>
+
+    <footer>
+      docs/architecture.html · 依据 src/ 目录结构与 docs/architecture.md、docs/module-architecture.md 绘制
+    </footer>
+  </body>
+</html>

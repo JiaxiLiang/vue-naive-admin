@@ -1,8 +1,10 @@
 import { useAuthStore } from '@/store'
 import { resolveResError } from './helpers'
-
+// 配置拦截器给axios实例使用
 export function setupInterceptors(axiosInstance) {
   const SUCCESS_CODES = [0, 200]
+  // 这一个函数要嵌套，主要是它需要上面的SUCCESS_CODES数据。
+  // 检查顺利返回的响应体：是 JSON 且业务码在名单上就放行原样上交
   function resResolve(response) {
     const { data, status, config, statusText, headers } = response
     if (headers['content-type']?.includes('json')) {

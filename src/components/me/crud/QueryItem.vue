@@ -1,3 +1,4 @@
+// 搜索项"排版小件"
 <template>
   <div class="flex items-center">
     <label v-if="label || label === 0" class="flex-shrink-0" :style="{ width: `${labelWidth}px` }">

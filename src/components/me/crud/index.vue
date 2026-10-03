@@ -1,3 +1,12 @@
+<!-- 封装层次全景（三层蛋糕）：
+
+  第1层  naive-ui           零件库: NDataTable / NModal / NButton...
+         ▲ 被包装
+  第2层  components/me       半成品: MeCrud(表格+搜索+分页) / MeModal(弹窗壳)
+         ▲ 被使用                     MeQueryItem(搜索项排版件)
+  第3层  views/pms/*         业务页: 只传配置+接口，一行 <MeCrud/> 完事
+   表格+搜索+分页+导出 三位一体
+  -->
 <template>
   <div class="h-full flex flex-col overflow-hidden">
     <AppCard v-if="$slots.default" bordered bg="#fafafc dark:black" class="mb-30 min-h-60 rounded-4">

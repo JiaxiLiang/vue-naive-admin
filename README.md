@@ -1,3 +1,7 @@
+# 1-vue-naive-admin
+
+📐 **[项目架构图全集（14 张 · 基于源码重绘）](docs/arch-overview.md)** · [整体分层架构图（可视化 HTML）](docs/architecture.html) · [Mermaid 源码](docs/architecture.md) · [CRUD 模块架构图](docs/module-architecture.md)
+
 ```
 1-vue-naive-admin
 ├─ .editorconfig
