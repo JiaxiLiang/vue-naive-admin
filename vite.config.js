@@ -23,11 +23,11 @@ export default defineConfig(({ mode }) => {
       Unocss(),
       AutoImport({
         imports: ['vue', 'vue-router'],
-        dts: false,
+        dts: true, // 生成根目录 auto-imports.d.ts，供 typecheck 使用
       }),
       Components({
         resolvers: [NaiveUiResolver()],
-        dts: false,
+        dts: true, // 生成根目录 components.d.ts，供 typecheck 使用
       }),
       // 自定义插件，用于生成页面文件的path，并添加到虚拟模块
       pluginPagePathes(),
