@@ -7,7 +7,7 @@
 - [x] 阶段 0：工具链与类型地基（tsconfig、vite dts、src/types/\*、typecheck 脚本）
 - [x] 阶段 1：settings + utils 工具层（settings、is、common、storage）
 - [x] 阶段 2：http 层（utils/http/\*、naiveTools）
-- [ ] 阶段 3：实体模型 + api 层（src/types/models.ts、src/api、views/\*/api）
+- [x] 阶段 3：实体模型 + api 层（src/types/models.ts、src/api、views/\*/api）
 - [ ] 阶段 4：composables 泛型化（useModal/useForm/useCrud/useAliveData）
 - [ ] 阶段 5：Pinia store（store/modules/\* 6 个模块 + helper）
 - [ ] 阶段 6：共享组件（MeCrud/MeModal/MeQueryItem/common 8 个）
@@ -22,6 +22,7 @@
 | 0    | 见 git log `refactor(ts): phase 0` | tsconfig + types 地基 |
 | 1    | 见 git log `refactor(ts): phase 1` | settings + utils      |
 | 2    | 见 git log `refactor(ts): phase 2` | http 层               |
+| 3    | 见 git log `refactor(ts): phase 3` | 实体模型 + api 层     |
 
 ## 阶段记录与遗留问题
 
@@ -67,6 +68,15 @@
 - `setupNaiveDiscreteApi` 的 `configProviderProps`：naive-ui 的 `GlobalThemeOverrides` 与 `ConfigProviderProps['themeOverrides']` 存在深层型变不兼容（'iconColor418' unknown vs undefined，官方已知缺陷，文档写法编译不过），用 `as unknown as ComputedRef<ConfigProviderProps>` 断言
 - `Message` 类五个公开方法显式 `return undefined`（TS2355 要求有返回值；与原实现的隐式 undefined 等价）；`showMessage` 数组分支同理
 - `setupDialog` 返回值 `as any`（原实现返回 DialogReactive，WrappedDialog 契约声明 MessageReactive | undefined，纯类型层面妥协，已在代码注释说明）
+
+### 阶段 3（2026-10-03）
+
+完成内容：
+
+- `models.ts` 补全实体：`Role`/`UserInfo`/`PermissionItem`/`RouteBtn`/`PageResult`/`LoginToken`（形状与 store/helper.js、settings 静态数据逐一核对过）
+- `api/index.ts`、5 个页面级 `api.ts`（login/profile/user/role/resource）全部迁移；`PageResult` 放在 models.ts（非 utils/http），http 层 `ApiResult` 不动
+- 自检通过：临时 .ts 中 `api.read()` 的 `res.data` 推导为 `PageResult<UserInfo> | UserInfo[]` 联合，直接 `.pageData` 报错、`Array.isArray` 收窄后可用——符合 MeCrud 分页契约设计
+- `login/api.ts` 的 `toggleRole` 无任何调用方，payload 类型保持 `Record<string, unknown>` 宽松处理
 
 ### 阶段 9 遗留备忘（前置记录）
 

@@ -1,22 +1,23 @@
 // 整个项目真真是是去后端取数据的就是这个Axios插件
 // 这个文件只是发送请求依旧是插件才是真正实施去取数据的
+import type { PermissionItem, UserInfo } from '@/types/models'
 import { request } from '@/utils' // 从@/utils模块导入封装好的HTTP请求实例request
 
 export default {
 // 导出默认对象，包含用户与认证相关的API接口方法集合
 // export default它的作用就是默认导出里面是函数变量等等数组都不影响
   // 获取用户信息
-  getUser: () => request.get('/user/detail'), // 定义getUser方法，发起GET请求获取用户详情数据
+  getUser: () => request.get<UserInfo>('/user/detail'), // 定义getUser方法，发起GET请求获取用户详情数据
   // 刷新token
   refreshToken: () => request.get('/auth/refresh/token'), // 定义refreshToken方法，发起GET请求刷新认证令牌
   // 登出
   logout: () => request.post('/auth/logout', {}, { needTip: false }), // 定义logout方法，发起POST请求登出，配置项needTip: false表示不显示全局提示
   // 切换当前角色
-  switchCurrentRole: role => request.post(`/auth/current-role/switch/${role}`), // 定义switchCurrentRole方法，接收role参数并发起POST请求切换角色
+  switchCurrentRole: (role: number | string) => request.post(`/auth/current-role/switch/${role}`), // 定义switchCurrentRole方法，接收role参数并发起POST请求切换角色
   // 获取角色权限
-  getRolePermissions: () => request.get('/role/permissions/tree'), // 定义getRolePermissions方法，发起GET请求获取角色权限树形结构数据
+  getRolePermissions: () => request.get<PermissionItem[]>('/role/permissions/tree'), // 定义getRolePermissions方法，发起GET请求获取角色权限树形结构数据
   // 验证菜单路径
-  validateMenuPath: path => request.get(`/permission/menu/validate?path=${path}`), // 定义validateMenuPath方法，接收path参数作为查询参数验证菜单路径权限
+  validateMenuPath: (path: string) => request.get<boolean>(`/permission/menu/validate?path=${path}`), // 定义validateMenuPath方法，接收path参数作为查询参数验证菜单路径权限
 }
 /*
 调用栈、任务队列与事件循环知识点 (进阶版 - 宏任务与微任务)
