@@ -6,7 +6,7 @@
 
 - [x] 阶段 0：工具链与类型地基（tsconfig、vite dts、src/types/\*、typecheck 脚本）
 - [x] 阶段 1：settings + utils 工具层（settings、is、common、storage）
-- [ ] 阶段 2：http 层（utils/http/\*、naiveTools）
+- [x] 阶段 2：http 层（utils/http/\*、naiveTools）
 - [ ] 阶段 3：实体模型 + api 层（src/types/models.ts、src/api、views/\*/api）
 - [ ] 阶段 4：composables 泛型化（useModal/useForm/useCrud/useAliveData）
 - [ ] 阶段 5：Pinia store（store/modules/\* 6 个模块 + helper）
@@ -21,6 +21,7 @@
 | ---- | ---------------------------------- | --------------------- |
 | 0    | 见 git log `refactor(ts): phase 0` | tsconfig + types 地基 |
 | 1    | 见 git log `refactor(ts): phase 1` | settings + utils      |
+| 2    | 见 git log `refactor(ts): phase 2` | http 层               |
 
 ## 阶段记录与遗留问题
 
@@ -52,6 +53,20 @@
 - `common.ts`：formatDateTime/formatDate 参数用 dayjs `ConfigType`；throttle/debounce 保留 function 声明 + `this: unknown` 透传
 - `storage.ts`：类名 `Storage` 遮蔽 DOM Storage，用 `type StorageLike = globalThis.Storage` 规避；`getItem` 默认值 `def: T = null as T`；`get()` 内部 `getItem(key, {})` 的解构加 `as { value: T | undefined }` 断言（原实现解构 value，行为不变）
 - `createStorage` 去掉了参考文档写的 `<T = unknown>`（泛型未被使用，eslint no-unused-vars 报错，且无调用方传类型参数）
+
+### 阶段 2（2026-10-03）
+
+完成内容：
+
+- `http/index.ts`：定义 `ApiResult` / `RequestError` / `RequestConfig` / `HttpClient`（响应拦截器改写了返回值形状，用自封装接口覆盖 axios 自带类型）
+- `interceptors.ts`：`reqResolve`/`resResolve` 里对自定义字段用 `(config as RequestConfig)` 窄化；axios header 值类型是 `string | string[] | number | boolean | null`，`content-type` 断言为 `string | undefined`
+- **偏离参考文档**：`resolveResError` 的 `code` 参数从 `number` 放宽为 `number | string`——断网等场景 axios 的 `error.code` 是字符串（如 `'ERR_NETWORK'`），原 number 类型无法通过 typecheck 且不符合运行时事实
+- `resReject` 参数用 `AxiosError<any>`（axios 1.16 的 AxiosError 默认泛型 data 是 unknown）
+- `helpers.ts`：`message` 重新赋值改为局部变量 `tip`（参考文档建议的等价写法）
+- `naiveTools.ts`：naive-ui 根导出里是 `DialogApi`/`MessageApi`（`DialogApiInjection` 不是公开导出名）；**`MessageOptions` 类型缺 `key` 字段（运行时支持）**，在 `global.d.ts` 新增 `KeyedMessageOptions = MessageOptions & { key?: string | number }` 并用于 WrappedMessage 全部方法签名（视图层大量传 key）
+- `setupNaiveDiscreteApi` 的 `configProviderProps`：naive-ui 的 `GlobalThemeOverrides` 与 `ConfigProviderProps['themeOverrides']` 存在深层型变不兼容（'iconColor418' unknown vs undefined，官方已知缺陷，文档写法编译不过），用 `as unknown as ComputedRef<ConfigProviderProps>` 断言
+- `Message` 类五个公开方法显式 `return undefined`（TS2355 要求有返回值；与原实现的隐式 undefined 等价）；`showMessage` 数组分支同理
+- `setupDialog` 返回值 `as any`（原实现返回 DialogReactive，WrappedDialog 契约声明 MessageReactive | undefined，纯类型层面妥协，已在代码注释说明）
 
 ### 阶段 9 遗留备忘（前置记录）
 

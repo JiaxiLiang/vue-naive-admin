@@ -1,5 +1,5 @@
 import type {
-  DialogApiInjection,
+  DialogApi,
   DialogOptions,
   LoadingBarApi,
   MessageOptions,
@@ -8,17 +8,20 @@ import type {
 } from 'naive-ui'
 import type { VNodeChild } from 'vue'
 
+/** naive-ui 运行时支持 key 来复用/合并同一条 message，但 MessageOptions 类型未声明该字段，项目里大量使用，故在此补充 */
+export type KeyedMessageOptions = MessageOptions & { key?: string | number }
+
 /** setupMessage 包装后的 message（比原生多 key 复用/延时销毁能力） */
 export interface WrappedMessage {
-  loading: (content: string, option?: MessageOptions) => MessageReactive | undefined
-  success: (content: string | (() => VNodeChild), option?: MessageOptions) => MessageReactive | undefined
-  error: (content: string, option?: MessageOptions) => MessageReactive | undefined
-  info: (content: string, option?: MessageOptions) => MessageReactive | undefined
-  warning: (content: string, option?: MessageOptions) => MessageReactive | undefined
+  loading: (content: string, option?: KeyedMessageOptions) => MessageReactive | undefined
+  success: (content: string | (() => VNodeChild), option?: KeyedMessageOptions) => MessageReactive | undefined
+  error: (content: string, option?: KeyedMessageOptions) => MessageReactive | undefined
+  info: (content: string, option?: KeyedMessageOptions) => MessageReactive | undefined
+  warning: (content: string, option?: KeyedMessageOptions) => MessageReactive | undefined
 }
 
 /** setupDialog 扩展后的 dialog：confirm 支持简化版 confirm/cancel 回调 */
-export type WrappedDialog = DialogApiInjection & {
+export type WrappedDialog = DialogApi & {
   confirm: (option: Partial<DialogOptions> & {
     confirm?: () => void
     cancel?: () => void
