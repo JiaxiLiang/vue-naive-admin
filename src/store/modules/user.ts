@@ -1,8 +1,9 @@
+import type { UserInfo } from '@/types/models'
 import { defineStore } from 'pinia' // 从 pinia 库中导入 defineStore 方法，用于定义状态管理仓库
 
 export const useUserStore = defineStore('user', { // 定义并导出一个名为 useUserStore 的仓库，id 为 'user'
   state: () => ({ // 定义 state 函数，返回仓库的初始状态对象
-    userInfo: null, // 存储用户信息对象，初始值为 null，登录成功后存入
+    userInfo: null as UserInfo | null, // 存储用户信息对象，初始值为 null，登录成功后存入
   }),
   getters: { // 定义 getters 计算属性，用于基于 state 派生数据
     userId() { // 定义计算属性 userId，获取用户 ID
@@ -25,7 +26,7 @@ export const useUserStore = defineStore('user', { // 定义并导出一个名为
     },
   },
   actions: { // 定义 actions 方法，用于修改 state 中的状态
-    setUser(user) { // 定义 setUser 方法，接收用户对象作为参数
+    setUser(user: UserInfo) { // 定义 setUser 方法，接收用户对象作为参数
       this.userInfo = user // 将传入的用户对象赋值给 state 中的 userInfo
     },
     resetUser() { // 定义 resetUser 方法，用于重置用户状态

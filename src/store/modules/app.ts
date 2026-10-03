@@ -1,5 +1,6 @@
 // 应用状态：侧边栏状态、设备类型（移动/PC）、UI 设置
 // 仓库只管页面状态 不管数据 （是否折叠这种）
+import type { LayoutMode } from '@/settings'
 import { generate, getRgbStr } from '@arco-design/color'
 // 第三方库 引入 Arco Design 的颜色生成与 RGB 格式转换工具
 import { useDark } from '@vueuse/core'
@@ -30,19 +31,19 @@ export const useAppStore = defineStore('app', { // 定义并导出名为 'app' �
       this.collapsed = !this.collapsed // 将当前折叠状态取反并赋值给自身
     },
     // this始终是指向仓库 这是例外（正常谁调用函数this就是谁）底层有了bind函数绑定
-    setCollapsed(b) { // 直接设置侧边栏折叠状态的方法
+    setCollapsed(b: boolean) { // 直接设置侧边栏折叠状态的方法
       this.collapsed = b // 给组件传入的布尔值赋给 collapsed 状态
     },
     toggleDark() { // 切换暗黑/明亮模式的方法
       this.isDark = !this.isDark // 将当前暗黑模式状态取反并赋值给自身
     },
-    setLayout(v) { // 修改系统布局模式的方法
+    setLayout(v: LayoutMode) { // 修改系统布局模式的方法
       this.layout = v // 将传入的布局配置赋值给 layout 状态
     },
-    setPrimaryColor(color) { // 修改系统主题色的方法
+    setPrimaryColor(color: string) { // 修改系统主题色的方法
       this.primaryColor = color // 将传入的颜色值赋给 primaryColor 状态
     },
-    setThemeColor(color = this.primaryColor, isDark = this.isDark) {
+    setThemeColor(color: string = this.primaryColor, isDark: boolean = this.isDark) {
       // 生成并应用主题色到全局 CSS 变量和组件库的方法
       const colors = generate(color, { // 调用第三方库生成对应的页面的调色板（一个数组存储）
         list: true, // 以数组形式返回色板
@@ -52,7 +53,9 @@ export const useAppStore = defineStore('app', { // 定义并导出名为 'app' �
       // setProperty设置样式  参数--primary-color就是css代入颜色
       // getRgbStr第三方 把十六进制函数转纯数字 [5]一般是最纯的色调
       // 将页面的主体的style中的--primary-color设置为[5]
-      this.naiveThemeOverrides.common = Object.assign(this.naiveThemeOverrides.common || {}, {
+      // 与原实现等价的拆写：Object.assign 原地修改 common（存在则同一引用），再赋回
+      const common = this.naiveThemeOverrides.common || {}
+      Object.assign(common, {
         // naiveThemeOverrides Naive UI 的配置对象 .common (通用主题区块)
         // Object全局对象（所有对象鼻祖）  assign（目标函数,源函数）
         // Object.assign把参数2的数据给到参数1（参数1没有就增加有就替换 不会清空参数1数据）
@@ -61,6 +64,7 @@ export const useAppStore = defineStore('app', { // 定义并导出名为 'app' �
         primaryColorSuppl: colors[4], // 设置补充状态的主色
         primaryColorPressed: colors[6], // 设置鼠标按下时的主色（比主色略暗）
       })
+      this.naiveThemeOverrides.common = common
     },
   },
   persist: { // 配置 Pinia 的状态持久化插件
@@ -69,7 +73,8 @@ export const useAppStore = defineStore('app', { // 定义并导出名为 'app' �
     storage: sessionStorage,
     // 指定持久化存储的媒介为 sessionStorage（关闭浏览器标签页即清空）
     // storage存储媒介
-  },
+    // as any：插件的 pick?: Path<State>[] 会对深层主题 state 实例化到 TS2589 爆栈，断言绕过（字段与原实现完全一致）
+  } as any,
 })
 /*
 🎨 浏览器内核层次关系全景知识点 (HTML + CSS + DOM + Vue)

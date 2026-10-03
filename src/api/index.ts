@@ -1,13 +1,13 @@
 // 整个项目真真是是去后端取数据的就是这个Axios插件
 // 这个文件只是发送请求依旧是插件才是真正实施去取数据的
-import type { PermissionItem, UserInfo } from '@/types/models'
+import type { PermissionItem, RawUserInfo } from '@/types/models'
 import { request } from '@/utils' // 从@/utils模块导入封装好的HTTP请求实例request
 
 export default {
 // 导出默认对象，包含用户与认证相关的API接口方法集合
 // export default它的作用就是默认导出里面是函数变量等等数组都不影响
-  // 获取用户信息
-  getUser: () => request.get<UserInfo>('/user/detail'), // 定义getUser方法，发起GET请求获取用户详情数据
+  // 获取用户信息（后端原始形状含嵌套 profile，由 store/helper.js 重组为前端 UserInfo）
+  getUser: () => request.get<RawUserInfo>('/user/detail'), // 定义getUser方法，发起GET请求获取用户详情数据
   // 刷新token
   refreshToken: () => request.get('/auth/refresh/token'), // 定义refreshToken方法，发起GET请求刷新认证令牌
   // 登出

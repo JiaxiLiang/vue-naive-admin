@@ -1,10 +1,20 @@
 // 标签状态仓库
+import type { RouteRecordName } from 'vue-router'
 import { defineStore } from 'pinia' // 引入 Pinia 的状态管理定义函数
 import { useRouterStore } from './router' // 引入路由状态管理仓库，用于编程式导航
 
+/** 标签页条目（实际字段以 guards/tab-guard 的 addTab 调用为准，迁移 tab-guard 时回填） */
+export interface TabItem {
+  path: string
+  name?: RouteRecordName
+  title?: string
+  keepAlive?: boolean
+  [key: string]: unknown
+}
+
 export const useTabStore = defineStore('tab', { // 定义并导出一个名为 'tab' 的状态仓库
   state: () => ({ // 定义仓库的初始状态
-    tabs: [], // 存储已打开的标签页列表数组
+    tabs: [] as TabItem[], // 存储已打开的标签页列表数组
     activeTab: '', // 当前激活的标签页路径
     reloading: false, // 标识是否正在重新加载（刷新）当前页面
   }),
@@ -15,14 +25,14 @@ export const useTabStore = defineStore('tab', { // 定义并导出一个名为 '
     },
   },
   actions: { // 定义修改状态的方法
-    async setActiveTab(path) { // 设置当前激活的标签页 就是代表路由的路径
+    async setActiveTab(path: string) { // 设置当前激活的标签页 就是代表路由的路径
       await nextTick() // 等待下一个 DOM 更新周期，确保视图更新后再设置，避免定位失效
       this.activeTab = path // 更新当前激活标签页路径
     },
-    setTabs(tabs) { // 直接设置标签页列表
+    setTabs(tabs: TabItem[]) { // 直接设置标签页列表
       this.tabs = tabs // 将传入的新数组赋值给状态
     },
-    addTab(tab = {}) { // 添加或更新一个标签页
+    addTab(tab: TabItem = {} as TabItem) { // 添加或更新一个标签页
       const findIndex = this.tabs.findIndex(item => item.path === tab.path)
       // 查找该标签页是否已存在
       if (findIndex !== -1) { // 如果存在（索引不为-1）
@@ -33,7 +43,7 @@ export const useTabStore = defineStore('tab', { // 定义并导出一个名为 '
       }
       this.setActiveTab(tab.path) // 将新添加/更新的标签页设为激活状态
     },
-    async reloadTab(path, keepAlive) {
+    async reloadTab(path: string, keepAlive?: boolean) {
       // 刷新指定标签页内容
       const findItem = this.tabs.find(item => item.path === path) // 查找目标标签页对象
       if (!findItem) // 如果未找到则直接返回
@@ -52,7 +62,7 @@ export const useTabStore = defineStore('tab', { // 定义并导出一个名为 '
         $loadingBar.finish() // 结束加载进度条
       }, 100) // 延迟 100 毫秒执行
     },
-    async removeTab(path) { // 移除指定路径的标签页
+    async removeTab(path: string) { // 移除指定路径的标签页
       this.setTabs(this.tabs.filter(tab => tab.path !== path))
       // 过滤掉要移除的标签页，保留其他
       if (path === this.activeTab) { // 如果移除的是当前激活的标签页
@@ -65,7 +75,7 @@ export const useTabStore = defineStore('tab', { // 定义并导出一个名为 '
         useRouterStore().router?.push(this.tabs[this.tabs.length - 1].path) // 跳转到保留下来的标签页
       }
     },
-    removeLeft(curPath) { // 关闭当前页签左侧的所有页签
+    removeLeft(curPath: string) { // 关闭当前页签左侧的所有页签
       const curIndex = this.tabs.findIndex(item => item.path === curPath) // 找到当前页签的索引
       const filterTabs = this.tabs.filter((item, index) => index >= curIndex) // 截取当前索引及之后的标签页
       this.setTabs(filterTabs) // 更新标签页列表
@@ -73,11 +83,12 @@ export const useTabStore = defineStore('tab', { // 定义并导出一个名为 '
         useRouterStore().router?.push(filterTabs[filterTabs.length - 1].path) // 跳转到新的末尾标签页
       }
     },
-    removeRight(curPath) { // 关闭当前页签右侧的所有页签
+    removeRight(curPath: string) { // 关闭当前页签右侧的所有页签
       const curIndex = this.tabs.findIndex(item => item.path === curPath) // 找到当前页签的索引
       const filterTabs = this.tabs.filter((item, index) => index <= curIndex) // 截取当前索引及之前的标签页
       this.setTabs(filterTabs) // 更新标签页列表
-      if (!filterTabs.some(item => item.path === this.activeTab.value)) { // 如果激活的标签页被关闭了（注意：此处原代码有.value，可能是为了响应式引用，但在Pinia state中通常直接访问属性即可）
+      // TODO: 原代码误写 this.activeTab.value（state 属性无 .value，恒为 undefined），按"不改运行时行为"保留，as any 仅为通过 typecheck
+      if (!filterTabs.some(item => item.path === (this.activeTab as any).value)) { // 如果激活的标签页被关闭了（注意：此处原代码有.value，可能是为了响应式引用，但在Pinia state中通常直接访问属性即可）
         useRouterStore().router?.push(filterTabs[filterTabs.length - 1].path) // 跳转到新的末尾标签页
       }
     },

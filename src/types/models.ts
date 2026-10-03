@@ -1,8 +1,10 @@
+import type { VNode } from 'vue'
 /**
  * 跨层共享的实体模型（全项目唯一实体定义处）
  * 依据来源：store/helper.js（getUserInfo 重组字段）、views/pms/user/index.vue（列渲染字段）、
  * store/modules/permission.js（generateRoute/getMenuItem 用到的字段）、settings.js（basePermissions 样例数据）
  */
+import type { RouteMeta, RouteRecordName } from 'vue-router'
 
 /** 用户角色 */
 export interface Role {
@@ -62,4 +64,41 @@ export interface PageResult<T = unknown> {
 /** 登录成功后的 token 载荷（auth store setToken 只取 accessToken） */
 export interface LoginToken {
   accessToken: string
+}
+
+/** 后端返回的原始用户信息（含嵌套 profile），store/helper.js getUserInfo() 据此重组出前端的 UserInfo */
+export interface RawUserInfo extends UserInfo {
+  profile?: {
+    avatar?: string
+    nickName?: string
+    gender?: number
+    address?: string
+    email?: string
+  }
+}
+
+/** 侧边菜单项（permission store getMenuItem 产出，Naive UI n-menu 的树节点） */
+export interface MenuItem {
+  label?: string
+  key: RouteRecordName
+  path?: string
+  originPath?: string
+  icon?: () => VNode
+  order: number
+  children?: MenuItem[]
+}
+
+/**
+ * 权限 store 生成的动态路由：component 在 store 阶段仍是后端给的字符串路径，
+ * 到 permission-guard 里才会被 import.meta.glob 替换为真实的懒加载组件。
+ * 不从 RouteRecordRaw 派生（Omit 作用在联合类型上会塌缩出错误的 redirect 类型）
+ */
+export interface AccessRoute {
+  /** 路由名称（权限 code） */
+  name?: RouteRecordName
+  path?: string
+  redirect?: string
+  /** store 阶段为字符串路径，permission-guard 替换为懒加载组件 */
+  component?: unknown
+  meta?: RouteMeta
 }

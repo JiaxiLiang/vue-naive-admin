@@ -1,4 +1,5 @@
 // 权限仓库 主要作用就是重置路由表 用于退出换号的时候内存数据清了路由表没有
+import type { AccessRoute } from '@/types/models'
 import { defineStore } from 'pinia' // 从 pinia 库中导入 defineStore 方法，用于定义状态管理 store
 
 export const useRouterStore = defineStore('router', () => { // 定义并导出一个名为 useRouterStore 的 store，id 为 'router'，使用组合式函数 (Setup) 写法
@@ -7,10 +8,11 @@ export const useRouterStore = defineStore('router', () => { // 定义并导出�
   const route = useRoute()
   // 调用 Vue Router 的 useRoute 获取当前路由对象 (包含当前路径、参数、meta 等信息)
 
-  function resetRouter(accessRoutes) { // 定义一个名为 resetRouter 的函数，用于重置路由，接收需要处理的动态路由列表作为参数
+  function resetRouter(accessRoutes: AccessRoute[]): void { // 定义一个名为 resetRouter 的函数，用于重置路由，接收需要处理的动态路由列表作为参数
     accessRoutes.forEach((item) => {
       // foreach遍历函数 遍历传入的 accessRoutes 路由数组
-      router.hasRoute(item.name) && router.removeRoute(item.name)
+      // name 不存在时 hasRoute 返回 false 短路跳过，! 断言不改变行为
+      router.hasRoute(item.name!) && router.removeRoute(item.name!)
       // 逻辑判断：如果路由器中已存在该名称的路由，则将其移除（用于防止路由重复注册
       // hasroute检查路由是否存在返回布尔  rem是移除路由函数
     }) // 结束 forEach 循环

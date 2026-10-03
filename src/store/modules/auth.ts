@@ -5,10 +5,10 @@ import { usePermissionStore, useRouterStore, useTabStore, useUserStore } from '@
 
 export const useAuthStore = defineStore('auth', { // 定义并导出名为 'auth' 的鉴权仓库
   state: () => ({ // 定义仓库的初始状态
-    accessToken: undefined, // 访问令牌，初始值为 undefined
+    accessToken: undefined as string | undefined, // 访问令牌，初始值为 undefined
   }),
   actions: { // 定义操作 state 的方法集合
-    setToken({ accessToken }) {
+    setToken({ accessToken }: { accessToken: string }) {
       // 设置 token 的方法，接收一个包含 accessToken 属性的对象参数
       this.accessToken = accessToken // 将传入的 accessToken 赋值给当前仓库的 state
     },
@@ -53,6 +53,7 @@ export const useAuthStore = defineStore('auth', { // 定义并导出名为 'auth
     },
   },
   persist: { // 配置 Pinia 的状态持久化插件
+    // TODO: key 里的 'naivue' 是原文件的拼写错误（应为 naive），按"不改运行时行为"原则保留，修正会导致已有用户持久化数据丢失
     key: 'vue-naivue-admin_auth', // 指定在浏览器本地存储中使用的唯一键名，避免与其他项目冲突
   },
   // 默认使用 localStorage（浏览器自带）

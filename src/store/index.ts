@@ -1,10 +1,11 @@
 // Store 根实例：创建并导出 Store 对象  store就是仓库的意思
+import type { App } from 'vue'
 import { createPinia } from 'pinia' // 引入 Pinia 状态管理库的核心创建方法
 import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 // 引入状态持久化插件，解决页面刷新导致状态丢失的问题
 // 第三方插件 把pinia的数据主题颜色语言等全局数据复制到浏览器存储不用一直后端调用
 // 核心的权限除外
-export function setupStore(app) { // 定义并导出 Store 的初始化工厂函数，接收 Vue 应用实例 app 作为参数
+export function setupStore(app: App): void { // 定义并导出 Store 的初始化工厂函数，接收 Vue 应用实例 app 作为参数
   const pinia = createPinia() // 创建 Pinia 的根实例对象
   pinia.use(piniaPluginPersistedstate) // 为当前 Pinia 实例注册持久化插件，使其具备自动同步本地存储的能力
   app.use(pinia) // 将配置好的 Pinia 实例作为插件挂载到 Vue 应用上，使其全局可用

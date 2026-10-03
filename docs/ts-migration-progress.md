@@ -9,7 +9,7 @@
 - [x] 阶段 2：http 层（utils/http/\*、naiveTools）
 - [x] 阶段 3：实体模型 + api 层（src/types/models.ts、src/api、views/\*/api）
 - [x] 阶段 4：composables 泛型化（useModal/useForm/useCrud/useAliveData）
-- [ ] 阶段 5：Pinia store（store/modules/\* 6 个模块 + helper）
+- [x] 阶段 5：Pinia store（store/modules/\* 6 个模块 + helper）
 - [ ] 阶段 6：共享组件（MeCrud/MeModal/MeQueryItem/common 8 个）
 - [ ] 阶段 7：router + directives + layouts
 - [ ] 阶段 8：views 逐页迁移（24 个页面，从 user 页开始）
@@ -24,6 +24,7 @@
 | 2    | 见 git log `refactor(ts): phase 2` | http 层               |
 | 3    | 见 git log `refactor(ts): phase 3` | 实体模型 + api 层     |
 | 4    | 见 git log `refactor(ts): phase 4` | composables 泛型化    |
+| 5    | 见 git log `refactor(ts): phase 5` | Pinia store           |
 
 ## 阶段记录与遗留问题
 
@@ -88,6 +89,19 @@
 - `useForm.ts`：泛型 `<T extends object = Record<string, any>>`；`ref(cloneDeep(...)) as Ref<T>`（ref 对泛型返回 Ref<UnwrapRef<T>> 的标准断言）；validation 返回值类型用 `ReturnType<NonNullable<FormInst['validate']>>`——naive-ui validate 返回的是 warnings 对象的 Promise 而非 void（参考文档的 `() => Promise<void>` 与现实不符）
 - `useCrud.ts`：ModalAction 用 `string & {}` 保留字面量提示；`modalAction.value = action ?? ''`（原实现赋 undefined，'' 语义等价，已在守卫与 ACTIONS 索引两处验证无观察差异）；`actions[modalAction.value as 'add' | 'edit']`（守卫逻辑保证运行时安全）
 - `useAliveData.ts`：key 用 String() 归一化做 Map 键（null → 'null' 字符串键的微小行为差异，参考文档认可）
+
+### 阶段 5（2026-10-03）
+
+完成内容：
+
+- 提前完成了阶段 7 的 RouteMeta 声明合并（`src/types/router.d.ts`，permission store 的 meta 需要）
+- `models.ts` 新增 `RawUserInfo`（后端原始形状含嵌套 profile，与前端重组形状 UserInfo 分离）、`MenuItem`、`AccessRoute`
+- `AccessRoute` 是关键妥协：**不从 RouteRecordRaw 派生**（Omit 作用于联合类型会塌缩出错误的 redirect 类型），而是独立接口；`component?: unknown`——store 阶段是后端字符串路径，permission-guard 才替换为懒加载组件（阶段 7 在赋值处收窄）
+- `app.ts` persist 配置整体 `as any`：插件的 `pick?: Path<State>[]` 对深层 GlobalThemeOverrides state 实例化到 TS2589 爆栈；字段与原实现完全一致，仅类型层面绕过
+- `app.ts` setThemeColor 的 Object.assign 拆写为"先取 common 引用 → 原地 assign → 赋回"，运行时等价（Object.assign 本就是原地修改并返回同一引用）
+- `auth.ts` persist key 的 'naivue' 拼写错误保留（修了会丢持久化数据），已加 TODO
+- `tab.ts` removeRight 的 `this.activeTab.value` 原逻辑 bug 保留（恒 undefined），`(this.activeTab as any).value` + TODO 通过 typecheck
+- `permission.ts` 两个 filter 用类型谓词 `(item): item is MenuItem => !!item`（运行时同 `!!item`）；`layout: item.layout as LayoutMode`（后端字符串与 LayoutMode 的契约妥协）
 
 ### 阶段 9 遗留备忘（前置记录）
 

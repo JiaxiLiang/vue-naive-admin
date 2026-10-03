@@ -1,4 +1,5 @@
 //  Store 辅助函数：处理数据持久化（存 LocalStorage）
+import type { PermissionItem, RawUserInfo, UserInfo } from '@/types/models'
 import { cloneDeep } from 'lodash-es'
 // 引入 lodash-es 库的深拷贝方法 里有现成的函数
 // cloneDeep 专门用来安全复制数据防止串台
@@ -9,11 +10,11 @@ import api from '@/api' // 引入全局聚合的 API 接口对象，用于发起
 import { basePermissions } from '@/settings'
 // 引入项目全局配置中的基础权限列表（静态权限）
 
-export async function getUserInfo() { // 定义并导出异步函数：获取并格式化当前登录用户的信息
+export async function getUserInfo(): Promise<UserInfo> { // 定义并导出异步函数：获取并格式化当前登录用户的信息
   const res = await api.getUser()
   // 等待并接收后端接口返回的原始用户数据
   // getUser获取当前用户的数据  res接收的是一个完整响应对象包含了 HTTP 状态码、响应头、配置信息等。
-  const { id, username, profile, roles, currentRole } = res.data || {}
+  const { id, username, profile, roles, currentRole } = (res.data || {}) as RawUserInfo
   // res.data才是纯数据  res.data || {}这里先执行或 data有值才会赋值
   // 从响应体中解构所需字段，若 data 为空则降级为空对象，防止抛错
   return { // 返回经过提取和重组的用户信息对象
@@ -29,9 +30,9 @@ export async function getUserInfo() { // 定义并导出异步函数：获取并
   }// 输出后端返回的.data数据
 }
 
-export async function getPermissions() {
+export async function getPermissions(): Promise<PermissionItem[]> {
   // 定义并导出异步函数：获取当前用户的合并权限列表
-  let asyncPermissions = [] // 声明变量存放从后端获取的动态权限，初始默认为空数组
+  let asyncPermissions: PermissionItem[] = [] // 声明变量存放从后端获取的动态权限，初始默认为空数组
   try { // 开启异常捕获块，处理网络请求或接口异常
     const res = await api.getRolePermissions()
     // 等待并接收后端接口返回的当前角色权限数据

@@ -1,3 +1,4 @@
+import type { LayoutMode } from '@/settings'
 //  权限状态仓库：动态路由表、菜单数据、按钮权限码
 // pinia仓库的返回值都是一个对象整合了{ state: ..., actions: ... }
 // pinia的核心还是存储状态 提供方法修改状态（数据加工） 全局共享状态 他是不做后端取数据的
@@ -8,6 +9,7 @@
 // 单页面上 组件的状态变化涉及到对应仓库就会响应式变化
 // 本质上都是从后端获取到纯数据到前端的时候通过插件转为全面的js对象 根据接收方对应提纯 路由配置对象和 ui组件其实本质都是一样
 // 全局配置数据就是一次性获取全面js对象 要筛选使用 如果是组件请求（业务数据）一般都是精确使用
+import type { AccessRoute, MenuItem, PermissionItem } from '@/types/models'
 import { hyphenate } from '@vueuse/core'
 // 第三方库 VueUse 的连字符转换工具函数
 import { defineStore } from 'pinia' // 引入 Pinia 的 defineStore 方法定义仓库
@@ -16,12 +18,12 @@ import { isExternal } from '@/utils'
 
 export const usePermissionStore = defineStore('permission', { // 定义并导出一个名为 'permission' 的 store
   state: () => ({ // 定义 state 函数，返回仓库的初始状态
-    accessRoutes: [], // 存储动态生成的可访问路由表 不同权限的用户看到菜单项都不一样
-    permissions: [], // 存储后端返回的原始权限数据
-    menus: [], // 存储经过处理和排序后的菜单树数据  一般就是页面的左边的菜单
+    accessRoutes: [] as AccessRoute[], // 存储动态生成的可访问路由表 不同权限的用户看到菜单项都不一样
+    permissions: [] as PermissionItem[], // 存储后端返回的原始权限数据
+    menus: [] as MenuItem[], // 存储经过处理和排序后的菜单树数据  一般就是页面的左边的菜单
   }),
   actions: { // 定义仓库的 actions（方法）
-    setPermissions(permissions) { // 设置权限并初始化菜单的方法
+    setPermissions(permissions: PermissionItem[]) { // 设置权限并初始化菜单的方法
       this.permissions = permissions // permissions英文就是权限
       this.menus = this.permissions // 开始处理 menus 数据，基于 permissions
         .filter(item => item.type === 'MENU')// menu就是菜单的意思 type是身份属性
@@ -30,14 +32,14 @@ export const usePermissionStore = defineStore('permission', { // 定义并导出
         // item => item.type === 'MENU'简箭头 左边参数 右边必须是return ===是判断返回布尔
         .map(item => this.getMenuItem(item))
         // map遍历函数 把处理后的元素组成新数组 getMenuItem输出加工成菜单组件以及路由
-        .filter(item => !!item)
+        .filter((item): item is MenuItem => !!item)
         // 过滤掉无效（如不显示）的菜单项 !!双重非运算符任意类型的值强制转换为布尔值
         .sort((a, b) => a.order - b.order)
         // sort排序方法（两两比较 想减只看正负零来判断顺序）直接修改原数组
         // order是后端传回的数据中的属性之一优先级
         // 链式调用 上一个输出是下一个的输入
     },
-    getMenuItem(item, parent) { // 递归生成菜单项的方法
+    getMenuItem(item: PermissionItem, parent?: MenuItem): MenuItem | null { // 递归生成菜单项的方法
       // item就是后端发出的json转换成的js对象（里面有属性和数组的纯数据）
       // pare是代表父菜单第一次初始化调用的时候就是直接赋予null（用于递归 子菜单挂载父上）
       const route = this.generateRoute(item, item.show ? null : parent?.key)
@@ -61,7 +63,7 @@ export const usePermissionStore = defineStore('permission', { // 定义并导出
         // h创建虚拟 DOM 节点的核心函数 h('div', {}, '你好') i为html标签<i>这样
         // 形成<i>class：...
         order: item.order ?? 0, // 菜单排序权重，默认为 0
-      }
+      } as MenuItem
       const children = item.children?.filter(item => item.type === 'MENU') || []
       // 筛选出当前项下的子菜单 chi数组里面元素是属性也有数组（树状结构数据）前端接收的js对象就有了
       // 这里不直接给menuitem设计进 item.children是chi里面的数据还是纯数据没设计组件得递归解析出来
@@ -72,7 +74,7 @@ export const usePermissionStore = defineStore('permission', { // 定义并导出
         menuItem.children = children // 这是给对象添加这个数组
           .map(child => this.getMenuItem(child, menuItem)) // 递归（调用自己
           // map本身就是会遍历的 以及chi调用map 参数自然是chi的元素 this依旧是仓库
-          .filter(item => !!item) // 过滤掉无效的子菜单项
+          .filter((item): item is MenuItem => !!item) // 过滤掉无效的子菜单项
           .sort((a, b) => a.order - b.order) // 对子菜单进行排序
           // 最后的menutiem就是树状图的整个菜单 通过map的遍历实现 递归是一趟到底再向上逐一遍历
         if (!menuItem.children.length) // 如果处理完后发现子菜单为空
@@ -82,7 +84,7 @@ export const usePermissionStore = defineStore('permission', { // 定义并导出
         return null // 返回 null，在菜单树中移除该项
       return menuItem // 返回构建好的菜单项
     },
-    generateRoute(item, parentKey) { // 生成标准的 Vue Router 路由对象
+    generateRoute(item: PermissionItem, parentKey: string | null): AccessRoute { // 生成标准的 Vue Router 路由对象
       // parentKey父菜单唯一标识 就是id
       let originPath // 声明变量存储原始路径
       if (isExternal(item.path)) { // 如果是外部链接
@@ -104,7 +106,8 @@ export const usePermissionStore = defineStore('permission', { // 定义并导出
           originPath, // 原始路径（外链时使用）
           icon: `${item.icon}?mask`, // 图标类名，添加 ?mask 参数
           title: item.name, // 页面标题
-          layout: item.layout, // 页面布局模式
+          // 后端 layout 字符串与前端 LayoutMode 的契约妥协，见进度文档
+          layout: item.layout as LayoutMode, // 页面布局模式
           keepAlive: !!item.keepAlive, // 是否开启页面缓存
           parentKey, // 父级菜单的 key
           btns: item.children // 当前路由下的按钮权限列表
