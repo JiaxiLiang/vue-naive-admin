@@ -1,7 +1,7 @@
-import { useAuthStore } from '@/store'
+import { getHttpAuth } from './index'
 
 let isConfirming = false
-// 认证过期时弹出"是否重新登录"确认框（带防重复锁）
+// 会话过期时弹出"是否重新登录"确认框（带防重复弹窗锁：确认框停留期间不重复弹）
 function handleAuthExpired(content: string, needTip: boolean): false {
   if (isConfirming || !needTip)
     return false
@@ -11,7 +11,7 @@ function handleAuthExpired(content: string, needTip: boolean): false {
     type: 'info',
     content,
     confirm() {
-      useAuthStore().logout()
+      getHttpAuth().logout()
       window.$message?.success('已退出登录')
       isConfirming = false
     },
@@ -22,9 +22,9 @@ function handleAuthExpired(content: string, needTip: boolean): false {
   return false
 }
 
-// 解析响应错误  拦截器调用
-// 注意：断网等场景 axios 的 error.code 是字符串（如 'ERR_NETWORK'），所以 code 参数放宽为 number | string
-export function resolveResError(code: number | string, message?: string, needTip = true): string | false {
+// 解析响应错误，拦截器调用
+// code 的三种来源：HTTP 状态码（数字）、后端业务码（数字）、axios 错误码（断网时是 'ERR_NETWORK' 这类字符串），未命中任何来源时为 undefined
+export function resolveResError(code: number | string | undefined, message?: string, needTip = true): string | false {
   let tip: string
   switch (code) {
     case 401:

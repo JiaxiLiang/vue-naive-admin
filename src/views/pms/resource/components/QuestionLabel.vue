@@ -11,14 +11,11 @@
 </template>
 
 <script setup lang="ts">
-defineProps({
-  label: {
-    type: String,
-    required: true,
-  },
-  content: {
-    type: String,
-    default: '',
-  },
+// content 缺省时为 undefined，与运行时默认 '' 同为假值，v-if="content" 行为一致
+withDefaults(defineProps<{
+  label: string
+  content?: string
+}>(), {
+  content: '',
 })
 </script>

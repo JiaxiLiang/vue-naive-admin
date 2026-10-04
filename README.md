@@ -9,26 +9,14 @@
 ├─ .env.development
 ├─ .env.production
 ├─ .npmrc
-├─ .VSCodeCounter
-│  └─ 2026-06-16_20-31-00
-│     ├─ details.md
-│     ├─ diff-details.md
-│     ├─ diff.csv
-│     ├─ diff.md
-│     ├─ diff.txt
-│     ├─ results.csv
-│     ├─ results.json
-│     ├─ results.md
-│     └─ results.txt
 ├─ build
-│  ├─ index.js
+│  ├─ index.ts
 │  └─ plugin-isme
-│     ├─ icons.js
-│     ├─ index.js
-│     └─ page-pathes.js
-├─ eslint.config.js
+│     ├─ icons.ts
+│     ├─ index.ts
+│     └─ page-pathes.ts
+├─ eslint.config.ts
 ├─ index.html
-├─ jsconfig.json
 ├─ LICENSE
 ├─ package.json
 ├─ pnpm-lock.yaml
@@ -37,48 +25,49 @@
 │  └─ favicon.png
 ├─ src
 │  ├─ api
-│  │  └─ index.js
+│  │  └─ index.ts（含 createCrudApi<T, Q> CRUD 接口工厂）
 │  ├─ App.vue
 │  ├─ assets
 │  │  ├─ icons
-│  │  │  ├─ dynamic-icons.js
-│  │  │  ├─ feather
-│  │  │  └─ isme
+│  │  │  ├─ dynamic-icons.ts
+│  │  │  ├─ feather（svg 图标集）
+│  │  │  └─ isme（svg 图标集）
 │  │  └─ images
 │  ├─ components
 │  │  ├─ common
 │  │  │  ├─ AppCard.vue
 │  │  │  ├─ AppPage.vue
 │  │  │  ├─ CommonPage.vue
-│  │  │  ├─ index.js
+│  │  │  ├─ index.ts
 │  │  │  ├─ LayoutSetting.vue
 │  │  │  ├─ TheFooter.vue
 │  │  │  ├─ TheLogo.vue
 │  │  │  ├─ ThemeSetting.vue
 │  │  │  └─ ToggleTheme.vue
-│  │  ├─ index.js
+│  │  ├─ index.ts
 │  │  └─ me
 │  │     ├─ crud
-│  │     │  ├─ index.vue
+│  │     │  ├─ index.vue（MeCrud 泛型组件 generic="T, Q"）
 │  │     │  └─ QueryItem.vue
-│  │     ├─ index.js
+│  │     ├─ index.ts
 │  │     └─ modal
 │  │        ├─ index.vue
-│  │        └─ utils.js
+│  │        └─ utils.ts
 │  ├─ composables
-│  │  ├─ index.js
-│  │  ├─ useAliveData.js
-│  │  ├─ useCrud.js
-│  │  ├─ useForm.js
-│  │  └─ useModal.js
+│  │  ├─ index.ts
+│  │  ├─ useCrud.ts（泛型 useCrud<T> + 类型守卫收窄）
+│  │  ├─ useEnableRow.ts（表格行状态开关）
+│  │  ├─ useForm.ts
+│  │  ├─ useModal.ts
+│  │  └─ useUserInfoColumns.ts（用户两页共享列）
 │  ├─ directives
-│  │  └─ index.js
+│  │  └─ index.ts
 │  ├─ layouts
 │  │  ├─ components
 │  │  │  ├─ BeginnerGuide.vue
 │  │  │  ├─ BreadCrumb.vue
 │  │  │  ├─ Fullscreen.vue
-│  │  │  ├─ index.js
+│  │  │  ├─ index.ts
 │  │  │  ├─ MenuCollapse.vue
 │  │  │  ├─ RoleSelect.vue
 │  │  │  ├─ SideLogo.vue
@@ -105,43 +94,52 @@
 │  │     ├─ index.vue
 │  │     └─ sidebar
 │  │        └─ index.vue
-│  ├─ main.js
+│  ├─ main.ts
 │  ├─ router
-│  │  ├─ basic-routes.js
+│  │  ├─ basic-routes.ts（satisfies RouteRecordRaw[]）
 │  │  ├─ guards
-│  │  │  ├─ index.js
-│  │  │  ├─ page-loading-guard.js
-│  │  │  ├─ page-title-guard.js
-│  │  │  ├─ permission-guard.js
-│  │  │  └─ tab-guard.js
-│  │  └─ index.js
-│  ├─ settings.js
+│  │  │  ├─ index.ts
+│  │  │  ├─ page-loading-guard.ts
+│  │  │  ├─ page-title-guard.ts
+│  │  │  ├─ permission-guard.ts
+│  │  │  └─ tab-guard.ts
+│  │  └─ index.ts
+│  ├─ settings.ts（LAYOUT_MODES as const → LayoutMode 派生 + toLayoutMode 归一）
 │  ├─ store
-│  │  ├─ helper.js
-│  │  ├─ index.js
+│  │  ├─ helper.ts
+│  │  ├─ index.ts
 │  │  └─ modules
-│  │     ├─ app.js
-│  │     ├─ auth.js
-│  │     ├─ index.js
-│  │     ├─ permission.js
-│  │     ├─ router.js
-│  │     ├─ tab.js
-│  │     └─ user.js
+│  │     ├─ app.ts
+│  │     ├─ auth.ts
+│  │     ├─ index.ts
+│  │     ├─ permission.ts
+│  │     ├─ router.ts
+│  │     ├─ tab.ts
+│  │     └─ user.ts
 │  ├─ styles
 │  │  ├─ global.css
 │  │  └─ reset.css
+│  ├─ types
+│  │  ├─ arco-design-color.d.ts
+│  │  ├─ env.d.ts
+│  │  ├─ global.d.ts
+│  │  ├─ icons.ts（模板字面量类型 i-${string}）
+│  │  ├─ me-components.ts
+│  │  ├─ models.ts（实体 + 查询契约唯一来源）
+│  │  ├─ router.d.ts
+│  │  └─ virtual-modules.d.ts
 │  ├─ utils
-│  │  ├─ common.js
+│  │  ├─ common.ts
 │  │  ├─ http
-│  │  │  ├─ helpers.js
-│  │  │  ├─ index.js
-│  │  │  └─ interceptors.js
-│  │  ├─ index.js
-│  │  ├─ is.js
-│  │  ├─ naiveTools.js
+│  │  │  ├─ helpers.ts
+│  │  │  ├─ index.ts（HttpClient/ApiResult + setupHttpAuth 注入点）
+│  │  │  └─ interceptors.ts（全链路 unknown 收窄）
+│  │  ├─ index.ts
+│  │  ├─ is.ts
+│  │  ├─ naiveTools.ts
 │  │  └─ storage
-│  │     ├─ index.js
-│  │     └─ storage.js
+│  │     ├─ index.ts
+│  │     └─ storage.ts（get 函数重载 + StoredEnvelope）
 │  └─ views
 │     ├─ base
 │     │  ├─ index.vue
@@ -160,64 +158,81 @@
 │     ├─ iframe
 │     │  └─ index.vue
 │     ├─ login
-│     │  ├─ api.js
+│     │  ├─ api.ts
 │     │  └─ index.vue
 │     ├─ pms
 │     │  ├─ resource
-│     │  │  ├─ api.js
+│     │  │  ├─ api.ts
 │     │  │  ├─ components
 │     │  │  │  ├─ MenuTree.vue
 │     │  │  │  ├─ QuestionLabel.vue
 │     │  │  │  └─ ResAddOrEdit.vue
 │     │  │  └─ index.vue
 │     │  ├─ role
-│     │  │  ├─ api.js
+│     │  │  ├─ api.ts
 │     │  │  ├─ index.vue
 │     │  │  └─ role-user.vue
 │     │  └─ user
-│     │     ├─ api.js
+│     │     ├─ api.ts
 │     │     └─ index.vue
 │     └─ profile
-│        ├─ api.js
+│        ├─ api.ts
 │        └─ index.vue
-├─ uno.config.js
-└─ vite.config.js
-
+├─ tests（vitest：镜像 src 结构；*.test-d.ts 为类型测试）
+│  ├─ composables
+│  ├─ store
+│  ├─ types
+│  └─ utils
+├─ tsconfig.json（应用源码工程，strict 全开 + noUncheckedIndexedAccess）
+├─ tsconfig.node.json（构建工具链工程：vite/uno/eslint/build）
+├─ tsconfig.typecheck.json（L2 类型测试工程）
+├─ uno.config.ts
+└─ vitest.config.ts
 ```
 
-## TypeScript 迁移说明
+## TypeScript 说明
 
-本项目已整体从 JavaScript 迁移到 TypeScript（2026-10 完成，渐进式 10 阶段）。
+本项目为纯 TypeScript 项目（2026-10 完成 JS → TS 迁移并通过验收整改）。编译器强度：`strict` + `noUncheckedIndexedAccess` + `noImplicitOverride`；构建工具链（vite/uno/eslint/build）由 `tsconfig.node.json` 纳入同一 typecheck。
 
 ### 类型组织方式
 
-| 位置                             | 内容                                                                                                             |
-| -------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `src/types/models.ts`            | 全项目唯一实体定义处：`UserInfo`/`Role`/`PermissionItem`/`MenuItem`/`PageResult`/`AccessRoute` 等跨层共享模型    |
-| `src/types/global.d.ts`          | `window.$message/$dialog/$notification/$loadingBar` 全局声明（`WrappedMessage`/`WrappedDialog` 包装类型）        |
-| `src/types/me-components.ts`     | `MeModal` 暴露契约（`ModalOptions`/`MeModalExposed`），useModal 与组件两端引用                                   |
-| `src/types/router.d.ts`          | `vue-router` 的 `RouteMeta` 声明合并（title/layout/keepAlive/originPath/icon/parentKey/btns）                    |
-| `src/types/virtual-modules.d.ts` | 自定义虚拟模块 `isme:icons`、`isme:page-pathes`（均为 `string[]`）                                               |
-| `src/types/env.d.ts`             | `.env` 环境变量类型                                                                                              |
-| `src/utils/http/index.ts`        | `HttpClient`/`ApiResult`/`RequestConfig`——响应拦截器改写了 axios 返回值形状，业务统一面向该接口                  |
-| `src/composables/useCrud.ts`     | 泛型 `useCrud<T>` + `MeCrud` 泛型组件（`generic="T"`），页面声明 `DataTableColumns<UserInfo>` 即获全链路类型推导 |
+| 位置                             | 内容                                                                                                                                           |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/types/models.ts`            | 全项目唯一实体与契约定义处：`UserInfo`/`Role`/`PermissionItem` 等实体 + `PageParams`/`UserInfoQuery` 等查询契约（enable 数字契约在查询侧归一） |
+| `src/types/global.d.ts`          | `window.$message/$dialog/$notification/$loadingBar` 全局声明（`WrappedMessage`/`WrappedDialog` 包装类型）                                      |
+| `src/types/me-components.ts`     | `MeModal` 暴露契约（`ModalOptions`/`MeModalExposed`），useModal 与组件两端引用                                                                 |
+| `src/types/router.d.ts`          | `vue-router` 的 `RouteMeta` 声明合并（title/layout/keepAlive/originPath/icon/parentKey/btns）                                                  |
+| `src/types/icons.ts`             | 模板字面量类型 `` IconName = `i-${string}` ``，约束图标名以 `i-` 开头                                                                          |
+| `src/types/virtual-modules.d.ts` | 自定义虚拟模块 `isme:icons`、`isme:page-pathes`                                                                                                |
+| `src/types/env.d.ts`             | `.env` 环境变量类型                                                                                                                            |
+| `src/utils/http/index.ts`        | `HttpClient`/`ApiResult`/`RequestConfig` + `setupHttpAuth` 注入点——响应拦截器改写了 axios 返回值形状，业务统一面向该接口                       |
+| `src/api/index.ts`               | `createCrudApi<T, Q>` CRUD 工厂：四份 api 样板收敛为一处，Q 契约经 MeCrud 反向推断到页面查询框                                                 |
+| `src/composables/useCrud.ts`     | 泛型 `useCrud<T>` + `MeCrud` 泛型组件（`generic="T, Q"`），页面列配置即获全链路类型推导                                                        |
 
 ### 常用命令
 
 ```bash
-pnpm typecheck   # vue-tsc --noEmit（strict 全开，0 错误为绿）
-pnpm lint:fix    # eslint --fix（@antfu 配置，自动启用 TS 规则）
-pnpm build       # 产物构建
+pnpm dev          # 启动开发服务器（默认 :3200）
+pnpm typecheck    # 双工程类型检查（src + 构建工具链，strict 全开，0 错误为绿）
+pnpm lint:fix     # eslint --fix（@antfu 配置 + 分层依赖方向机器化）
+pnpm test         # vitest 单测（L1 纯逻辑）
+pnpm test:cov     # 单测 + 覆盖率（src/utils 与 src/composables 门槛 80%）
+pnpm test:type    # L2 类型契约测试（vitest --typecheck）
+pnpm build        # 产物构建
 ```
 
-### 迁移阶段索引
+### 分层依赖方向（eslint no-restricted-imports 机器化）
 
-迁移按 10 个阶段推进，每阶段一个 commit（`refactor(ts): phase N ...`），可按阶段回溯：
-阶段 0 工具链与类型地基 → 1 settings/utils → 2 http 层 → 3 实体模型 + api → 4 composables 泛型化 → 5 Pinia store → 6 共享组件（泛型 MeCrud）→ 7 router/directives/layouts → 8 views 逐页 → 9 收尾（main.ts、jsconfig 删除、strict 全开）。
-各阶段详细决策与遗留妥协见 [docs/ts-migration-progress.md](docs/ts-migration-progress.md)。
+`utils ← api ← composables ← components ← views`，下层禁止反向引用上层；store 不引 UI；api 层不引 UI；views 之间禁止横向 import。规则固化在 `eslint.config.ts`，违规 import 在 lint 阶段直接报错。
 
-### 已知类型妥协（运行时行为均未改动）
+### 验收与测试
 
-- naive-ui 的 `GlobalThemeOverrides` 与 `ConfigProviderProps['themeOverrides']` 存在深层型变不兼容（官方已知缺陷），`app store` 的 persist 配置与 `setupNaiveDiscreteApi` 处用断言绕过
-- `AccessRoute.component` 在 store 阶段是后端字符串路径，permission-guard 中才替换为懒加载组件，类型为 `unknown`
-- `enable` 在查询条件里是 1/0 数字、在行数据开关里是 boolean，与后端契约保持宽松（TODO 统一属接口变更，超出本次范围）
+- 验收协议：`.agents/skills/ts-acceptance-criteria`（四大支柱 + 整改规范）
+- 验收报告：`docs/ts-acceptance-report-20261004.md`（首轮基线）与 `docs/ts-acceptance-report-20261004-r2.md`（整改后复验）
+- 测试分层：L1 单测（`tests/` 镜像 `src/`）、L2 类型契约（`*.test-d.ts`）、T8 应用冒烟（dev/preview HTTP 200）、L4 功能测试（浏览器 GUI 驱动 §E 清单）
+
+### 已登记的类型豁免（第三方类型局限）
+
+- `src/utils/http/index.ts`：`request = createAxios() as unknown as HttpClient`——axios 方法级泛型无法表达"响应拦截器改写响应体"这一运行时事实，以自封装 HttpClient 收口
+- `src/main.ts`：`setupNaiveDiscreteApi` 的 configProviderProps——naive-ui `GlobalThemeOverrides` 与 `ConfigProviderProps['themeOverrides']` 深层型变不兼容（官方已知类型缺陷）
+- `src/router/guards/permission-guard.ts`：`{ ...to, replace: true } as RouteLocationRaw`——vue-router 的 RouteLocationRaw 不接受 RouteLocationNormalized 展开（官方类型缺口）

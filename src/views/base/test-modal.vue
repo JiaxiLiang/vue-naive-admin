@@ -38,8 +38,8 @@ function openModal1() {
       openModal2()
       return false // 默认关闭弹窗，返回false可让弹窗不关闭
     },
-    onCancel(message) {
-      $message.info(message ?? '已取消')
+    onCancel: (message: unknown) => {
+      $message.info(typeof message === 'string' ? message : '已取消')
     },
   })
 }

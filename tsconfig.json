@@ -1,9 +1,13 @@
 {
+  // ── 应用源码工程（DOM 侧）；构建工具链在 tsconfig.node.json，两者均纳入 typecheck ──
   "compilerOptions": {
+    // 语言与输出
     "target": "ESNext",
     "jsx": "preserve",
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "useDefineForClassFields": true,
+
+    // 路径别名
     "baseUrl": ".",
     "module": "ESNext",
     "moduleResolution": "Bundler",
@@ -12,9 +16,16 @@
       "~/*": ["./*"]
     },
     "resolveJsonModule": true,
+    // exactOptionalPropertyTypes 评估结论：不开——Vue/naive-ui 生态大量依赖"可选 prop 显式传
+    // undefined"的惯用法（Partial 展开、withDefaults 合并），开启需全面重构且无运行时收益，
+    // 论证详见 docs/ts-acceptance-report-20261004-r2.md
     "allowJs": false,
     "checkJs": false,
+
+    // 严格性（B1）：strict 全开 + 索引访问收窄 + 子类方法强制 override
     "strict": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
     "noEmit": true,
     "esModuleInterop": true,
     "isolatedModules": true,

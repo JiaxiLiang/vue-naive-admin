@@ -1,14 +1,13 @@
-import type { PermissionItem } from '@/types/models'
-import axios from 'axios'
+import type { PageParams, PermissionItem } from '@/types/models'
 import { request } from '@/utils'
+
+/** 按钮列表查询参数（resource 页 MeCrud 数据源，MeCrud 会把分页参数一并合入 params） */
+export type ButtonQuery = { parentId?: number | string | null } & PageParams
 
 export default {
   getMenuTree: () => request.get<PermissionItem[]>('/permission/menu/tree'),
-  // 按钮权限列表（resource 页 MeCrud 数据源，MeCrud 会把分页参数一并合入 params）
-  getButtons: (params: Record<string, any>) => request.get<PermissionItem[]>(`/permission/button/${params.parentId}`),
-  // 原生 axios（非项目封装），返回的是 AxiosResponse，注意没有经过拦截器加工
-  getComponents: () => axios.get(`${import.meta.env.VITE_PUBLIC_PATH}components.json`),
-  addPermission: (data: Partial<PermissionItem>) => request.post('/permission', data),
+  getButtons: (params: ButtonQuery) => request.get<PermissionItem[]>(`/permission/button/${params.parentId}`),
+  addPermission: (data: Partial<PermissionItem>) => request.post<PermissionItem>('/permission', data),
   savePermission: (id: number | string, data: Partial<PermissionItem>) => request.patch(`/permission/${id}`, data),
-  deletePermission: (id: number | string) => request.delete(`permission/${id}`),
+  deletePermission: (id: number | string) => request.delete(`/permission/${id}`),
 }

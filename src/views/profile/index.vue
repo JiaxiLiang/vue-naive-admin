@@ -97,7 +97,6 @@
 </template>
 
 <script setup lang="ts">
-import type { UserInfo } from '@/types/models'
 import { MeModal } from '@/components'
 import { useForm, useModal } from '@/composables'
 import { useUserStore } from '@/store'
@@ -112,10 +111,11 @@ const required = {
 }
 
 const [pwdModalRef] = useModal()
-const [pwdFormRef, pwdForm, pwdValidation] = useForm()
+const [pwdFormRef, pwdForm, pwdValidation] = useForm<{ oldPassword?: string, newPassword?: string }>({})
 
 async function handlePwdSave() {
   await pwdValidation()
+  // 两个密码字段均为必填校验，校验通过后必有值
   await api.changePassword(pwdForm.value as { oldPassword: string, newPassword: string })
   $message.success('密码修改成功')
   refreshUserInfo()
@@ -139,7 +139,7 @@ const genders = [
   { label: '女', value: 2 },
 ]
 const [profileModalRef] = useModal()
-const [profileFormRef, profileForm, profileValidation] = useForm({
+const [profileFormRef, profileForm, profileValidation] = useForm<{ id?: number, nickName?: string, gender?: number, address?: string, email?: string }>({
   id: userStore.userId,
   nickName: userStore.nickName,
   gender: userStore.userInfo?.gender ?? 0,
@@ -148,7 +148,8 @@ const [profileFormRef, profileForm, profileValidation] = useForm({
 })
 async function handleProfileSave() {
   await profileValidation()
-  await api.updateProfile(profileForm.value as Partial<UserInfo> & { id: number })
+  // 资料页仅在登录态可达，userId 必有值
+  await api.updateProfile(profileForm.value as { id: number } & typeof profileForm.value)
   $message.success('资料修改成功')
   refreshUserInfo()
 }

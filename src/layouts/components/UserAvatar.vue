@@ -1,5 +1,5 @@
 <template>
-  <n-dropdown :options="(options as any)" @select="handleSelect">
+  <n-dropdown :options="options" @select="handleSelect">
     <div id="user-dropdown" class="flex cursor-pointer items-center">
       <n-avatar round :size="36" :src="userStore.avatar" />
       <div v-if="userStore.userInfo" class="ml-12 flex-col flex-shrink-0 items-center">
@@ -13,6 +13,7 @@
 </template>
 
 <script setup lang="ts">
+import type { DropdownOption } from 'naive-ui'
 import api from '@/api'
 import { RoleSelect } from '@/layouts/components'
 import { useAuthStore, usePermissionStore, useUserStore } from '@/store'
@@ -22,18 +23,19 @@ const userStore = useUserStore()
 const authStore = useAuthStore()
 const permissionStore = usePermissionStore()
 
-const options = reactive([
+/** 下拉选项用 computed 组装：show 直接给 boolean，与 DropdownOption 契约一致（n-dropdown 按 show 隐藏项） */
+const options = computed<DropdownOption[]>(() => [
   {
     label: '个人资料',
     key: 'profile',
     icon: () => h('i', { class: 'i-material-symbols:person-outline text-14' }),
-    show: computed(() => permissionStore.accessRoutes?.some(item => item.path === '/profile')),
+    show: permissionStore.accessRoutes?.some(item => item.path === '/profile'),
   },
   {
     label: '切换角色',
     key: 'toggleRole',
     icon: () => h('i', { class: 'i-basil:exchange-solid text-14' }),
-    show: computed(() => userStore.roles.length > 1),
+    show: userStore.roles.length > 1,
   },
   {
     label: '退出登录',

@@ -1,23 +1,37 @@
 // 整个项目真真是是去后端取数据的就是这个Axios插件
 // 这个文件只是发送请求依旧是插件才是真正实施去取数据的
-import type { PermissionItem, RawUserInfo } from '@/types/models'
-import { request } from '@/utils' // 从@/utils模块导入封装好的HTTP请求实例request
+import type { LoginToken, PageParams, PageResult, PermissionItem, RawUserInfo } from '@/types/models'
+import { request } from '@/utils'
+
+/**
+ * CRUD 接口工厂：把"新增/列表/更新/删除"四个标准端点的样板收敛为一处（DRY 收口）。
+ * @param resource 端点前缀，如 '/user'（create=resource，update/delete=resource/:id）
+ * @param readPath 列表查询路径，默认与 resource 相同（如 role 的分页接口是 /role/page）
+ * 模板参数 T 为实体类型；Q 为列表查询参数类型（各资源按后端契约在 models.ts 收窄），
+ * Q 经 MeCrud 的 :get-data 反向推断到页面的 queryItems，使查询字段名拼写错误在编译期报错
+ */
+export function createCrudApi<T extends { id: number }, Q extends PageParams & Record<string, unknown> = PageParams & Record<string, unknown>>(resource: string, readPath = resource) {
+  return {
+    create: (data: Partial<T>) => request.post(resource, data),
+    read: (params: Q) => request.get<PageResult<T> | T[]>(readPath, { params }),
+    update: (data: Partial<T> & { id: number }) => request.patch(`${resource}/${data.id}`, data),
+    delete: (id: number) => request.delete(`${resource}/${id}`),
+  }
+}
 
 export default {
-// 导出默认对象，包含用户与认证相关的API接口方法集合
-// export default它的作用就是默认导出里面是函数变量等等数组都不影响
-  // 获取用户信息（后端原始形状含嵌套 profile，由 store/helper.js 重组为前端 UserInfo）
-  getUser: () => request.get<RawUserInfo>('/user/detail'), // 定义getUser方法，发起GET请求获取用户详情数据
+  // 获取用户信息（后端原始形状含嵌套 profile，由 store/helper.ts 重组为前端 UserInfo）
+  getUser: () => request.get<RawUserInfo>('/user/detail'),
   // 刷新token
-  refreshToken: () => request.get('/auth/refresh/token'), // 定义refreshToken方法，发起GET请求刷新认证令牌
+  refreshToken: () => request.get('/auth/refresh/token'),
   // 登出
-  logout: () => request.post('/auth/logout', {}, { needTip: false }), // 定义logout方法，发起POST请求登出，配置项needTip: false表示不显示全局提示
-  // 切换当前角色
-  switchCurrentRole: (role: number | string) => request.post(`/auth/current-role/switch/${role}`), // 定义switchCurrentRole方法，接收role参数并发起POST请求切换角色
+  logout: () => request.post('/auth/logout', {}, { needTip: false }),
+  // 切换当前角色（后端返回切换后账号的新 token 载荷）
+  switchCurrentRole: (role: number | string) => request.post<LoginToken>(`/auth/current-role/switch/${role}`),
   // 获取角色权限
-  getRolePermissions: () => request.get<PermissionItem[]>('/role/permissions/tree'), // 定义getRolePermissions方法，发起GET请求获取角色权限树形结构数据
+  getRolePermissions: () => request.get<PermissionItem[]>('/role/permissions/tree'),
   // 验证菜单路径
-  validateMenuPath: (path: string) => request.get<boolean>(`/permission/menu/validate?path=${path}`), // 定义validateMenuPath方法，接收path参数作为查询参数验证菜单路径权限
+  validateMenuPath: (path: string) => request.get<boolean>(`/permission/menu/validate?path=${path}`),
 }
 /*
 调用栈、任务队列与事件循环知识点 (进阶版 - 宏任务与微任务)

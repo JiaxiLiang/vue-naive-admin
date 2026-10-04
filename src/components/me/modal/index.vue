@@ -44,8 +44,7 @@
 import type { ModalOptions } from '@/types/me-components'
 import { initDrag } from './utils'
 
-// TODO: 原 modalStyle/contentStyle 的 default: () => {} 是 bug（对象字面量被解析为函数体，工厂返回 undefined），
-// 这里不设默认值（未传时即为 undefined），与原行为完全一致，未"修复"成 () => ({})
+/** modalStyle/contentStyle 不设默认值：未传时保持 undefined，n-modal/n-card 的 style 接受 undefined */
 const props = withDefaults(defineProps<ModalOptions>(), {
   width: '800px',
   title: '',
@@ -82,10 +81,7 @@ async function open(options: Partial<ModalOptions> = {}) {
   // 将show的值设置为true
   show.value = true
   await nextTick()
-  initDrag(
-    Array.prototype.at.call(document.querySelectorAll('.modal-header'), -1) as HTMLElement | undefined,
-    Array.prototype.at.call(document.querySelectorAll('.modal-box'), -1) as HTMLElement | undefined,
-  )
+  initDrag(lastElement('.modal-header'), lastElement('.modal-box'))
 }
 
 // 定义一个close函数，用于关闭模态框
@@ -94,7 +90,7 @@ function close() {
 }
 
 // 定义一个handleOk函数，用于处理模态框确定操作
-async function handleOk(data?: any) {
+async function handleOk(data?: unknown) {
   // 如果modalOptions中没有onOk函数，则直接关闭模态框
   if (typeof modalOptions.value.onOk !== 'function') {
     return close()
@@ -113,7 +109,7 @@ async function handleOk(data?: any) {
 }
 
 // 定义一个handleCancel函数，用于处理模态框取消操作
-async function handleCancel(data?: any) {
+async function handleCancel(data?: unknown) {
   // 如果modalOptions中没有onCancel函数，则直接关闭模态框
   if (typeof modalOptions.value.onCancel !== 'function') {
     return close()
@@ -134,10 +130,13 @@ async function handleCancel(data?: any) {
 
 async function onAfterLeave() {
   await nextTick()
-  initDrag(
-    Array.prototype.at.call(document.querySelectorAll('.modal-header'), -1) as HTMLElement | undefined,
-    Array.prototype.at.call(document.querySelectorAll('.modal-box'), -1) as HTMLElement | undefined,
-  )
+  initDrag(lastElement('.modal-header'), lastElement('.modal-box'))
+}
+
+/** 取当前文档中最后一批匹配元素的最后一个（弹窗叠层时操作最上层的那个） */
+function lastElement(selector: string): HTMLElement | undefined {
+  const list = document.querySelectorAll<HTMLElement>(selector)
+  return list[list.length - 1]
 }
 
 // 定义一个defineExpose函数，用于暴露open、close、handleOk、handleCancel函数

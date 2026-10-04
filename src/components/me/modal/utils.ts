@@ -5,9 +5,9 @@ interface ElementWithCurrentStyle extends HTMLElement {
 }
 
 function getCss(element: HTMLElement, key: string): string | undefined {
-  // CSSStyleDeclaration 无通用字符串索引签名，断言后按 key 取值
+  // IE 专属属性分支，现代浏览器走 getComputedStyle；两种风格对象都有 getPropertyValue
   const style = (element as ElementWithCurrentStyle).currentStyle ?? window.getComputedStyle(element, null)
-  return (style as any)[key]
+  return style.getPropertyValue(key)
 }
 
 // 初始化拖拽

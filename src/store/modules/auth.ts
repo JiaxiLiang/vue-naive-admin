@@ -53,7 +53,8 @@ export const useAuthStore = defineStore('auth', { // 定义并导出名为 'auth
     },
   },
   persist: { // 配置 Pinia 的状态持久化插件
-    // TODO: key 里的 'naivue' 是原文件的拼写错误（应为 naive），按"不改运行时行为"原则保留，修正会导致已有用户持久化数据丢失
+    // key 沿用历史拼写 'naivue'：本地已存会话都挂在这个键下，改成 'naive' 会让既有用户登录态全部失效，
+    // 属于用户数据迁移决策，须与旧键迁移方案一起做，不在日常改造中顺手改
     key: 'vue-naivue-admin_auth', // 指定在浏览器本地存储中使用的唯一键名，避免与其他项目冲突
   },
   // 默认使用 localStorage（浏览器自带）

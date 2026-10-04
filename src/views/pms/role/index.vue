@@ -88,25 +88,23 @@
 
 <script setup lang="ts">
 import type { DataTableColumns } from 'naive-ui'
-import type { PermissionItem, Role } from '@/types/models'
-import type { ApiResult } from '@/utils/http'
+import type { PermissionItem, Role, RoleQuery } from '@/types/models'
 import { NButton, NSwitch } from 'naive-ui'
 import { MeCrud, MeModal, MeQueryItem } from '@/components'
-import { useCrud } from '@/composables'
+import { useCrud, useEnableRow } from '@/composables'
 import api from './api'
 
 defineOptions({ name: 'RoleMgt' })
 
 const router = useRouter()
 
-/** 行数据：Role + 状态开关的运行时临时字段 */
+/** 行数据：Role + 状态开关的行级 loading 态（前端 UI 字段，不来自后端） */
 type RoleRow = Role & { enableLoading?: boolean }
 /** 弹窗表单：角色字段 + 分配权限时用的 permissionIds */
 type RoleForm = Partial<RoleRow> & { permissionIds?: number[] }
 
 const $table = ref<{ handleSearch: (keepCurrentPage?: boolean) => void } | null>(null)
-/** QueryBar筛选参数（可选） */
-const queryItems = ref<Record<string, any>>({})
+const queryItems = ref<RoleQuery>({})
 
 onMounted(() => {
   $table.value?.handleSearch()
@@ -116,11 +114,13 @@ const { modalRef, modalFormRef, modalAction, modalForm, handleAdd, handleDelete,
   = useCrud<RoleForm>({
     name: '角色',
     doCreate: api.create,
-    doDelete: api.delete as (id: number | string) => Promise<ApiResult<unknown>>,
-    doUpdate: (data: RoleForm) => api.update(data as Partial<Role> & { id: number }),
+    doDelete: api.delete,
+    doUpdate: api.update,
     initForm: { enable: true },
     refresh: (_, keepCurrentPage) => $table.value?.handleSearch(keepCurrentPage),
   })
+
+const { handleEnable } = useEnableRow(api.update, () => $table.value?.handleSearch())
 
 const columns: DataTableColumns<RoleRow> = [
   { title: '角色名', key: 'name' },
@@ -128,7 +128,7 @@ const columns: DataTableColumns<RoleRow> = [
   {
     title: '状态',
     key: 'enable',
-    render: (row: RoleRow) =>
+    render: row =>
       h(
         NSwitch,
         {
@@ -151,7 +151,7 @@ const columns: DataTableColumns<RoleRow> = [
     width: 320,
     align: 'right',
     fixed: 'right',
-    render(row: RoleRow) {
+    render(row) {
       return [
         h(
           NButton,
@@ -200,20 +200,6 @@ const columns: DataTableColumns<RoleRow> = [
     },
   },
 ]
-
-async function handleEnable(row: RoleRow) {
-  row.enableLoading = true
-  try {
-    await api.update({ id: row.id, enable: !row.enable })
-    row.enableLoading = false
-    $message.success('操作成功')
-    $table.value?.handleSearch()
-  }
-  catch (error) {
-    console.error(error)
-    row.enableLoading = false
-  }
-}
 
 const permissionTree = ref<PermissionItem[]>([])
 api.getAllPermissionTree().then(({ data = [] }) => (permissionTree.value = data))

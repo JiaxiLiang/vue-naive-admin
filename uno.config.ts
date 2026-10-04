@@ -1,7 +1,7 @@
 import { FileSystemIconLoader } from '@iconify/utils/lib/loader/node-loaders'
 import presetRemToPx from '@unocss/preset-rem-to-px'
 import { defineConfig, presetAttributify, presetIcons, presetWind3 } from 'unocss'
-import { getIcons } from './build/index.js'
+import { getIcons } from './build/index'
 
 const icons = getIcons()
 export default defineConfig({

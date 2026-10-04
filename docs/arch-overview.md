@@ -1,6 +1,6 @@
 # vue-naive-admin 项目架构图（基于源码重新梳理）
 
-> 本文档由通读 `src/`、`build/`、`vite.config.js` 源码后重新绘制，与代码实际实现一一对应。
+> 本文档由通读 `src/`、`build/`、`vite.config.ts` 源码后重新绘制，与代码实际实现一一对应。
 > 图例：`──▶` 编译期 import 依赖　`-.->` 运行时调用/读写　`==▶` 网络请求
 
 ---
@@ -14,10 +14,10 @@ flowchart TD
 
         subgraph L0["① 入口引导层 · src 根"]
             direction LR
-            MAIN["main.js<br/>bootstrap() 启动编排"]
+            MAIN["main.ts<br/>bootstrap() 启动编排"]
             APPV["App.vue<br/>根组件 · 主题/布局/KeepAlive 总装"]
-            SET["settings.js<br/>默认布局·主色·基础权限"]
-            DIR["directives/index.js<br/>v-permission / withPermission"]
+            SET["settings.ts<br/>默认布局·主色·基础权限"]
+            DIR["directives/index.ts<br/>v-permission / withPermission"]
         end
 
         subgraph L1["② 页面视图层 · src/views"]
@@ -69,8 +69,8 @@ flowchart TD
 
         subgraph L7["⑦ 服务接口层"]
             direction LR
-            A_GLOBAL["api/index.js<br/>用户·权限·校验"]
-            A_VIEWS["views/**/api.js<br/>就近拆分接口"]
+            A_GLOBAL["api/index.ts<br/>用户·权限·校验"]
+            A_VIEWS["views/**/api.ts<br/>就近拆分接口"]
         end
 
         subgraph L8["⑧ 基础设施层 · src/utils"]
@@ -81,7 +81,7 @@ flowchart TD
             U_COMMON["common / is<br/>时间·节流·类型判断"]
         end
 
-        subgraph L9["⑨ 构建期 · build + vite.config.js"]
+        subgraph L9["⑨ 构建期 · build + vite.config.ts"]
             direction LR
             B_ICON["plugin-isme/icons<br/>isme:icons 虚拟模块"]
             B_PATH["plugin-isme/page-pathes<br/>isme:page-pathes 虚拟模块"]
@@ -198,16 +198,16 @@ flowchart TD
 
 | 层           | 目录                                            | 实际职责                                                                                                                                             |
 | ------------ | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ① 入口引导   | `main.js` `App.vue` `settings.js` `directives/` | 严格按 `setupStore → setupDirectives → setupRouter → mount → setupNaiveDiscreteApi` 装配；`App.vue` 是「主题 + 布局 + 过渡 + KeepAlive」的唯一总装点 |
+| ① 入口引导   | `main.ts` `App.vue` `settings.ts` `directives/` | 严格按 `setupStore → setupDirectives → setupRouter → mount → setupNaiveDiscreteApi` 装配；`App.vue` 是「主题 + 布局 + 过渡 + KeepAlive」的唯一总装点 |
 | ② 页面视图   | `src/views/`                                    | 业务页面只做两件事：写配置（columns / queryItems）+ 写接口函数；权限靠 `withPermission` 声明                                                         |
 | ③ 布局       | `src/layouts/`                                  | 4 套壳 `normal / full / simple / empty`，由 `route.meta.layout` 或 `appStore.layout` 决定；框架级导航件集中在 `layouts/components`                   |
 | ③' 组件      | `src/components/`                               | `common` 通用 UI 件；`me` 业务「半成品」件（MeCrud 表格壳 / MeModal 弹窗壳 / MeQueryItem 查询件）                                                    |
 | ④ 组合式逻辑 | `src/composables/`                              | `useCrud` 是唯一胶水，把「开弹窗→填表→校验→调接口→提示→刷新列表」串成一条循环                                                                        |
 | ⑤ 状态       | `src/store/`                                    | 6 个 Pinia 模块；只放**登录态 / 权限 / 布局偏好 / 多标签**这类全局状态，业务列表数据不进 store                                                       |
 | ⑥ 路由       | `src/router/`                                   | 仅 4 条静态路由（`/login` `/` `/404` `/403`），其余全部由权限动态 `addRoute` 生成；4 个守卫按序注册                                                  |
-| ⑦ 服务接口   | `src/api/index.js` + `views/**/api.js`          | 跨模块接口聚合在 `api/index.js`，模块私有接口就近放 `views/**/api.js`                                                                                |
+| ⑦ 服务接口   | `src/api/index.ts` + `views/**/api.ts`          | 跨模块接口聚合在 `api/index.ts`，模块私有接口就近放 `views/**/api.ts`                                                                                |
 | ⑧ 基础设施   | `src/utils/`                                    | axios 实例与拦截器、带过期时间的存储封装、NaiveUI 离散 API 全局化、通用工具                                                                          |
-| ⑨ 构建期     | `build/plugin-isme/*` + `vite.config.js`        | 自研虚拟模块（图标清单、页面路径清单）+ 自动导入 + 组件自动注册                                                                                      |
+| ⑨ 构建期     | `build/plugin-isme/*` + `vite.config.ts`        | 自研虚拟模块（图标清单、页面路径清单）+ 自动导入 + 组件自动注册                                                                                      |
 
 ---
 
@@ -217,7 +217,7 @@ flowchart TD
 sequenceDiagram
     autonumber
     participant HTML as index.html #app
-    participant MAIN as main.js
+    participant MAIN as main.ts
     participant ST as setupStore
     participant DI as directives
     participant RT as setupRouter
@@ -308,7 +308,7 @@ sequenceDiagram
     autonumber
     actor U as 用户
     participant L as login/index.vue
-    participant API as views/login/api.js
+    participant API as views/login/api.ts
     participant H as utils/http 拦截器
     participant BE as 后端
     participant GUARD as permission-guard
@@ -367,7 +367,7 @@ sequenceDiagram
     R->>R: afterEach：设置标题 + 写入多标签
 ```
 
-### 权限守卫决策树（permission-guard.js）
+### 权限守卫决策树（permission-guard.ts）
 
 ```mermaid
 flowchart TD
@@ -411,7 +411,7 @@ flowchart TD
 ```mermaid
 flowchart LR
     subgraph SRC["权限数据来源"]
-        S1["settings.js · basePermissions<br/>本地内置（外链/文档类菜单）"]
+        S1["settings.ts · basePermissions<br/>本地内置（外链/文档类菜单）"]
         S2["GET /role/permissions/tree<br/>后端按当前角色下发的权限树"]
     end
 
@@ -532,7 +532,7 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    SETUP["setupRouterGuards(router)<br/>src/router/guards/index.js"]
+    SETUP["setupRouterGuards(router)<br/>src/router/guards/index.ts"]
 
     SETUP --> G1
     SETUP --> G2
@@ -586,10 +586,10 @@ flowchart LR
     CRUDL -->|"formRef 校验"| NAIVE["Naive UI<br/>NForm / NDataTable"]
     CRUDP --> NAIVE
     CRUDP -->|"导出 Excel"| XLSX["xlsx"]
-    MODAL -->|"open() 后"| DRAG["modal/utils.js<br/>initDrag 纯 DOM 拖拽"]
+    MODAL -->|"open() 后"| DRAG["modal/utils.ts<br/>initDrag 纯 DOM 拖拽"]
 
     P3 ==>|"走 request 实例"| HTTP["utils/http 拦截器"]
-    P3 --> A1["views/pms/user/api.js"]
+    P3 --> A1["views/pms/user/api.ts"]
 
     classDef pg fill:#0ea5e9,stroke:#0369a1,color:#fff
     classDef cp fill:#10b981,stroke:#047857,color:#fff
@@ -680,7 +680,7 @@ flowchart TD
 
     ENVCONF --> FACTORY
 
-    subgraph FACTORY["utils/http/index.js · createAxios(options)"]
+    subgraph FACTORY["utils/http/index.ts · createAxios(options)"]
         DEF["默认配置<br/>baseURL = VITE_AXIOS_BASE_URL<br/>timeout = 12000"]
         MK["axios.create({ ...默认, ...自定义 })"]
         SI["立即调用 setupInterceptors(service)"]
@@ -690,7 +690,7 @@ flowchart TD
     FACTORY --> REQ["export const request = createAxios()<br/>★ 全项目唯一正式实例"]
     FACTORY --> MOCK["export const mockRequest<br/>= createAxios({ baseURL: '/mock-api' })"]
 
-    subgraph INT["utils/http/interceptors.js · 双向拦截器"]
+    subgraph INT["utils/http/interceptors.ts · 双向拦截器"]
         direction TB
         RQ["请求拦截 reqResolve<br/>needToken === false → 原样返回<br/>否则 Authorization: Bearer {accessToken}"]
         RS["响应拦截 resResolve<br/>content-type 含 json 才走业务码分支<br/>SUCCESS_CODES = [0, 200] → Promise.resolve(data)<br/>非成功 → resolveResError → Promise.reject"]
@@ -704,7 +704,7 @@ flowchart TD
     RS --> HELP
     REJ --> HELP
 
-    subgraph HELP["utils/http/helpers.js · 错误码收口"]
+    subgraph HELP["utils/http/helpers.ts · 错误码收口"]
         direction TB
         H1["401 / 11007 / 11008<br/>handleAuthExpired：isConfirming 防重锁<br/>$dialog.confirm → 确认后 authStore.logout()"]
         H2["403 → 请求被拒绝<br/>404 → 请求资源或接口不存在<br/>500 → 服务器发生异常"]
@@ -739,7 +739,7 @@ flowchart TD
 | `500`             | 映射为「服务器发生异常」                                  | `$message.error` |
 | 其他              | 用后端文案，兜底「`{code}` 未知异常!」                    | `$message.error` |
 
-**单请求级开关**：`{ needToken: false }` 跳过 token（如 `login/api.js` 的登录接口）；`{ needTip: false }` 静默失败（如 `api.logout()`）。
+**单请求级开关**：`{ needToken: false }` 跳过 token（如 `login/api.ts` 的登录接口）；`{ needTip: false }` 静默失败（如 `api.logout()`）。
 
 ---
 
@@ -747,7 +747,7 @@ flowchart TD
 
 ```mermaid
 flowchart TB
-    subgraph CFG["vite.config.js"]
+    subgraph CFG["vite.config.ts"]
         LOAD["loadEnv(mode, cwd)<br/>读出 VITE_PUBLIC_PATH / VITE_PROXY_TARGET"]
         BASE["base = VITE_PUBLIC_PATH || '/'"]
         PLUGINS["插件数组（按序）"]
@@ -764,8 +764,8 @@ flowchart TB
         P4["unocss/vite<br/>原子化 CSS"]
         P5["unplugin-auto-import<br/>自动注入 vue / vue-router 的 API<br/>（故 store/router 中可直接用 ref、computed、<br/>useRoute、nextTick、unref、h）"]
         P6["unplugin-vue-components<br/>NaiveUiResolver 自动注册 N* 组件"]
-        P7["★ build/plugin-isme/page-pathes.js<br/>glob('src/views/**/*.vue')<br/>→ 虚拟模块 'isme:page-pathes'"]
-        P8["★ build/plugin-isme/icons.js<br/>glob('src/assets/icons/feather/*.svg')<br/>glob('src/assets/icons/isme/*.svg')<br/>+ dynamic-icons.js<br/>→ 虚拟模块 'isme:icons'"]
+        P7["★ build/plugin-isme/page-pathes.ts<br/>glob('src/views/**/*.vue')<br/>→ 虚拟模块 'isme:page-pathes'"]
+        P8["★ build/plugin-isme/icons.ts<br/>glob('src/assets/icons/feather/*.svg')<br/>glob('src/assets/icons/isme/*.svg')<br/>+ dynamic-icons.ts<br/>→ 虚拟模块 'isme:icons'"]
         P9["vite-plugin-router-warn<br/>消除动态路由的 No match 噪音"]
     end
 
@@ -773,7 +773,7 @@ flowchart TB
         R1["vite 直接消费<br/>src/**"]
         R2["virtual: isme:page-pathes<br/>页面路径清单数组"]
         R3["virtual: isme:icons<br/>i-fe:* / i-me:* 图标类名数组"]
-        R4["UnoCSS 生成的 uno.css<br/>（main.js 中 import 'uno.css'）"]
+        R4["UnoCSS 生成的 uno.css<br/>（main.ts 中 import 'uno.css'）"]
         R5["构建产物 dist/<br/>Hash 模式(dev) / History 模式(prod)"]
     end
 
@@ -813,22 +813,22 @@ flowchart TB
 flowchart LR
     ROOT["vue-naive-admin/"]
 
-    ROOT --> CFG["配置层<br/>vite.config.js · uno.config.js<br/>eslint.config.js · jsconfig.json<br/>.env · .env.development · .env.production"]
-    ROOT --> BUILD["自研构建层<br/>build/index.js<br/>build/plugin-isme/{icons,page-pathes}.js"]
+    ROOT --> CFG["配置层<br/>vite.config.ts · uno.config.ts<br/>eslint.config.ts · jsconfig.json<br/>.env · .env.development · .env.production"]
+    ROOT --> BUILD["自研构建层<br/>build/index.ts<br/>build/plugin-isme/{icons,page-pathes}.js"]
     ROOT --> PUB["静态资源<br/>public/favicon.png"]
     ROOT --> SRC["src/"]
 
-    SRC --> S_MAIN["入口<br/>main.js · App.vue · settings.js"]
-    SRC --> S_DIR["指令<br/>directives/index.js"]
+    SRC --> S_MAIN["入口<br/>main.ts · App.vue · settings.ts"]
+    SRC --> S_DIR["指令<br/>directives/index.ts"]
     SRC --> S_LAY["布局<br/>layouts/{normal,full,simple,empty}<br/>layouts/components/{SideMenu,BreadCrumb,<br/>tab/index,tab/ContextMenu,UserAvatar,<br/>RoleSelect,Fullscreen,MenuCollapse,<br/>SideLogo,BeginnerGuide}"]
     SRC --> S_VW["视图<br/>views/{login,home,pms/{user,role,resource},<br/>profile,base,demo/upload,iframe,error-page}"]
     SRC --> S_CP["组件<br/>components/common/{AppPage,AppCard,CommonPage,<br/>LayoutSetting,ThemeSetting,ToggleTheme,<br/>TheLogo,TheFooter}<br/>components/me/{crud/index,crud/QueryItem,<br/>modal/index,modal/utils}"]
     SRC --> S_HO["组合式逻辑<br/>composables/{useCrud,useForm,<br/>useModal,useAliveData}"]
     SRC --> S_ST["状态<br/>store/{index,helper}<br/>store/modules/{app,auth,user,permission,router,tab}"]
     SRC --> S_RT["路由<br/>router/{index,basic-routes}<br/>router/guards/{index,permission-guard,<br/>tab-guard,page-title-guard,page-loading-guard}"]
-    SRC --> S_AP["接口<br/>api/index.js<br/>views/**/api.js（就近拆分）"]
+    SRC --> S_AP["接口<br/>api/index.ts<br/>views/**/api.ts（就近拆分）"]
     SRC --> S_UT["工具<br/>utils/{index,common,is,naiveTools}<br/>utils/http/{index,interceptors,helpers}<br/>utils/storage/{index,storage}"]
-    SRC --> S_STY["样式与资源<br/>styles/{reset.css,global.css}<br/>assets/icons/{feather,isme,dynamic-icons.js}<br/>assets/images/"]
+    SRC --> S_STY["样式与资源<br/>styles/{reset.css,global.css}<br/>assets/icons/{feather,isme,dynamic-icons.ts}<br/>assets/images/"]
 
     S_MAIN --> S_ST
     S_MAIN --> S_DIR
@@ -872,7 +872,7 @@ flowchart LR
 2. **逻辑层与组件层零耦合**：`useModal` / `useForm` 通过 **ref 运行时遥控** `MeModal` / `NForm`，而不是 import 它们；只有 `useCrud` 在页面 setup 里把两端接起来。
 3. **守卫只读 store**：`router` 是骨架层，`permission-guard` 读 `auth/user/permission`，store 不 import router（`router` store 只是把 `useRouter()` 结果包一层）。
 4. **store 不放业务数据**：只有登录态、权限、布局偏好、多标签四类全局状态入 store，列表数据全部留在页面 `ref` 中。
-5. **接口就近存放**：模块私有接口写 `views/**/api.js`，跨模块共享（用户详情、权限树、菜单校验）才进 `api/index.js`。
+5. **接口就近存放**：模块私有接口写 `views/**/api.ts`，跨模块共享（用户详情、权限树、菜单校验）才进 `api/index.ts`。
 6. **错误处理单点收口**：所有 HTTP 异常最终汇入 `resolveResError`，页面层 `catch` 只需 `console.error`。
 
 ---
@@ -882,20 +882,20 @@ flowchart LR
 | 能力                                                                                   | 来源                                                                         | 生效时机                         | 使用方                           |
 | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------- | -------------------------------- |
 | `ref` `computed` `watch` `h` `unref` `markRaw` `defineAsyncComponent` `withDirectives` | `unplugin-auto-import`（`vue`）                                              | 构建期注入                       | 全项目免 import                  |
-| `useRoute` `useRouter`                                                                 | `unplugin-auto-import`（`vue-router`）                                       | 构建期注入                       | `store/modules/router.js`、组件  |
+| `useRoute` `useRouter`                                                                 | `unplugin-auto-import`（`vue-router`）                                       | 构建期注入                       | `store/modules/router.ts`、组件  |
 | `nextTick`                                                                             | `unplugin-auto-import`（`vue`）                                              | 构建期注入                       | `auth` / `tab` store             |
 | `NButton` `NDataTable` `NForm` 等                                                      | `unplugin-vue-components` + `NaiveUiResolver`                                | 构建期按模板标签自动注册         | 所有 `.vue`                      |
-| `i-fe:*` `i-me:*` `i-simple-icons:*`                                                   | `build/plugin-isme/icons.js` 虚拟模块 + UnoCSS                               | 构建期生成类名数组               | 菜单图标、后端下发的 `icon` 字段 |
-| 页面路径清单                                                                           | `build/plugin-isme/page-pathes.js` 虚拟模块                                  | 构建期 glob `src/views/**/*.vue` | 组件选择器 / 路径校验类需求      |
-| `$message` `$dialog` `$loadingBar` `$notification`                                     | `utils/naiveTools.js` 的 `setupNaiveDiscreteApi()`                           | **运行期**挂在 `window` 上       | 拦截器、`useCrud`、各守卫        |
-| 路由历史模式（Hash / History）                                                         | `.env.development` = `true` / `.env.production` = `false`                    | 构建期由 `import.meta.env` 决定  | `router/index.js`                |
-| 接口 baseURL                                                                           | `.env.development` = `/api`（走 Vite 代理）/ `.env.production` = apifox mock | 构建期注入                       | `utils/http/index.js`            |
+| `i-fe:*` `i-me:*` `i-simple-icons:*`                                                   | `build/plugin-isme/icons.ts` 虚拟模块 + UnoCSS                               | 构建期生成类名数组               | 菜单图标、后端下发的 `icon` 字段 |
+| 页面路径清单                                                                           | `build/plugin-isme/page-pathes.ts` 虚拟模块                                  | 构建期 glob `src/views/**/*.vue` | 组件选择器 / 路径校验类需求      |
+| `$message` `$dialog` `$loadingBar` `$notification`                                     | `utils/naiveTools.ts` 的 `setupNaiveDiscreteApi()`                           | **运行期**挂在 `window` 上       | 拦截器、`useCrud`、各守卫        |
+| 路由历史模式（Hash / History）                                                         | `.env.development` = `true` / `.env.production` = `false`                    | 构建期由 `import.meta.env` 决定  | `router/index.ts`                |
+| 接口 baseURL                                                                           | `.env.development` = `/api`（走 Vite 代理）/ `.env.production` = apifox mock | 构建期注入                       | `utils/http/index.ts`            |
 
 ---
 
 ## 十四、架构要点总结
 
-1. **单一入口单线装配**：`main.js` 用 5 步固定顺序启动，唯一 `await` 在 `setupRouter`，保证守卫就绪后才渲染。
+1. **单一入口单线装配**：`main.ts` 用 5 步固定顺序启动，唯一 `await` 在 `setupRouter`，保证守卫就绪后才渲染。
 2. **静态极简 + 动态补全**：只写死 4 条公开路由，其余由后端权限树递归生成 `accessRoutes` 并 `addRoute`，实现「菜单、路由、按钮三级权限同源」。
 3. **刷新即重建**：Pinia 内存态丢失是设计的一部分，守卫的 `Promise.all` + `replace: true` 重入构成完整的「查票 → 过闸 → 补录」闭环。
 4. **App.vue 是唯一总装点**：主题、布局、过渡动画、KeepAlive 四件事集中在根组件，页面层完全不感知。

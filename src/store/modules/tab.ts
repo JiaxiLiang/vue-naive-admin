@@ -52,7 +52,7 @@ export const useTabStore = defineStore('tab', { // 定义并导出一个名为 '
         return
       // 通过修改 keepAlive 属性使 keep-alive 缓存失效，从而实现刷新效果
       if (keepAlive) // 如果配置了缓存
-        findItem.keepAlive = false // 临时关闭缓存
+        findItem.keepAlive = false // 先关闭缓存使 keep-alive 失效，刷新完成后在下方恢复原配置
       $loadingBar.start() // 启动页面加载进度条（全局插件）
       this.reloading = true // 开启刷新状态标识
       await nextTick() // 等待 DOM 更新
@@ -68,14 +68,19 @@ export const useTabStore = defineStore('tab', { // 定义并导出一个名为 '
       this.setTabs(this.tabs.filter(tab => tab.path !== path))
       // 过滤掉要移除的标签页，保留其他
       if (path === this.activeTab) { // 如果移除的是当前激活的标签页
-        useRouterStore().router?.push(this.tabs[this.tabs.length - 1].path) // 自动跳转到列表中最后一个标签页
+        // 激活页被关时跳到剩余的最后一个标签页；全部关完（列表为空）则无处可跳，静默结束
+        const last = this.tabs.at(-1)
+        if (last)
+          useRouterStore().router?.push(last.path) // 自动跳转到列表中最后一个标签页
       }
     },
     removeOther(curPath?: string) { // 关闭除当前页签外的其他所有页签
       curPath = curPath ?? this.activeTab // 与原默认参数等价
       this.setTabs(this.tabs.filter(tab => tab.path === curPath)) // 只保留当前路径的标签页
       if (curPath !== this.activeTab) { // 如果当前路径不是激活路径（说明之前激活的标签页被关闭了）
-        useRouterStore().router?.push(this.tabs[this.tabs.length - 1].path) // 跳转到保留下来的标签页
+        const last = this.tabs.at(-1)
+        if (last)
+          useRouterStore().router?.push(last.path) // 跳转到保留下来的标签页
       }
     },
     removeLeft(curPath: string) { // 关闭当前页签左侧的所有页签
@@ -83,15 +88,19 @@ export const useTabStore = defineStore('tab', { // 定义并导出一个名为 '
       const filterTabs = this.tabs.filter((item, index) => index >= curIndex) // 截取当前索引及之后的标签页
       this.setTabs(filterTabs) // 更新标签页列表
       if (!filterTabs.some(item => item.path === this.activeTab)) { // 如果激活的标签页被关闭了
-        useRouterStore().router?.push(filterTabs[filterTabs.length - 1].path) // 跳转到新的末尾标签页
+        const last = filterTabs.at(-1)
+        if (last)
+          useRouterStore().router?.push(last.path) // 跳转到新的末尾标签页
       }
     },
     removeRight(curPath: string) { // 关闭当前页签右侧的所有页签
       const curIndex = this.tabs.findIndex(item => item.path === curPath) // 找到当前页签的索引
       const filterTabs = this.tabs.filter((item, index) => index <= curIndex) // 截取当前索引及之前的标签页
       this.setTabs(filterTabs) // 更新标签页列表
-      if (!filterTabs.some(item => item.path === this.activeTab)) { // 如果激活的标签页被关闭了（修复：原代码误写 this.activeTab.value，恒为 undefined，导致"关闭右侧"总是跳到最右侧标签页）
-        useRouterStore().router?.push(filterTabs[filterTabs.length - 1].path) // 跳转到新的末尾标签页
+      if (!filterTabs.some(item => item.path === this.activeTab)) { // 如果激活的标签页被关闭了
+        const last = filterTabs.at(-1)
+        if (last)
+          useRouterStore().router?.push(last.path) // 跳转到新的末尾标签页
       }
     },
     resetTabs() { // 重置标签页状态

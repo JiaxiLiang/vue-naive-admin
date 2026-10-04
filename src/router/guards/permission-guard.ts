@@ -71,17 +71,19 @@ export function createPermissionGuard(router: Router): void { // 导出创建权
         // 遍历权限 store 中计算得出的动态路由配置 forEach数组自带遍历
         // accessRoutes自定义属性（数组）存储后端返回的数据通过pinia转换成路由配置表
         // foreach是accessRoutes调用 route就是数组里的元素 for函数的作用就是把数组内每个元素都做参数调用箭头
-        // acc调用的箭头函数 acc就是路由配置数组和basicRoutes一样 之是前者是后端发出的里面的com只是字符串后者是开发者写的直接拿到函数
         // glob的作用就是把组件目录的文件写成键位 []取值字符串就找到对应的函数
-        // component 在 store 阶段是字符串（AccessRoute），此处替换为 glob 的懒加载组件
-        route.component = routeComponents[route.component as string] || undefined
-        // 将路由配置中的组件路径字符串，替换为 glob 映射出的实际懒加载组件函数；若未匹配到则设为 undefined
-        // component 后端接口返回表示组件位置的字符串
-        // routeComponents[route.component]中 []就是取值 从前者中根据键位取值 com还只是字符串
-        // || undefined 就是或者基于und防止没有值
-        !router.hasRoute(route.name!) && router.addRoute(route as RouteRecordRaw)
+        // component 在 store 阶段是后端返回的字符串路径（AccessRoute 契约），此处替换为 glob 的懒加载组件；
+        // 非字符串形状（理论不可达）与未匹配路径同样按 undefined 处理
+        const componentKey = typeof route.component === 'string' ? route.component : undefined
+        route.component = (componentKey && routeComponents[componentKey]) || undefined
+        // name 是权限 code（generateRoute 恒赋值），直接判重注册
+        !router.hasRoute(route.name) && router.addRoute(route as RouteRecordRaw)
         // &&与 在这里其实就是if的作用 hasRoute路由检查器   addRoute路由添加
+        // as RouteRecordRaw：AccessRoute 与 RouteRecordRaw 的结构差异只有 path/component 的可选性——
+        // 后端契约保证二者在守卫此点必有值（上面刚做过字符串收窄与替换），编译器不可知，断言收口一次
       })
+      // as RouteLocationRaw：vue-router 的 RouteLocationRaw 不接受 RouteLocationNormalized 的展开
+      // （name 可空等结构性冲突，官方类型缺口），用路径语义原样重放目标路由，已登记豁免
       return { ...to, replace: true } as RouteLocationRaw
       // 返回目标路由对象并设置 replace: true 会变成返回到类似这样{ path: '/b', query: ..., replace: true }。
       // replace: true替换当前记录[A, B, B] 变成[A, B]为了后退键
@@ -98,7 +100,7 @@ export function createPermissionGuard(router: Router): void { // 导出创建权
       return true // 若是已注册的合法路由，直接放行
 
     // 判断是无权限还是404 // 注释说明：走到这里说明路由未注册，需排查是权限不足还是页面不存在
-    // 修复：接口异常（网络错误/后端不可用）时原先会让导航中断、URL 与页面脱节，这里兜底按 404 处理
+    // 校验接口异常（网络错误/后端不可用）时兜底按 404 处理，避免导航中断、URL 与页面脱节
     let hasMenu: boolean | undefined
     try {
       const { data } = await api.validateMenuPath(to.path)

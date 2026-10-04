@@ -1,6 +1,6 @@
 # vue-naive-admin 架构图 · 框架图（ASCII 分层管道版）
 
-> **作用域**：整项目（`src/` · `build/` · `vite.config.js` · `uno.config.js`）
+> **作用域**：整项目（`src/` · `build/` · `vite.config.ts` · `uno.config.ts`）
 > **绘制依据**：逐个通读作用域内源码后绘制，图中每一行都能在代码里定位到实现，不是按目录名猜的
 > **依赖方向**：自上而下。上层可调用下层；下层不 import 上层，只凭**注入/借阅**被借用（图中用 `▲` 标注）
 > **姊妹文档**：`docs/architecture.md`（Mermaid 分层图）· `docs/arch-overview.md`（逐条链路详解）· `docs/architecture.html`（可视化版）· `docs/module-architecture.md`（CRUD 封装体系）
@@ -15,12 +15,12 @@
 
 ```text
 浏览器 URL
-  ► main.js bootstrap()            装配 Pinia / 指令 / Router / 离散 API
+  ► main.ts bootstrap()            装配 Pinia / 指令 / Router / 离散 API
   ► App.vue                        按 route.meta.layout || appStore.layout 取骨架
   ► layouts/{name}/index.vue       <slot/> 装入 views/ 页面
   ► views/*                        模板用 components/(MeCrud·MeModal)，setup 调 composables/(useCrud)
   ► composables/useCrud            执行注入进来的 doCreate/doUpdate/doDelete
-  ► views/*/api.js ► utils/http    请求拦截加 Bearer ► 后端接口
+  ► views/*/api.ts ► utils/http    请求拦截加 Bearer ► 后端接口
   ► 守卫 permission-guard          store 写入 menus/accessRoutes ► 菜单与路由就绪
 ```
 
@@ -37,7 +37,7 @@
                                │
                                ▼ pnpm dev ► Vite Dev Server (端口 3200)
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ 【工程启动层】package.json · vite.config.js · uno.config.js · build/     │
+│ 【工程启动层】package.json · vite.config.ts · uno.config.ts · build/     │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ 插件链: Vue ► VueJsx ► VueDevTools ► Unocss ► AutoImport                 │
 │         ► Components ► pluginPagePathes ► pluginIcons ► removeNoMatch    │
@@ -51,21 +51,21 @@
                                │
                                ▼ 浏览器访问 http://localhost:3200
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ 【应用引导层】main.js · App.vue · settings.js · directives/index.js      │
+│ 【应用引导层】main.ts · App.vue · settings.ts · directives/index.ts      │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ bootstrap(): ①createApp(App) ②setupStore ③setupDirectives                │
 │              ④await setupRouter ⑤mount('#app') ⑥setupNaiveDiscreteApi    │
 │ App.vue: n-config-provider(locale/theme/themeOverrides) ► 动态 Layout    │
 │   └ <component :is> + <transition fade-slide> + <KeepAlive :include>     │
 │ KeepAlive 名单 ◄ tabStore.tabs.filter(keepAlive).map(name)               │
-│ settings.js: defaultLayout · defaultPrimaryColor · basePermissions       │
+│ settings.ts: defaultLayout · defaultPrimaryColor · basePermissions       │
 │ directives: v-permission(读 route.meta.btns 的 code，无权限 el.remove)   │
 │ 全局注入: $message $dialog $notification $loadingBar (挂在 window)       │
 └──────────────────────────────────────────────────────────────────────────┘
                                │
                                ▼ mount 后首次导航，触发 beforeEach 守卫链
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ 【路由入口控制层】router/index.js · basic-routes.js · guards/            │
+│ 【路由入口控制层】router/index.ts · basic-routes.ts · guards/            │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ basic-routes: /login(layout empty) · /(首页) · /404 · /403(empty)        │
 │ guards/index: 按序注册 4 个守卫(注册序=执行序)                           │
@@ -89,7 +89,7 @@
 │   ┌────────┬──────────────────┬─────────────────────────────────────┐    │
 │   │ 骨架名 │ 来源             │ 组成与差异                          │    │
 │   ├────────┼──────────────────┼─────────────────────────────────────┤    │
-│   │ normal │ settings.js 默认 │ 侧栏 + Header(内嵌 Tab) + 内容      │    │
+│   │ normal │ settings.ts 默认 │ 侧栏 + Header(内嵌 Tab) + 内容      │    │
 │   │ full   │ LayoutSetting    │ 侧栏 + Header(面包屑) + 独立 Tab 行 │    │
 │   │ simple │ LayoutSetting    │ 仅侧栏 + 内容；侧栏底部头像/折叠钮  │    │
 │   │ empty  │ meta.layout      │ 裸 slot；登录 / 403 / 404 专用      │    │
@@ -184,9 +184,9 @@
 │   └ 否则 resolveResError(code) ► reject({code, message})                 │
 │ helpers: 401/11007/11008 ► $dialog 重新登录(防重复锁 isConfirming)       │
 │   403/404/500 ► $message.error 中文文案；needTip:false 可静音            │
-│ api/index.js: getUser · refreshToken · logout · switchCurrentRole        │
+│ api/index.ts: getUser · refreshToken · logout · switchCurrentRole        │
 │   · getRolePermissions · validateMenuPath (认证/权限专用)                │
-│ views/*/api.js: 各模块 CRUD 就近存放(login/user/role/resource/profile)   │
+│ views/*/api.ts: 各模块 CRUD 就近存放(login/user/role/resource/profile)   │
 │ ===► 后端接口: dev 走 /api 代理，prod 走 VITE_AXIOS_BASE_URL             │
 └──────────────────────────────────────────────────────────────────────────┘
                                │
@@ -196,8 +196,8 @@
 ├──────────────────────────────────────────────────────────────────────────┤
 │ storage/: Storage 类(前缀 vue-naive-admin_ + JSON + expire 惰性清理)     │
 │   ► lStorage / sStorage (登录页记住账号密码用)                           │
-│ is.js: isExternal/isNullOrUndef/... · common.js: formatDateTime/         │
-│   throttle/debounce/sleep · naiveTools.js: createDiscreteApi             │
+│ is.ts: isExternal/isNullOrUndef/... · common.ts: formatDateTime/         │
+│   throttle/debounce/sleep · naiveTools.ts: createDiscreteApi             │
 │ styles/ reset.css · global.css(--primary-color) · assets/icons           │
 │ 第三方: Vue 3.5 · Pinia 3 · Naive UI 2 · UnoCSS · axios · lodash-es      │
 │   @vueuse/core · dayjs · echarts · vue-echarts · xlsx 等                 │
@@ -207,7 +207,7 @@
 ┌──────────────────────────────────────────────────────────────────────────┐
 │ 【反向支撑】(▲ 下层不主动调用上层，只被借用)                             │
 ├──────────────────────────────────────────────────────────────────────────┤
-│ views/*/api.js ──注入为 doCreate/doUpdate/doDelete──► useCrud 执行       │
+│ views/*/api.ts ──注入为 doCreate/doUpdate/doDelete──► useCrud 执行       │
 │ 页面 refresh 回调 ──注入──► useCrud.refresh ╌╌► MeCrud.handleSearch      │
 │ useModal.modalRef ╌╌► MeModal.open/close(模板 ref 遥控，零 import)       │
 │ permissionStore.menus ──借阅──► SideMenu 渲染 n-menu                     │
@@ -226,7 +226,7 @@
                                │
                                ▼ pnpm dev / pnpm build 启动工程化框架
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ 【构建期框架】vite.config.js + uno.config.js + build/ (Vite 8)           │
+│ 【构建期框架】vite.config.ts + uno.config.ts + build/ (Vite 8)           │
 ├──────────────────────────────────────────────────────────────────────────┤
 │   @vitejs/plugin-vue + vue-jsx ──► 编译 .vue / .jsx                      │
 │   unocss/vite + uno.config ──► 原子类 + i-me:/i-fe: 图标 + safelist      │
@@ -243,7 +243,7 @@
                                │
                                ▼ 构建期把"免 import/免注册/虚拟模块"烧进产物
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ 【运行期框架】package.json dependencies ► main.js 装配                   │
+│ 【运行期框架】package.json dependencies ► main.ts 装配                   │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ Vue 3.5: 应用实例 + 响应式/组合式 API(createApp/computed/watch)          │
 │   ├ Vue Router 5: URL ► 组件调度 + 导航闸门(4 守卫 + addRoute)           │
@@ -286,7 +286,7 @@
                                │
                                ▼ ① 用户提交账号密码 (接口免 token)
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ ① 【登录页】views/login/index.vue + views/login/api.js                   │
+│ ① 【登录页】views/login/index.vue + views/login/api.ts                   │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ api.login({username,password,captcha}) ──► POST /auth/login (免token)    │
 │ code 10003(验证码错) ──► 刷新验证码；成功 ──► authStore.setToken(data)   │
@@ -297,7 +297,7 @@
                                │
                                ▼ ② 目标路由未注册 ► 守卫补数据 + 注册路由
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ ② 【权限守卫】router/guards/permission-guard.js (beforeEach)             │
+│ ② 【权限守卫】router/guards/permission-guard.ts (beforeEach)             │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ 有 token、非 /login、非白名单 ──► 继续；userStore.userInfo 为空(刷新)    │
 │ ► Promise.all[getUserInfo(), getPermissions()] 并发取回纯数据            │
@@ -339,7 +339,7 @@
 | 层             | 输入                                        | 交付                                                                    | 消费方                                          |
 | -------------- | ------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------- |
 | 工程启动层     | `package.json` 脚本 · `.env*`               | 插件链、虚拟模块 `isme:*`、别名 `@/~`、`/api` 代理                      | 构建产物 `dist/`、浏览器 Dev Server             |
-| 应用引导层     | `App.vue` · `settings.js`                   | 装配完成的 app 实例 + 全局 `$message/$dialog/$notification/$loadingBar` | 全部组件与 store                                |
+| 应用引导层     | `App.vue` · `settings.ts`                   | 装配完成的 app 实例 + 全局 `$message/$dialog/$notification/$loadingBar` | 全部组件与 store                                |
 | 路由入口控制层 | 静态路由表 · token · 后端权限数据           | 动态路由表、放行/重定向决策、页面标题、标签写入                         | `App.vue` · permission/user store · tab store   |
 | 布局渲染层     | `appStore.layout` · `permissionStore.menus` | 4 套骨架 + 菜单/面包屑/多标签                                           | 页面组件                                        |
 | 页面组件层     | 接口函数 · 列配置                           | 业务 UI 与交互                                                          | 用户                                            |
@@ -353,19 +353,18 @@
 
 | 文件                                | 输入 → 交付 → 消费方                                                                   |
 | ----------------------------------- | -------------------------------------------------------------------------------------- |
-| `vite.config.js`                    | 环境变量 + 源码 → 插件管线/别名/代理 → Vite 与业务代码                                 |
-| `build/index.js`                    | `globSync` 扫图标与页面 → `getIcons()/getPagePathes()` → 两个自定义插件 + `uno.config` |
-| `main.js`                           | `App.vue` → 装配顺序 → 浏览器 DOM                                                      |
+| `vite.config.ts`                    | 环境变量 + 源码 → 插件管线/别名/代理 → Vite 与业务代码                                 |
+| `build/index.ts`                    | `globSync` 扫图标与页面 → `getIcons()/getPagePathes()` → 两个自定义插件 + `uno.config` |
+| `main.ts`                           | `App.vue` → 装配顺序 → 浏览器 DOM                                                      |
 | `App.vue`                           | `route.meta.layout`/tabStore → 异步 Layout + KeepAlive 壳 → 页面组件                   |
-| `store/helper.js`                   | `api.getUser`/`api.getRolePermissions` → 归一化用户与权限 → permission-guard           |
-| `router/guards/permission-guard.js` | token + userInfo → 放行/重定向/注册动态路由 → router                                   |
+| `store/helper.ts`                   | `api.getUser`/`api.getRolePermissions` → 归一化用户与权限 → permission-guard           |
+| `router/guards/permission-guard.ts` | token + userInfo → 放行/重定向/注册动态路由 → router                                   |
 | `components/me/crud/index.vue`      | `:columns :get-data :query-items` → 表格数据/导出文件 → 4 个列表页                     |
-| `composables/useCrud.js`            | 页面注入的接口函数 → 弹窗+表单+保存闭环 → 页面模板 ref                                 |
-| `utils/http/interceptors.js`        | 请求配置 → 附加 Bearer / 校验业务码 → 所有 api 调用方                                  |
-| `utils/http/helpers.js`             | 错误码 → 中文提示 / 重新登录确认框 → 拦截器                                            |
-| `utils/storage/storage.js`          | key/value/expire → 带前缀与过期机制的读写 → `lStorage/sStorage`（登录页）              |
-| `utils/naiveTools.js`               | Naive UI 组件 → `createDiscreteApi` → `window.$message` 等全局                         |
-| `composables/useAliveData.js`       | 路由名 → 缓存数据 → **暂未使用**                                                       |
+| `composables/useCrud.ts`            | 页面注入的接口函数 → 弹窗+表单+保存闭环 → 页面模板 ref                                 |
+| `utils/http/interceptors.ts`        | 请求配置 → 附加 Bearer / 校验业务码 → 所有 api 调用方                                  |
+| `utils/http/helpers.ts`             | 错误码 → 中文提示 / 重新登录确认框 → 拦截器                                            |
+| `utils/storage/storage.ts`          | key/value/expire → 带前缀与过期机制的读写 → `lStorage/sStorage`（登录页）              |
+| `utils/naiveTools.ts`               | Naive UI 组件 → `createDiscreteApi` → `window.$message` 等全局                         |
 
 ## 五、值得吃透的设计点
 
@@ -377,4 +376,4 @@
 
 **④ 构建期把复杂度前置了。** 免 `import`（auto-import）、免注册（vue-components + NaiveUiResolver，连 `ThemeSetting`/`TheLogo` 都是自动注册）、虚拟模块（`isme:icons`/`isme:page-pathes`）三件事让业务代码几乎没有样板；代价是**符号来源在文件里看不见**，读代码时需要知道这三条链路存在，否则会在 `src/` 里找不到 `ref`、`$message`、`NDataTable` 是从哪来的。
 
-**⑤ 一处真实的破例，知道即可，不必照抄。** 分层规则说"下层不 import 上层"，但 `utils/http/interceptors.js` 与 `helpers.js` 都 `import { useAuthStore } from '@/store'`——网络层为了取 token 与登出，反向依赖了状态层（图中标为 `◄── 反向依赖`）。它工作得很好，但这意味着 `utils/http` **不能脱离 Pinia 单独复用**；若将来要抽成独立请求库，这里是第一道要拆的墙。
+**⑤ 依赖注入点（曾经的破例，已整改）。** 分层规则说"下层不 import 上层"；早期 `utils/http` 曾为取 token 反向依赖 auth store，现改为 `setupHttpAuth()` 注入：应用入口 `main.ts` 在 store 装配后把 `getAccessToken/logout` 两个能力注入 http 层，`utils` 保持零上层依赖，可独立复用。同理 `setupNaiveDiscreteApi` 的主题以 `ComputedRef` 由入口注入。

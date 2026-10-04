@@ -1,9 +1,17 @@
 import type { GlobalThemeOverrides } from 'naive-ui'
 import type { PermissionItem } from '@/types/models'
 
-export type LayoutMode = 'normal' | 'full' | 'empty' | 'simple'
+/** 四种布局常量（LayoutMode 由 keyof typeof 派生，两处永远一致） */
+export const LAYOUT_MODES = ['normal', 'full', 'empty', 'simple'] as const
+
+export type LayoutMode = typeof LAYOUT_MODES[number]
 
 export const defaultLayout: LayoutMode = 'normal'
+
+/** 后端返回的 layout 字符串归一为 LayoutMode：合法值直通，缺省/非法值回退默认布局 */
+export function toLayoutMode(value: string | null | undefined): LayoutMode {
+  return LAYOUT_MODES.find(mode => mode === value) ?? defaultLayout
+}
 
 export const defaultPrimaryColor = '#316C72'
 
@@ -19,7 +27,8 @@ export const naiveThemeOverrides: GlobalThemeOverrides = {
   },
 }
 
-export const basePermissions: PermissionItem[] = [
+/** satisfies 保留字面量最窄推断，同时校验静态数据形状与 PermissionItem 契约一致 */
+export const basePermissions = [
   {
     code: 'ExternalLink',
     name: '外链(可内嵌打开)',
@@ -71,4 +80,4 @@ export const basePermissions: PermissionItem[] = [
       },
     ],
   },
-]
+] satisfies PermissionItem[]

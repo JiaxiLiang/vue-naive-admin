@@ -160,12 +160,13 @@ async function handleLogin(isQuick?: boolean) {
   loading.value = false
 }
 
-async function onLoginSuccess(data: LoginToken = {} as LoginToken) {
+async function onLoginSuccess(data: LoginToken) {
   authStore.setToken(data)
   $message.loading('登录中...', { key: 'login' })
   try {
     $message.success('登录成功', { key: 'login' })
     if (route.query.redirect) {
+      // redirect 由权限守卫以 to.path（字符串）写入
       const path = route.query.redirect as string
       delete route.query.redirect
       router.push({ path, query: route.query })

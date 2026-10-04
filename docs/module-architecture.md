@@ -17,29 +17,28 @@ flowchart TD
         CRUD["crud/index.vue · MeCrud<br/>表格+搜索+分页+导出 三位一体<br/>expose: handleSearch / handleReset / handleExport"]
         QITEM["crud/QueryItem.vue · MeQueryItem<br/>搜索项排版小件(label + 定宽内容区)"]
         MODAL["modal/index.vue · MeModal<br/>万能弹窗壳<br/>expose: open / close / handleOk / okLoading"]
-        DRAG["modal/utils.js<br/>initDrag 拖拽(纯 DOM,不依赖 Vue)"]
+        DRAG["modal/utils.ts<br/>initDrag 拖拽(纯 DOM,不依赖 Vue)"]
     end
 
     %% ========== 逻辑层 ==========
     subgraph HOOK["③ 逻辑层 src/composables/ (交互动作)"]
-        IDX["index.js 桶文件<br/>统一 re-export"]
-        USECRUD["useCrud.js ★ 总装车间<br/>组合 useModal + useForm<br/>handleAdd / Edit / View / Open / Save / Delete"]
-        USEMODAL["useModal.js 弹窗遥控器<br/>modalRef + okLoading(读写代理到 MeModal)"]
-        USEFORM["useForm.js 表单管家<br/>formRef / formModel / validation / rules"]
-        ALIVE["useAliveData.js 路由级数据缓存<br/>(暂未使用)"]
+        IDX["index.ts 桶文件<br/>统一 re-export"]
+        USECRUD["useCrud.ts ★ 总装车间<br/>组合 useModal + useForm<br/>handleAdd / Edit / View / Open / Save / Delete"]
+        USEMODAL["useModal.ts 弹窗遥控器<br/>modalRef + okLoading(读写代理到 MeModal)"]
+        USEFORM["useForm.ts 表单管家<br/>formRef / formModel / validation / rules"]
     end
 
     %% ========== 网络层 ==========
     subgraph HTTP["④ 网络层 src/utils/http/"]
-        AXIDX["index.js · createAxios<br/>产出 request / mockRequest 两个实例<br/>(baseURL + timeout)"]
-        INTC["interceptors.js · setupInterceptors<br/>请求: 自动附加 Bearer token<br/>响应: 业务码白名单 [0,200] 放行,否则走错误解析"]
-        HELP["helpers.js · resolveResError<br/>401/11007/11008 → 重新登录确认框(防重复锁)<br/>403/404/500 → 中文提示 + $message.error"]
+        AXIDX["index.ts · createAxios<br/>产出 request / mockRequest 两个实例<br/>(baseURL + timeout)"]
+        INTC["interceptors.ts · setupInterceptors<br/>请求: 自动附加 Bearer token<br/>响应: 业务码白名单 [0,200] 放行,否则走错误解析"]
+        HELP["helpers.ts · resolveResError<br/>401/11007/11008 → 重新登录确认框(防重复锁)<br/>403/404/500 → 中文提示 + $message.error"]
     end
 
     %% ========== 存储层 ==========
     subgraph STOR["⑤ 存储层 src/utils/storage/"]
-        SIDX["index.js<br/>lStorage / sStorage 实例<br/>统一前缀 vue-naive-admin_"]
-        SCLS["storage.js · Storage 类<br/>getKey / set / get / getItem / remove / clear<br/>自带过期时间机制"]
+        SIDX["index.ts<br/>lStorage / sStorage 实例<br/>统一前缀 vue-naive-admin_"]
+        SCLS["storage.ts · Storage 类<br/>getKey / set / get / getItem / remove / clear<br/>自带过期时间机制"]
     end
 
     %% ========== 外部依赖 ==========
@@ -136,21 +135,21 @@ sequenceDiagram
 | `components/me/crud/index.vue`     | 表格+搜索+分页+导出的半成品                         | MeCrud(expose: handleSearch/handleReset/handleExport)      |
 | `components/me/crud/QueryItem.vue` | 搜索项排版件                                        | MeQueryItem(label + 定宽插槽)                              |
 | `components/me/modal/index.vue`    | 可拖拽万能弹窗壳                                    | MeModal(expose: open/close/handleOk/okLoading)             |
-| `components/me/modal/utils.js`     | 纯 DOM 拖拽实现                                     | initDrag(bar, box)                                         |
-| `composables/useCrud.js`           | ★ 总装:把弹窗+表单+接口+提示+刷新串成标准 CRUD 循环 | useCrud({name, initForm, doCreate/Delete/Update, refresh}) |
-| `composables/useForm.js`           | 表单状态与校验                                      | useForm → [formRef, formModel, validation, rules]          |
-| `composables/useModal.js`          | 用 ref 遥控 MeModal                                 | useModal → [modalRef, okLoading]                           |
-| `composables/useAliveData.js`      | 按路由名缓存组件数据(暂未使用)                      | useAliveData                                               |
-| `utils/http/index.js`              | axios 实例工厂                                      | createAxios / request / mockRequest                        |
-| `utils/http/interceptors.js`       | 请求附 token、响应验业务码                          | setupInterceptors                                          |
-| `utils/http/helpers.js`            | 错误码 → 中文提示 / 重新登录弹窗                    | resolveResError                                            |
-| `utils/storage/index.js`           | 带前缀的存储实例                                    | lStorage / sStorage                                        |
-| `utils/storage/storage.js`         | 存储类(JSON 序列化 + 过期时间)                      | createStorage / Storage                                    |
+| `components/me/modal/utils.ts`     | 纯 DOM 拖拽实现                                     | initDrag(bar, box)                                         |
+| `composables/useCrud.ts`           | ★ 总装:把弹窗+表单+接口+提示+刷新串成标准 CRUD 循环 | useCrud({name, initForm, doCreate/Delete/Update, refresh}) |
+| `composables/useForm.ts`           | 表单状态与校验                                      | useForm → [formRef, formModel, validation, rules]          |
+| `composables/useModal.ts`          | 用 ref 遥控 MeModal                                 | useModal → [modalRef, okLoading]                           |
+| `composables/useAliveData.ts`      | 按路由名缓存组件数据(暂未使用)                      | useAliveData                                               |
+| `utils/http/index.ts`              | axios 实例工厂                                      | createAxios / request / mockRequest                        |
+| `utils/http/interceptors.ts`       | 请求附 token、响应验业务码                          | setupInterceptors                                          |
+| `utils/http/helpers.ts`            | 错误码 → 中文提示 / 重新登录弹窗                    | resolveResError                                            |
+| `utils/storage/index.ts`           | 带前缀的存储实例                                    | lStorage / sStorage                                        |
+| `utils/storage/storage.ts`         | 存储类(JSON 序列化 + 过期时间)                      | createStorage / Storage                                    |
 
 ## 四、设计要点
 
 1. **三层蛋糕**:naive-ui 零件 → components/me 半成品 → views 业务页。业务页只写"配置 + 接口函数",一行 `<MeCrud/>` 出整页。
 2. **useCrud 是唯一的"胶水"**:组件层(Modal/Form)和网络层(request)互相不认识,全靠 useCrud 在页面 setup 里把它们串起来;`modalRef → MeModal` 是**运行时 ref 连接**,不是 import 依赖,所以逻辑层与组件层零耦合。
 3. **约定优于配置**:MeCrud 约定出参 `{ pageData, total }`、入参 `{ pageNo, pageSize }`;拦截器约定业务成功码 `[0, 200]`;`needToken: false`、`needTip: false` 可在单个请求上关闭默认行为。
-4. **错误处理收口在 helpers.js**:所有 HTTP 异常最终都汇到 `resolveResError`,401/11007/11008 触发带防重复锁的"重新登录"确认框,页面层 catch 里只需 `console.error`。
+4. **错误处理收口在 helpers.ts**:所有 HTTP 异常最终都汇到 `resolveResError`,401/11007/11008 触发带防重复锁的"重新登录"确认框,页面层 catch 里只需 `console.error`。
 5. **storage 与 http 是平行基础设施**:两者互不依赖,共同的上游是 `useAuthStore`(token 存取、登录态持久化)。

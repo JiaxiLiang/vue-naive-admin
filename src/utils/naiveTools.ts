@@ -1,15 +1,13 @@
 import type {
   ConfigProviderProps,
   DialogApi,
-  DialogOptions,
   MessageApi,
   MessageReactive,
 } from 'naive-ui'
-import type { ComputedRef, VNodeChild } from 'vue'
-import type { KeyedMessageOptions, WrappedDialog, WrappedMessage } from '@/types/global'
+import type { ComputedRef } from 'vue'
+import type { KeyedMessageOptions, WrappedDialog, WrappedMessage, WrappedMessageContent } from '@/types/global'
 import * as NaiveUI from 'naive-ui'
-import { useAppStore } from '@/store'
-import { isNullOrUndef } from '@/utils'
+import { isNullOrUndef } from '@/utils/is'
 
 type MessageType = 'loading' | 'success' | 'error' | 'info' | 'warning'
 
@@ -41,7 +39,7 @@ export function setupMessage(NMessage: MessageApi): WrappedMessage {
       }, duration)
     }
 
-    showMessage(type: MessageType, content: string | string[], option: KeyedMessageOptions = {}): MessageReactive | undefined {
+    showMessage(type: MessageType, content: WrappedMessageContent, option: KeyedMessageOptions = {}): MessageReactive | undefined {
       if (Array.isArray(content)) {
         content.forEach(msg => NMessage[type](msg, option))
         return undefined
@@ -69,27 +67,27 @@ export function setupMessage(NMessage: MessageApi): WrappedMessage {
       return undefined
     }
 
-    loading(content: string | string[], option?: KeyedMessageOptions): MessageReactive | undefined {
+    loading(content: WrappedMessageContent, option?: KeyedMessageOptions): MessageReactive | undefined {
       this.showMessage('loading', content, option)
       return undefined
     }
 
-    success(content: string | string[] | (() => VNodeChild), option?: KeyedMessageOptions): MessageReactive | undefined {
-      this.showMessage('success', content as string, option)
+    success(content: WrappedMessageContent, option?: KeyedMessageOptions): MessageReactive | undefined {
+      this.showMessage('success', content, option)
       return undefined
     }
 
-    error(content: string | string[], option?: KeyedMessageOptions): MessageReactive | undefined {
+    error(content: WrappedMessageContent, option?: KeyedMessageOptions): MessageReactive | undefined {
       this.showMessage('error', content, option)
       return undefined
     }
 
-    info(content: string | string[], option?: KeyedMessageOptions): MessageReactive | undefined {
+    info(content: WrappedMessageContent, option?: KeyedMessageOptions): MessageReactive | undefined {
       this.showMessage('info', content, option)
       return undefined
     }
 
-    warning(content: string | string[], option?: KeyedMessageOptions): MessageReactive | undefined {
+    warning(content: WrappedMessageContent, option?: KeyedMessageOptions): MessageReactive | undefined {
       this.showMessage('warning', content, option)
       return undefined
     }
@@ -99,12 +97,21 @@ export function setupMessage(NMessage: MessageApi): WrappedMessage {
 }
 
 export function setupDialog(NDialog: DialogApi): WrappedDialog {
+  // 各类型弹窗 API 的分发表：DialogOptions['type'] 中的 'default' 没有对应的离散方法，
+  // 直接在 confirm 的入参类型里排除，运行时索引恒安全
+  const apiByType = {
+    info: NDialog.info,
+    success: NDialog.success,
+    warning: NDialog.warning,
+    error: NDialog.error,
+  } as const
+
   // 给 confirm 挂上简化版 confirm/cancel 回调（WrappedDialog 的扩展字段）
+  // 断言依据：confirm 由下一行立即挂载，返回值满足 WrappedDialog 契约
   const dialog = NDialog as WrappedDialog
-  dialog.confirm = function (option: Partial<DialogOptions> & { confirm?: () => void, cancel?: () => void } = {}) {
+  dialog.confirm = function (option = {}) {
     const showIcon = !isNullOrUndef(option.title)
-    // DialogOptions['type'] 含 'default'，DialogApi 无对应方法，索引断言绕过
-    return (NDialog as any)[option.type || 'warning']({
+    return apiByType[option.type ?? 'warning']({
       showIcon,
       positiveText: '确定',
       negativeText: '取消',
@@ -112,20 +119,17 @@ export function setupDialog(NDialog: DialogApi): WrappedDialog {
       onNegativeClick: option.cancel,
       onMaskClick: option.cancel,
       ...option,
-    }) as any
+    })
   }
 
   return dialog
 }
 
-export function setupNaiveDiscreteApi(): void {
-  const appStore = useAppStore()
-  // naive-ui 的 GlobalThemeOverrides 与 ConfigProviderProps['themeOverrides'] 存在深层型变不兼容（官方已知类型缺陷），
-  // 文档写法 computed<ConfigProviderProps> 在本版本编译不过，故用断言
-  const configProviderProps = computed(() => ({
-    theme: appStore.isDark ? NaiveUI.darkTheme : undefined,
-    themeOverrides: useAppStore().naiveThemeOverrides,
-  })) as unknown as ComputedRef<ConfigProviderProps>
+/**
+ * 装配 naive 离散 API（$message/$dialog/$notification/$loadingBar 挂到 window）。
+ * 主题以 ComputedRef 形式由调用方注入（应用入口在 store 就绪后装配），utils 不反向依赖 store。
+ */
+export function setupNaiveDiscreteApi(configProviderProps: ComputedRef<ConfigProviderProps>): void {
   const { message, dialog, notification, loadingBar } = NaiveUI.createDiscreteApi(
     ['message', 'dialog', 'notification', 'loadingBar'],
     { configProviderProps },

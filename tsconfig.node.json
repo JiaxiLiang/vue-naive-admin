@@ -1,0 +1,32 @@
+{
+  // 构建工具链的独立类型工程：vite/uno/eslint 配置与 build/ 脚本运行在 Node 侧，
+  // 与 src（DOM）分工程检查，避免 DOM/Node 全局类型互相污染（A1 附加核对要求）
+  "compilerOptions": {
+    "target": "ESNext",
+    "lib": ["ESNext"],
+    "baseUrl": ".",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "paths": {
+      "@/*": ["src/*"],
+      "~/*": ["./*"]
+    },
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "vite.config.ts",
+    "vitest.config.ts",
+    "uno.config.ts",
+    "eslint.config.ts",
+    "build/**/*.ts",
+    "src/assets/icons/dynamic-icons.ts",
+    "src/types/icons.ts"
+  ]
+}

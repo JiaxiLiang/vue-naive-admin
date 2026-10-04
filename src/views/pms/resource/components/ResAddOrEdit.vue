@@ -151,6 +151,7 @@
 </template>
 
 <script setup lang="ts">
+import type { TreeSelectOption } from 'naive-ui'
 import type { ModalAction } from '@/composables'
 import type { ModalOptions } from '@/types/me-components'
 import type { PermissionItem } from '@/types/models'
@@ -166,12 +167,14 @@ const props = defineProps<{
   menus: PermissionItem[]
 }>()
 const emit = defineEmits<{
-  refresh: [data?: any]
+  refresh: [data?: PermissionItem]
 }>()
 
-const menuOptions = computed(() => {
-  // n-tree-select 的 TreeSelectOption 用 label/key 字段，这里用后端的 name/id，断言交给运行时字段名配置
-  return [{ name: '根菜单', id: '', children: props.menus || [] }] as any
+/** 树选择选项：n-tree-select 用 label/key 字段，本项目经 label-field="name" key-field="id" 映射为后端字段 */
+type MenuSelectOption = TreeSelectOption & { name?: string, id?: number | string }
+
+const menuOptions = computed<MenuSelectOption[]>(() => {
+  return [{ name: '根菜单', id: '', children: props.menus || [] }]
 })
 const componentOptions = pagePathes.map(path => ({ label: path, value: path }))
 const iconOptions = icons.map(item => ({
@@ -193,7 +196,7 @@ const required = {
 }
 
 const defaultForm = { enable: true, show: true, layout: '' }
-const [modalFormRef, modalForm, validation] = useForm()
+const [modalFormRef, modalForm, validation] = useForm<Partial<PermissionItem>>({})
 const [modalRef, okLoading] = useModal()
 
 const modalAction = ref<ModalAction>('')
@@ -224,11 +227,13 @@ async function onSave() {
       newFormData = res.data
     }
     else if (modalAction.value === 'edit') {
-      await api.savePermission(modalForm.value.id, modalForm.value)
+      // 编辑动作只能从树节点行进入，行数据携带后端 id，校验通过后必有值
+      await api.savePermission(modalForm.value.id!, modalForm.value)
     }
     okLoading.value = false
     $message.success('保存成功')
-    emit('refresh', modalAction.value === 'add' ? newFormData : modalForm.value)
+    // 编辑态表单由树节点行展开而来（code/name/type 必有），新增态直接用后端返回的实体
+    emit('refresh', modalAction.value === 'add' ? newFormData : modalForm.value as PermissionItem)
   }
   catch (error) {
     console.error(error)

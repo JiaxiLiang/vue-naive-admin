@@ -1,4 +1,3 @@
-import type { LayoutMode } from '@/settings'
 //  权限状态仓库：动态路由表、菜单数据、按钮权限码
 // pinia仓库的返回值都是一个对象整合了{ state: ..., actions: ... }
 // pinia的核心还是存储状态 提供方法修改状态（数据加工） 全局共享状态 他是不做后端取数据的
@@ -13,6 +12,7 @@ import type { AccessRoute, MenuItem, PermissionItem } from '@/types/models'
 import { hyphenate } from '@vueuse/core'
 // 第三方库 VueUse 的连字符转换工具函数
 import { defineStore } from 'pinia' // 引入 Pinia 的 defineStore 方法定义仓库
+import { toLayoutMode } from '@/settings'
 import { isExternal } from '@/utils'
 // 自定义工具函数，用于判断是否为外部链接
 
@@ -42,7 +42,7 @@ export const usePermissionStore = defineStore('permission', { // 定义并导出
     getMenuItem(item: PermissionItem, parent?: MenuItem): MenuItem | null { // 递归生成菜单项的方法
       // item就是后端发出的json转换成的js对象（里面有属性和数组的纯数据）
       // pare是代表父菜单第一次初始化调用的时候就是直接赋予null（用于递归 子菜单挂载父上）
-      const route = this.generateRoute(item, item.show ? null : (parent?.key as string | null))
+      const route = this.generateRoute(item, item.show ? null : (parent?.key ?? null))
       // show是显示属性  key唯一标识符 item就是
       // 生成路由对象函数 下面，第二参数是？：判断选择
       // ?: 三元运算符（只判断值的对错不判断这个值是否存在）  ?.可选链(就看后面是隔开还是) ?? 空值合并
@@ -52,7 +52,7 @@ export const usePermissionStore = defineStore('permission', { // 定义并导出
         // enable权限属性 startsWith字符串 方法判断开头是否是http
         this.accessRoutes.push(route)
         // push数组的方法将 把参数添加到数组的最后 该路由添加到可访问路由表中
-      const menuItem = {
+      const menuItem: MenuItem = {
         // 把后端数据转成js对象  构建菜单项对象给ui组件识别的
         label: route.meta.title, // 菜单显示的标题
         key: route.name, // 菜单的唯一标识，对应路由 name
@@ -63,7 +63,7 @@ export const usePermissionStore = defineStore('permission', { // 定义并导出
         // h创建虚拟 DOM 节点的核心函数 h('div', {}, '你好') i为html标签<i>这样
         // 形成<i>class：...
         order: item.order ?? 0, // 菜单排序权重，默认为 0
-      } as MenuItem
+      }
       const children = item.children?.filter(item => item.type === 'MENU') || []
       // 筛选出当前项下的子菜单 chi数组里面元素是属性也有数组（树状结构数据）前端接收的js对象就有了
       // 这里不直接给menuitem设计进 item.children是chi里面的数据还是纯数据没设计组件得递归解析出来
@@ -87,8 +87,8 @@ export const usePermissionStore = defineStore('permission', { // 定义并导出
     generateRoute(item: PermissionItem, parentKey: string | null): AccessRoute { // 生成标准的 Vue Router 路由对象
       // parentKey父菜单唯一标识 就是id
       let originPath // 声明变量存储原始路径
-      if (isExternal(item.path!)) { // 如果是外部链接
-        // isE函数导入函数 判断字符串是否是外部链接
+      if (item.path && isExternal(item.path)) { // 如果是外部链接
+        // isExternal函数导入函数 判断字符串是否是外部链接
         originPath = item.path // 保存原始外部链接地址
         item.component = '/src/views/iframe/index.vue'
         // component：是 Vue Router 配置中的核心属性，指定该路由要渲染哪个 Vue 组件
@@ -106,8 +106,8 @@ export const usePermissionStore = defineStore('permission', { // 定义并导出
           originPath, // 原始路径（外链时使用）
           icon: `${item.icon}?mask`, // 图标类名，添加 ?mask 参数
           title: item.name, // 页面标题
-          // 后端 layout 字符串与前端 LayoutMode 的契约妥协，见进度文档
-          layout: item.layout as LayoutMode, // 页面布局模式
+          // 后端 layout 字符串在边界归一为 LayoutMode（非法值回退默认布局，见 settings.toLayoutMode）
+          layout: toLayoutMode(item.layout), // 页面布局模式
           keepAlive: !!item.keepAlive, // 是否开启页面缓存
           parentKey, // 父级菜单的 key
           btns: item.children // 当前路由下的按钮权限列表

@@ -337,14 +337,14 @@
           <div class="head">
             <span class="num">1</span>
             <h2>入口引导层</h2>
-            <span class="path">src/main.js · App.vue · directives/ · settings.js</span
+            <span class="path">src/main.ts · App.vue · directives/ · settings.ts</span
             ><span class="desc">装配应用</span>
           </div>
           <div class="chips">
             <span class="chip solid">bootstrap() 启动编排</span>
             <span class="chip">setupStore → setupDirectives → setupRouter → mount → setupNaiveDiscreteApi</span>
             <span class="chip">v-permission / v-role 指令</span>
-            <span class="chip">settings.js 默认配置</span>
+            <span class="chip">settings.ts 默认配置</span>
           </div>
         </div>
 
@@ -421,7 +421,7 @@
             <span class="chip">useModal 弹窗遥控（modalRef / okLoading）</span>
             <span class="chip">useForm 表单状态与校验</span>
             <span class="chip">useAliveData 路由级数据缓存（暂未用）</span>
-            <span class="chip">index.js 桶文件统一 re-export</span>
+            <span class="chip">index.ts 桶文件统一 re-export</span>
           </div>
         </div>
 
@@ -454,8 +454,8 @@
             <span class="path">src/router/**</span><span class="desc">静态路由 + 4 守卫 + 动态路由</span>
           </div>
           <div class="chips">
-            <span class="chip">index.js createRouter（Hash / History 由 .env 决定）</span>
-            <span class="chip">basic-routes.js 静态路由</span>
+            <span class="chip">index.ts createRouter（Hash / History 由 .env 决定）</span>
+            <span class="chip">basic-routes.ts 静态路由</span>
             <span class="chip solid">permission-guard 权限与动态路由</span>
             <span class="chip">tab-guard 多标签</span>
             <span class="chip">page-loading-guard 加载态</span>
@@ -469,16 +469,16 @@
           <div class="head">
             <span class="num">8</span>
             <h2>服务接口层</h2>
-            <span class="path">src/api/index.js + src/views/**/api.js</span
+            <span class="path">src/api/index.ts + src/views/**/api.ts</span
             ><span class="desc">接口就近存放，统一聚合</span>
           </div>
           <div class="chips">
             <span class="chip"
               >api/index.js：getUser / refreshToken / logout / switchCurrentRole / getRolePermissions</span
             >
-            <span class="chip">views/login/api.js</span>
-            <span class="chip">views/pms/{user,role,resource}/api.js</span>
-            <span class="chip">views/profile/api.js</span>
+            <span class="chip">views/login/api.ts</span>
+            <span class="chip">views/pms/{user,role,resource}/api.ts</span>
+            <span class="chip">views/profile/api.ts</span>
           </div>
         </div>
 

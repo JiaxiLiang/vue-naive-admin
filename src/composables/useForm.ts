@@ -9,9 +9,9 @@ type ValidationResult = ReturnType<NonNullable<FormInst['validate']>>
 /**
  * @returns [formRef(挂到 n-form), formModel(响应式表单数据), validation(触发表单校验), rules(通用校验规则)]
  */
-export function useForm<T extends object = Record<string, any>>(initFormData: T = {} as T): [Ref<FormInst | null>, Ref<T>, () => ValidationResult | undefined, { required: FormItemRule }] {
+export function useForm<T extends object>(initFormData: T): [Ref<FormInst | null>, Ref<T>, () => ValidationResult | undefined, { required: FormItemRule }] {
   const formRef = ref<FormInst | null>(null)
-  // ref() 对泛型 T 返回 Ref<UnwrapRef<T>>，这里断言为 Ref<T>（表单数据是普通对象，UnwrapRef 等价）
+  // ref() 对泛型 T 返回 Ref<UnwrapRef<T>>，表单数据是普通对象两者等价，此处收口为 Ref<T>
   const formModel = ref(cloneDeep(initFormData)) as Ref<T>
   const rules = {
     required: {

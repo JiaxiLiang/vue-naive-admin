@@ -92,7 +92,7 @@ import api from './api'
 import MenuTree from './components/MenuTree.vue'
 import ResAddOrEdit from './components/ResAddOrEdit.vue'
 
-/** 按钮行数据：PermissionItem + 状态开关的运行时临时字段 */
+/** 按钮行数据：PermissionItem + 状态开关的行级 loading 态（前端 UI 字段，不来自后端） */
 type BtnRow = PermissionItem & { enableLoading?: boolean }
 
 const treeData = ref<PermissionItem[]>([])
@@ -115,7 +115,7 @@ async function initData(data?: PermissionItem) {
 initData()
 
 const modalRef = ref<InstanceType<typeof ResAddOrEdit> | null>(null)
-function handleEdit(item: PermissionItem = {} as PermissionItem) {
+function handleEdit(item: PermissionItem) {
   modalRef.value?.handleOpen({
     action: 'edit',
     title: `编辑菜单 - ${item.name}`,

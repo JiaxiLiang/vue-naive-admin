@@ -7,8 +7,8 @@
     :collapsed-icon-size="22"
     :collapsed-width="64"
     :collapsed="appStore.collapsed"
-    :options="(permissionStore.menus as any)"
-    :value="(activeKey as any)"
+    :options="permissionStore.menus"
+    :value="activeKey"
     @update:value="handleMenuSelect"
   />
 </template>
@@ -23,7 +23,8 @@ const route = useRoute()
 const appStore = useAppStore()
 const permissionStore = usePermissionStore()
 
-const activeKey = computed(() => route.meta?.parentKey || route.name)
+/** 本应用路由 name 均为字符串（权限 code / 基础路由字面量，见 generateRoute 与 basic-routes），无 symbol */
+const activeKey = computed(() => (route.meta?.parentKey ?? route.name ?? null) as string | null)
 
 const menu = ref<{ showOption: () => void } | null>(null)
 watch(route, async () => {
@@ -32,16 +33,19 @@ watch(route, async () => {
 })
 
 function handleMenuSelect(key: string, item: MenuOption | null) {
-  if (isExternal(item?.originPath as string)) {
+  // 项目菜单项是 MenuItem（PermissionItem 派生），originPath/path 为字符串字段（MenuOption 索引签名上是 unknown）
+  const originPath = item?.originPath as string | undefined
+  if (isExternal(originPath)) {
     $dialog.confirm({
       type: 'info',
       title: `请选择打开方式`,
       positiveText: '外链打开',
       negativeText: '在本站内嵌打开',
       confirm() {
-        window.open(item?.originPath as string)
+        window.open(originPath)
       },
       cancel: () => {
+        // 外链菜单的 path 已被 generateRoute 改写为 /iframe/xxx（此时必有值）
         router.push(item?.path as string)
       },
     })
@@ -49,7 +53,7 @@ function handleMenuSelect(key: string, item: MenuOption | null) {
   else {
     if (!item?.path)
       return
-    router.push(item?.path as string)
+    router.push(item?.path)
   }
 }
 </script>

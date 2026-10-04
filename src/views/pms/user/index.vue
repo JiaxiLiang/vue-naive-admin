@@ -24,7 +24,7 @@
       </MeQueryItem>
 
       <MeQueryItem label="性别" :label-width="50">
-        <n-select v-model:value="queryItems.gender" clearable :options="genders" />
+        <n-select v-model:value="queryItems.gender" clearable :options="GENDERS" />
       </MeQueryItem>
 
       <MeQueryItem label="状态" :label-width="50">
@@ -102,35 +102,26 @@
 </template>
 
 <script setup lang="ts">
-import type { DataTableColumn } from 'naive-ui'
-import type { Role, UserInfo } from '@/types/models'
-import type { ApiResult } from '@/utils/http'
-import { NAvatar, NButton, NSwitch, NTag } from 'naive-ui'
+import type { UserRow, UserTableColumn } from '@/composables'
+import type { Role, UserInfoQuery } from '@/types/models'
+import { NButton, NSwitch } from 'naive-ui'
 import { MeCrud, MeModal, MeQueryItem } from '@/components'
-import { useCrud } from '@/composables'
+import { GENDERS, getBaseUserColumns, useCrud, useEnableRow } from '@/composables'
 import { withPermission } from '@/directives'
-import { formatDateTime } from '@/utils'
 import api from './api'
 
 defineOptions({ name: 'UserMgt' })
 
-/** 行数据：UserInfo + render 里的运行时临时字段 enableLoading、列表接口返回的 createTime */
-type UserRow = UserInfo & { enableLoading?: boolean, createTime?: string }
 /** 弹窗表单：用户字段 + 新增时的 password、分配角色时的 roleIds */
 type UserForm = Partial<UserRow> & { password?: string, roleIds?: number[] }
 
 const $table = ref<{ handleSearch: (keepCurrentPage?: boolean) => void } | null>(null)
-/** QueryBar筛选参数（可选） */
-const queryItems = ref<Record<string, any>>({})
+const queryItems = ref<UserInfoQuery>({})
 
 onMounted(() => {
   $table.value?.handleSearch()
 })
 
-const genders = [
-  { label: '男', value: 1 },
-  { label: '女', value: 2 },
-]
 const roles = ref<Role[]>([])
 api.getAllRoles().then(({ data = [] }) => (roles.value = data))
 
@@ -147,63 +138,22 @@ const {
   name: '用户',
   initForm: { enable: true },
   doCreate: api.create,
-  // 编辑态表单必带 id，包装一层对齐 api 形状（运行时不变）
-  doDelete: api.delete as (id: number | string) => Promise<ApiResult<unknown>>,
-  doUpdate: (data: UserForm) => api.update(data as Partial<UserInfo> & { id: number }),
+  doDelete: api.delete,
+  doUpdate: api.update,
   refresh: () => $table.value?.handleSearch(),
 })
 
-// hideInExcel 是 MeCrud 导出 Excel 的自定义字段，naive-ui 列类型上没有，交叉类型补上
-const columns: Array<DataTableColumn<UserRow> & { hideInExcel?: boolean }> = [
-  {
-    title: '头像',
-    key: 'avatar',
-    width: 80,
-    render: ({ avatar }: UserRow) =>
-      h(NAvatar, {
-        size: 'medium',
-        src: avatar,
-      }),
-  },
-  { title: '用户名', key: 'username', width: 150, ellipsis: { tooltip: true } },
-  {
-    title: '角色',
-    key: 'roles',
-    width: 200,
-    ellipsis: { tooltip: true },
-    render: ({ roles }: UserRow) => {
-      if (roles?.length) {
-        return roles.map((item, index) =>
-          h(
-            NTag,
-            { type: 'success', style: index > 0 ? 'margin-left: 8px;' : '' },
-            { default: () => item.name },
-          ),
-        )
-      }
-      return '暂无角色'
-    },
-  },
-  {
-    title: '性别',
-    key: 'gender',
-    width: 80,
-    render: ({ gender }: UserRow) => genders.find(item => gender === item.value)?.label ?? '',
-  },
+const { handleEnable } = useEnableRow(api.update, () => $table.value?.handleSearch())
+
+// 基础展示列（头像/用户名/角色/性别/创建时间）来自共享的 getBaseUserColumns，本页只组装差异化列
+const columns: UserTableColumn[] = [
+  ...getBaseUserColumns(),
   { title: '邮箱', key: 'email', width: 150, ellipsis: { tooltip: true } },
-  {
-    title: '创建时间',
-    key: 'createDate',
-    width: 180,
-    render(row: UserRow) {
-      return h('span', formatDateTime(row.createTime))
-    },
-  },
   {
     title: '状态',
     key: 'enable',
     width: 120,
-    render: (row: UserRow) =>
+    render: row =>
       h(
         NSwitch,
         {
@@ -226,7 +176,7 @@ const columns: Array<DataTableColumn<UserRow> & { hideInExcel?: boolean }> = [
     align: 'right',
     fixed: 'right',
     hideInExcel: true,
-    render(row: UserRow) {
+    render(row) {
       return [
         withPermission(
           h(NButton, {
@@ -285,20 +235,6 @@ const columns: Array<DataTableColumn<UserRow> & { hideInExcel?: boolean }> = [
   },
 ]
 
-async function handleEnable(row: UserRow) {
-  row.enableLoading = true
-  try {
-    await api.update({ id: row.id, enable: !row.enable })
-    row.enableLoading = false
-    $message.success('操作成功')
-    $table.value?.handleSearch()
-  }
-  catch (error) {
-    console.error(error)
-    row.enableLoading = false
-  }
-}
-
 function handleOpenRolesSet(row: UserRow) {
   const roleIds = row.roles.map(item => item.id)
   handleOpen({
@@ -311,15 +247,17 @@ function handleOpenRolesSet(row: UserRow) {
 
 function onSave() {
   if (modalAction.value === 'setRole') {
+    // 'setRole' 动作由 handleOpenRolesSet 进入，row 必带 id
     return handleSave({
-      api: () => api.update(modalForm.value as Partial<UserInfo> & { id: number }),
+      api: () => api.update(modalForm.value as UserForm & { id: number }),
       cb: () => $message.success('分配成功'),
     })
   }
   else if (modalAction.value === 'reset') {
-    // 编辑时表单必带 id/password，断言对齐 api 形状
+    const { id, password } = modalForm.value
+    // 'reset' 动作只能从重置密码按钮进入：row 携带 id，password 为必填校验字段，校验通过后两者必有值
     return handleSave({
-      api: () => api.resetPwd(modalForm.value.id!, modalForm.value as { password: string }),
+      api: () => api.resetPwd(id!, { password } as { password: string }),
       cb: () => $message.success('密码重置成功'),
     })
   }

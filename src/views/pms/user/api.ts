@@ -1,14 +1,13 @@
-import type { PageResult, Role, UserInfo } from '@/types/models'
-import { request } from '@/utils' // ① 拿"加工过的 axios 实例"，不是裸 axios
+import type { Role, UserInfo, UserInfoQuery } from '@/types/models'
+import { createCrudApi } from '@/api'
+import { request } from '@/utils'
 
-// api.js 的本质就是：把"一次 HTTP 调用"包装成一个"有名字的 JS 函数"
-export default { // 默认导出
-  create: (data: Partial<UserInfo>) => request.post('/user', data),
-  // 列表查询：后端分页返回 PageResult，非分页返回完整数组
-  read: (params: Partial<UserInfo> & { pageNo?: number, pageSize?: number, enable?: number } = {}) =>
-    request.get<PageResult<UserInfo> | UserInfo[]>('/user', { params }),
-  update: (data: Partial<UserInfo> & { id: number }) => request.patch(`/user/${data.id}`, data),
-  delete: (id: number) => request.delete(`/user/${id}`),
+// api.ts 的本质就是：把"一次 HTTP 调用"包装成一个"有名字的 JS 函数"
+// CRUD 四件套由工厂生成；查询参数契约 UserInfoQuery 经 MeCrud 的 :get-data 反向推断到页面
+const crud = createCrudApi<UserInfo, UserInfoQuery>('/user')
+
+export default {
+  ...crud,
   resetPwd: (id: number, data: { password: string }) => request.patch(`/user/password/reset/${id}`, data),
 
   getAllRoles: () => request.get<Role[]>('/role?enable=1'),

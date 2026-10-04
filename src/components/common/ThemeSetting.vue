@@ -22,5 +22,6 @@ import { useAppStore } from '@/store'
 
 const appStore = useAppStore()
 
-const primaryColors = Object.entries(getPresetColors()).map(([, value]) => (value as { primary: string }).primary)
+// getPresetColors 的返回类型已在 arco-design-color.d.ts 声明为 Record<string, { primary: string }>，直接取值
+const primaryColors = Object.entries(getPresetColors()).map(([, value]) => value.primary)
 </script>

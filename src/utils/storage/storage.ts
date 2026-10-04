@@ -1,5 +1,4 @@
 // 封装好的本地存储类
-import { isNullOrUndef } from '@/utils' // 判断是unll还是undefined
 // 设计理念：
 // 1. STR：所调用的浏览器自带的仓库名。
 // 2. PRE：前缀名。
@@ -9,6 +8,13 @@ import { isNullOrUndef } from '@/utils' // 判断是unll还是undefined
 
 /** 浏览器原生 Storage（起别名，避免被下方同名类遮蔽） */
 type StorageLike = globalThis.Storage
+
+/** set 写入的信封结构：value 为业务数据，expire 为绝对过期时间戳（null 表示永不过期） */
+interface StoredEnvelope<T> {
+  value: T
+  time: number
+  expire: number | null
+}
 
 interface StorageOptions {
   /** 底层存储引擎 */
@@ -31,32 +37,29 @@ class Storage {
     return `${this.prefixKey}${key}`.toLowerCase() // tolo是转小写字符串自带
   }
 
-  // 设置数据 参数（数据名字 数据内容 过期时间）
+  // 设置数据 参数（数据名字 数据内容 过期时间/秒）
   set(key: string, value: unknown, expire?: number): void {
-    const stringData = JSON.stringify({
+    const envelope: StoredEnvelope<unknown> = {
       value,
       time: Date.now(),
-      expire: !isNullOrUndef(expire) ? Date.now() + expire * 1000 : null,
-    })
-    this.storage.setItem(this.getKey(key), stringData)
+      expire: expire !== undefined ? Date.now() + expire * 1000 : null,
+    }
+    this.storage.setItem(this.getKey(key), JSON.stringify(envelope))
   }
 
-  // 获取数据
-  get<T = unknown>(key: string): T | undefined {
-    const { value } = this.getItem(key, {}) as { value: T | undefined }
-    return value
-  }
-
-  getItem<T = unknown>(key: string, def: T = null as T): { value: T, time: number } | T {
-    const val = this.storage.getItem(this.getKey(key))
-    if (!val)
+  // 读取数据：未存储 / 已过期 / JSON 损坏统一走默认值分支（损坏与过期键读后即清除）
+  get<T>(key: string): T | undefined
+  get<T>(key: string, def: T): T
+  get<T>(key: string, def?: T): T | undefined {
+    const raw = this.storage.getItem(this.getKey(key))
+    if (raw === null)
       return def
     try {
-      const data = JSON.parse(val)
-      const { value, time, expire } = data
-      if (isNullOrUndef(expire) || expire > Date.now()) {
-        return { value, time }
-      }
+      // JSON.parse 的返回本质是任意 JSON 值，这里按写入时的信封结构收口；
+      // 形状不符（如裸数字/裸字符串）时解构得 undefined，进入过期分支走默认值，与旧实现一致
+      const { value, expire } = JSON.parse(raw) as StoredEnvelope<T>
+      if (expire === null || expire > Date.now())
+        return value
       this.remove(key)
       return def
     }

@@ -1,5 +1,8 @@
 // 应用状态：侧边栏状态、设备类型（移动/PC）、UI 设置
 // 仓库只管页面状态 不管数据 （是否折叠这种）
+import type { GlobalThemeOverrides } from 'naive-ui'
+import type { PersistenceOptions } from 'pinia-plugin-persistedstate'
+import type { WritableComputedRef } from 'vue'
 import type { LayoutMode } from '@/settings'
 import { generate, getRgbStr } from '@arco-design/color'
 // 第三方库 引入 Arco Design 的颜色生成与 RGB 格式转换工具
@@ -11,9 +14,24 @@ import { defaultLayout, defaultPrimaryColor, naiveThemeOverrides } from '@/setti
 // 引入全局配置中的默认布局、默认主色调及 Naive UI 主题覆盖对象
 // 里就会初始化页面的各种状态 （初始化就是白色的等）
 
+// 插件对深层主题 state 实例化 Path<State>[] 会触发 TS2589 爆栈（官方递归类型局限），
+// 因此 persist 选项整体以 PersistedStateOptions（非本 store 的 State 实例化）收口，
+// 字段名拼写安全由下面的 keyof AppState 校验兜底
+const persistedKeys = ['collapsed', 'layout', 'primaryColor', 'naiveThemeOverrides'] as const satisfies ReadonlyArray<keyof AppState>
+
 // pinia仓库三大板块：state：存放数据    getters：存放计算属性  actions：存放修改数据的方法
+interface AppState {
+  collapsed: boolean
+  /** state 工厂持有 useDark() 的 computed ref，pinia 对外解包为 boolean */
+  isDark: WritableComputedRef<boolean>
+  /** 布局模式；'' 为历史持久化值的过渡态（见 setupAppLayoutCompat），布局渲染时回退 meta.layout */
+  layout: LayoutMode | ''
+  primaryColor: string
+  naiveThemeOverrides: GlobalThemeOverrides
+}
+
 export const useAppStore = defineStore('app', { // 定义并导出名为 'app' 的仓库 {}把参数2打包成对象
-  state: () => ({ // 声明 Store 的初始状态工厂函数
+  state: (): AppState => ({ // 声明 Store 的初始状态工厂函数
     collapsed: false, // 侧边栏菜单是否折叠（默认不折叠）
     isDark: useDark(), // 是否开启暗黑模式，初始值由 useDark Hook 根据系统或缓存决定
     layout: defaultLayout, // 当前系统的布局模式（如侧边菜单、顶部菜单等）
@@ -45,16 +63,15 @@ export const useAppStore = defineStore('app', { // 定义并导出名为 'app' �
     },
     setThemeColor(color?: string, isDark?: boolean) {
       // 与原默认参数 this.primaryColor / this.isDark 等价（strict 下 this 不能用于默认参数位）
-      color = color ?? this.primaryColor
-      isDark = isDark ?? this.isDark
+      const themeColor = color ?? this.primaryColor
+      const dark = isDark ?? this.isDark
       // 生成并应用主题色到全局 CSS 变量和组件库的方法
-      const colors = generate(color, { // 调用第三方库生成对应的页面的调色板（一个数组存储）
+      const colors = generate(themeColor, { // 调用第三方库生成对应的页面的调色板（一个数组存储）
         list: true, // 以数组形式返回色板
-        dark: isDark, // 根据当前是否为暗黑模式生成对应的色板
+        dark, // 根据当前是否为暗黑模式生成对应的色板
       })
-      document.body.style.setProperty('--primary-color', getRgbStr(colors[5]))
-      // setProperty设置样式  参数--primary-color就是css代入颜色
-      // getRgbStr第三方 把十六进制函数转纯数字 [5]一般是最纯的色调
+      document.body.style.setProperty('--primary-color', getRgbStr(colors[5]!)) // setProperty设置样式  参数--primary-color就是css代入颜色
+      // getRgbStr第三方 把十六进制函数转纯数字 [5]一般是最纯的色调（arco list:true 恒返回 10 元素色板，索引必有值）
       // 将页面的主体的style中的--primary-color设置为[5]
       // 与原实现等价的拆写：Object.assign 原地修改 common（存在则同一引用），再赋回
       const common = this.naiveThemeOverrides.common || {}
@@ -71,13 +88,13 @@ export const useAppStore = defineStore('app', { // 定义并导出名为 'app' �
     },
   },
   persist: { // 配置 Pinia 的状态持久化插件
-    pick: ['collapsed', 'layout', 'primaryColor', 'naiveThemeOverrides'], // 指定需要被持久化存储的 state 字段
+    // 指定需要被持久化存储的 state 字段（keyof AppState 校验：字段名拼错编译期报错）
+    pick: [...persistedKeys],
     // pick是挑选可以保留的数据 数组的形式
     storage: sessionStorage,
     // 指定持久化存储的媒介为 sessionStorage（关闭浏览器标签页即清空）
     // storage存储媒介
-    // as any：插件的 pick?: Path<State>[] 会对深层主题 state 实例化到 TS2589 爆栈，断言绕过（字段与原实现完全一致）
-  } as any,
+  } as PersistenceOptions,
 })
 /*
 🎨 浏览器内核层次关系全景知识点 (HTML + CSS + DOM + Vue)

@@ -10,13 +10,4 @@ export function createLocalStorage(option: { prefixKey?: string } = {}) {
   })
 }
 
-export function createSessionStorage(option: { prefixKey?: string } = {}) {
-  return createStorage({
-    prefixKey: option.prefixKey || '',
-    storage: sessionStorage,
-  })
-}
-
 export const lStorage = createLocalStorage({ prefixKey })
-
-export const sStorage = createSessionStorage({ prefixKey })

@@ -6,13 +6,20 @@ import type { ApiResult } from '@/utils/http'
 import { cloneDeep } from 'lodash-es'
 import { useForm, useModal } from '.'
 
-/** 弹窗用途标识。内置三种，业务页可传任意扩展值（如 'reset'、'setRole'，见 user 页） */
-export type ModalAction = 'view' | 'edit' | 'add' | (string & {})
-
-const ACTIONS: Record<ModalAction, string> = {
+/** ACTIONS 常量的键即内置弹窗动作；新增内置动作只需在此常量加键值 */
+const ACTIONS: Partial<Record<ModalAction, string>> = {
   view: '查看',
   edit: '编辑',
   add: '新增',
+}
+
+/** useCrud 内置支持的弹窗动作 */
+export type BuiltinModalAction = 'view' | 'edit' | 'add'
+/** 弹窗用途标识。内置三种，业务页可传任意扩展值（如 'reset'、'setRole'，见 user 页） */
+export type ModalAction = BuiltinModalAction | (string & {})
+
+function isAddOrEdit(action: ModalAction): action is 'add' | 'edit' {
+  return action === 'add' || action === 'edit'
 }
 
 /** handleSave 的自定义动作（user 页 onSave 的 reset/setRole 分支传的就是它） */
@@ -26,8 +33,10 @@ export interface UseCrudOptions<T extends object> {
   name: string
   initForm?: Partial<T>
   doCreate: (data: Partial<T>) => Promise<ApiResult<unknown>>
-  doDelete: (id: number | string) => Promise<ApiResult<unknown>>
-  doUpdate: (data: Partial<T> & { id?: number }) => Promise<ApiResult<unknown>>
+  /** id 为后端主键，删除目标必存在，故必填 */
+  doDelete: (id: number) => Promise<ApiResult<unknown>>
+  /** 编辑保存的表单必带 id（行数据来自后端实体，见 handleSave 内的收口注释） */
+  doUpdate: (data: Partial<T> & { id: number }) => Promise<ApiResult<unknown>>
   /** 保存/删除成功后的刷新回调；第二参数含义见各页 refresh 实现（keepCurrentPage） */
   refresh: (data?: unknown, keepCurrentPage?: boolean) => void
 }
@@ -74,33 +83,36 @@ export function useCrud<T extends object>(options: UseCrudOptions<T>) {
     })
   }
 
-  /** 保存 */
+  const actions: Record<'add' | 'edit', SaveAction> = {
+    add: {
+      api: () => doCreate(modalForm.value),
+      cb: () => $message.success('新增成功'),
+    },
+    edit: {
+      // 编辑态表单由 handleEdit(row) 携带后端行数据进入，id 必有；该运行时事实编译器不可知，在此收口一次
+      api: () => doUpdate(modalForm.value as Partial<T> & { id: number }),
+      cb: () => $message.success('保存成功'),
+    },
+  }
+
+  /** 保存。返回值语义：false = 保存失败或守卫拦截；true = 保存成功（调用方仅用 !== false 判断，返回值本身未被消费） */
   async function handleSave(action?: SaveAction): Promise<boolean | undefined> {
+    const currentAction = modalAction.value
     // 无自定义 action 时，弹窗用途必须是 add/edit，否则直接失败返回
-    if (!action && !['edit', 'add'].includes(modalAction.value)) {
-      return false
+    if (!action) {
+      if (!isAddOrEdit(currentAction))
+        return false
+      action = actions[currentAction] // isAddOrEdit 收窄后索引安全
     }
+
     await validation()
-    const actions: Record<'add' | 'edit', SaveAction> = {
-      add: {
-        api: () => doCreate(modalForm.value),
-        cb: () => $message.success('新增成功'),
-      },
-      edit: {
-        api: () => doUpdate(modalForm.value),
-        cb: () => $message.success('保存成功'),
-      },
-    }
-
-    // 走到这里 action 必有值：要么调用方传入，要么上面守卫保证 modalAction 是 add/edit
-    action = action || actions[modalAction.value as 'add' | 'edit']
-
     try {
       okLoading.value = true
       const data = await action.api()
       action.cb()
       okLoading.value = false
       data && refresh(data)
+      return true
     }
     catch (error) {
       console.error(error)
@@ -109,8 +121,8 @@ export function useCrud<T extends object>(options: UseCrudOptions<T>) {
     }
   }
 
-  /** 删除 */
-  function handleDelete(id: number | string | undefined, confirmOptions?: Partial<DialogOptions>) {
+  /** 删除。id 缺省（且非 0）时静默返回，不弹确认框 */
+  function handleDelete(id: number | undefined, confirmOptions?: Partial<DialogOptions>) {
     if (!id && id !== 0)
       return
     const d = $dialog.warning({

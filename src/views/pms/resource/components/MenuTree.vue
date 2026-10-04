@@ -13,11 +13,11 @@
       <n-tree
         :show-irrelevant-nodes="false"
         :pattern="pattern"
-        :data="(treeData as any)"
-        :selected-keys="([currentMenu?.code] as any)"
+        :data="treeData"
+        :selected-keys="currentMenu?.code ? [currentMenu.code] : []"
         :render-prefix="renderPrefix"
         :render-suffix="renderSuffix"
-        :on-update:selected-keys="(onSelect as any)"
+        :on-update:selected-keys="onSelect"
         key-field="code"
         label-field="name"
 
@@ -45,7 +45,7 @@ withDefaults(defineProps<{
   currentMenu: null,
 })
 const emit = defineEmits<{
-  'refresh': [data?: any]
+  'refresh': [data?: PermissionItem]
   'update:currentMenu': [item: PermissionItem | null]
 }>()
 
@@ -61,17 +61,19 @@ async function handleAdd(data: Partial<PermissionItem> = {}) {
   })
 }
 
-// n-tree 的 option 是 TreeOption（字段 unknown），实际数据是 PermissionItem，取字段时断言
-function onSelect(keys: Array<string | number>, option: TreeOption | null, meta: { action: string, node: TreeOption | null }) {
-  emit('update:currentMenu', meta.action === 'select' ? (meta.node as unknown as PermissionItem) : null)
+// n-tree 回调签名对齐 OnUpdateSelectedKeys：第二参数是 option 数组（本处不消费），
+// meta.node 即传入的原始 PermissionItem（:data 直接绑定实体数组），取字段时收窄一次
+function onSelect(keys: Array<string | number>, options: Array<TreeOption | null>, meta: { node: TreeOption | null, action: 'select' | 'unselect' }) {
+  emit('update:currentMenu', meta.action === 'select' ? (meta.node as PermissionItem) : null)
 }
 
 function renderPrefix({ option }: { option: TreeOption }) {
-  return h('i', { class: `${option.icon as string}?mask text-16` })
+  const item = option as PermissionItem
+  return h('i', { class: `${item.icon}?mask text-16` })
 }
 
 function renderSuffix({ option }: { option: TreeOption }) {
-  const menu = option as unknown as PermissionItem
+  const menu = option as PermissionItem
   return [
     h(
       NButton,

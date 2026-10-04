@@ -45,9 +45,9 @@ export async function getPermissions(): Promise<PermissionItem[]> {
   }
   // try {}可能会报错的代码放进去 catch (error) {}：如果真的报错不会直接崩溃白屏，而是会立刻跳进 catch 里
   // try里面任意报错 都直接到catch里 等于没生效数组还是空
-  return cloneDeep(basePermissions).concat(asyncPermissions)
   // basePermissions就是那个基础权限 cloneDeep第三方复制函数 地址分离
-  // concat数组合并
+  const staticPermissions: PermissionItem[] = cloneDeep(basePermissions)
+  return staticPermissions.concat(asyncPermissions) // 数组合并
 }
 
 /*

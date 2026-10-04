@@ -7,9 +7,9 @@ flowchart TD
     %% ========== 入口引导层 ==========
     subgraph L0["① 入口引导层（src 根）"]
         direction LR
-        MAIN["main.js<br/>bootstrap() 启动编排"]
+        MAIN["main.ts<br/>bootstrap() 启动编排"]
         APP["App.vue<br/>根组件"]
-        SET["settings.js<br/>系统默认配置"]
+        SET["settings.ts<br/>系统默认配置"]
         DIR["directives/<br/>v-permission / v-role 权限指令"]
     end
 
@@ -72,12 +72,12 @@ flowchart TD
     end
 
     %% ========== 服务接口层 ==========
-    subgraph L7["⑧ 服务接口层 src/api/ + 各模块 api.js"]
+    subgraph L7["⑧ 服务接口层 src/api/ + 各模块 api.ts"]
         direction LR
-        A_INDEX["api/index.js 接口聚合"]
-        A_LOGIN["views/login/api.js"]
-        A_PMS["views/pms/**/api.js"]
-        A_PROFILE["views/profile/api.js"]
+        A_INDEX["api/index.ts 接口聚合"]
+        A_LOGIN["views/login/api.ts"]
+        A_PMS["views/pms/**/api.ts"]
+        A_PROFILE["views/profile/api.ts"]
     end
 
     %% ========== 基础设施层 ==========
@@ -160,14 +160,14 @@ flowchart TD
 
 | 层             | 目录                                    | 职责                                                                                                      |
 | -------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| ① 入口引导层   | `src/main.js`、`App.vue`、`directives/` | 按 `setupStore → setupDirectives → setupRouter → mount → setupNaiveDiscreteApi` 顺序装配应用              |
+| ① 入口引导层   | `src/main.ts`、`App.vue`、`directives/` | 按 `setupStore → setupDirectives → setupRouter → mount → setupNaiveDiscreteApi` 顺序装配应用              |
 | ② 页面视图层   | `src/views/`                            | 纯业务页面，只负责数据录入与展示，CRUD 逻辑下沉到 composables                                             |
 | ③ 布局层       | `src/layouts/`                          | 4 套布局壳（normal / full / simple / empty）+ 导航、面包屑、多标签等框架件                                |
 | ④ 组件层       | `src/components/`                       | `common` 跨页面通用组件；`me` 业务标准件（crud 表格、modal 弹窗）                                         |
 | ⑤ 组合式逻辑层 | `src/composables/`                      | 把「开弹窗→填表→校验→调接口→提示→刷新列表」沉淀为 `useCrud / useForm / useModal`                          |
 | ⑥ 状态层       | `src/store/`                            | Pinia 模块：app / auth / user / permission / router / tab，`auth` 核心权限不持久化，其余走 persistedstate |
 | ⑦ 路由层       | `src/router/`                           | 静态路由 + 4 个守卫（加载态、权限、标题、多标签）+ 按权限动态 `addRoute`                                  |
-| ⑧ 服务接口层   | `src/api/`、各模块 `api.js`             | 按视图模块就近拆分接口，统一从 `api/index.js` 聚合                                                        |
+| ⑧ 服务接口层   | `src/api/`、各模块 `api.ts`             | 按视图模块就近拆分接口，统一从 `api/index.ts` 聚合                                                        |
 | ⑨ 基础设施层   | `src/utils/`、`styles/`、`assets/`      | axios 实例与拦截器、本地存储、NaiveUI 工具、全局样式与图标                                                |
 | ⑩ 框架与依赖   | `package.json`                          | Vue3 / Router5 / Pinia3 / Naive UI / Vite8 / UnoCSS 等                                                    |
 
@@ -175,5 +175,5 @@ flowchart TD
 
 1. **单向依赖**：`views → layouts → components → composables → store → api → utils`，禁止下层反向 import 上层；`router` 属于骨架层，与 `store` 协作（守卫**只读** store，store 不 import router）。
 2. **路由不直接写业务**：动态路由由 `permission` store + `permission-guard` 生成与校验，页面只按 `meta` 声明权限。
-3. **接口就近存放**：每个 `views/**` 自带 `api.js`，只通过 `utils/http` 的 `request` 实例发请求，拦截器统一处理 Token 与错误提示。
+3. **接口就近存放**：每个 `views/**` 自带 `api.ts`，只通过 `utils/http` 的 `request` 实例发请求，拦截器统一处理 Token 与错误提示。
 4. **状态分域**：业务数据不进 store，store 只放登录态、权限、布局偏好、多标签等全局 UI/权限状态。

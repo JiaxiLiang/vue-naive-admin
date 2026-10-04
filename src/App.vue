@@ -26,7 +26,6 @@
 
 <script setup lang="ts">
 import type { Component } from 'vue'
-import type { LayoutMode } from './settings'
 import { darkTheme, dateZhCN, zhCN } from 'naive-ui'
 import { LayoutSetting } from '@/components'
 import { useAppStore, useTabStore } from '@/store'
@@ -44,9 +43,11 @@ function getLayout(name: string): Component {
 
 const route = useRoute()
 const appStore = useAppStore()
-// TODO: 原实现的兼容旧持久化值逻辑，'default'/'' 不在 LayoutMode 联合内，保持原行为用断言
-if ((appStore.layout as string) === 'default')
-  appStore.setLayout('' as LayoutMode)
+// 兼容历史持久化布局值（旧版本布局名 'default'，不在 LayoutMode 内）：置为空串后走 meta.layout 回退。
+// 仅当 sessionStorage 沿用旧会话值时可达，属于既有用户数据兼容，不随手删除
+const LEGACY_LAYOUT_VALUES: readonly string[] = ['default']
+if (LEGACY_LAYOUT_VALUES.includes(appStore.layout))
+  appStore.layout = ''
 const Layout = computed(() => {
   if (!route.matched?.length)
     return null

@@ -21,7 +21,7 @@
           <n-button
             class="mt-12"
             size="small"
-            :type="(appStore.layout === 'simple' ? 'primary' : '') as any"
+            :type="appStore.layout === 'simple' ? 'primary' : undefined"
             ghost
           >
             简约
@@ -38,7 +38,7 @@
           <n-button
             class="mt-12"
             size="small"
-            :type="(appStore.layout === 'normal' ? 'primary' : '') as any"
+            :type="appStore.layout === 'normal' ? 'primary' : undefined"
             ghost
           >
             通用
@@ -57,7 +57,7 @@
           <n-button
             class="mt-12"
             size="small"
-            :type="(appStore.layout === 'full' ? 'primary' : '') as any"
+            :type="appStore.layout === 'full' ? 'primary' : undefined"
             ghost
           >
             全面
@@ -70,7 +70,7 @@
           <n-button
             class="mt-12"
             size="small"
-            :type="(appStore.layout === 'empty' ? 'primary' : '') as any"
+            :type="appStore.layout === 'empty' ? 'primary' : undefined"
             ghost
           >
             空白

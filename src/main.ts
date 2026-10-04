@@ -1,16 +1,17 @@
-import { createApp } from 'vue' // 从Vue框架导入createApp函数，用于创建Vue应用实例
 // import就是引用模块函数 createApp函数是vue创建应用实例的函数
 // {}是目标文件里面的具体函数或者变量 无{}就是默认导出
+import { darkTheme } from 'naive-ui' // Naive UI 暗黑主题（离散 API 主题跟随 app store 用）
+import { createApp } from 'vue' // 从Vue框架导入createApp函数，用于创建Vue应用实例
 import App from './App.vue' // 导入根组件App.vue，这是整个应用的入口组件
 
 import { setupDirectives } from './directives' // 从directives目录导入setupDirectives函数
 // 用于注册自定义指令，如权限控制、权限码等
 import { setupRouter } from './router' // 从router目录导入setupRouter函数
 // 用于设置路由配置和路由守卫
-import { setupStore } from './store' // 从store目录导入setupStore函数
-// 用于设置Pinia状态管理（原注释误写为 Vuex，实际项目用的是 Pinia，顺手修正）
-import { setupNaiveDiscreteApi } from './utils' // 从utils目录导入setupNaiveDiscreteApi函数，
-// 用于设置NaiveUI的独立API调用方式
+import { setupStore, useAppStore, useAuthStore } from './store' // 从store目录导入setupStore函数与所需仓库
+// 用于设置Pinia状态管理
+import { setupHttpAuth, setupNaiveDiscreteApi } from './utils' // 从utils导入 http 认证注入与 NaiveUI 离散 API 装配
+// utils 层不反向依赖 store，认证能力与主题都由入口在此注入
 
 import '@/styles/reset.css' // 导入CSS重置样式文件重置浏览器默认样式
 // @就是指代src文件
@@ -27,7 +28,19 @@ async function bootstrap() { // 定义异步bootstrap函数，作为应用的启
   // await 关键字：暂停 bootstrap 函数的执行，等待 setupRouter(app) 完成后再继续。
   app.mount('#app') // #是CSS选择器，表示id为app的DOM元素 ''是dom操作得用字符串
   // mount 方法会将 Vue 实例的模板渲染到指定的 DOM 元素中，并启动应用的生命周期。
-  setupNaiveDiscreteApi()
+  // NaiveUI 离散 API：主题以 ComputedRef 注入，跟随 app store 的暗黑/主题色变化（装配须在 store 就绪后）
+
+  // 认证能力注入 http 层（token 读取 + 过期登出），保持 utils 不反向依赖 store
+  setupHttpAuth({
+    getAccessToken: () => useAuthStore().accessToken,
+    logout: () => useAuthStore().logout(),
+  })
+
+  const appStore = useAppStore()
+  setupNaiveDiscreteApi(computed(() => ({
+    theme: appStore.isDark ? darkTheme : undefined,
+    themeOverrides: appStore.naiveThemeOverrides,
+  })))
   // 设置NaiveUI的离散API，提供如message、dialog、notification等独立调用方式
 }
 

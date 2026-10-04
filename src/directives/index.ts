@@ -20,8 +20,8 @@ export function setupDirectives(app: App): void { // 导出设置指令的函数
 /**
  * 用于h函数使用自定义权限指令
  *
- * @param {*} vnode 虚拟节点
- * @param {*} code 权限码
+ * @param vnode 虚拟节点
+ * @param code 权限码
  * @returns 返回一个包含权限指令的vnode
  *
  * 使用示例：withPermission(h('button', {class: 'text-red-500'}, '删除'), 'user:delete')

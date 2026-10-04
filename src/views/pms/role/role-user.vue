@@ -41,7 +41,7 @@
       </MeQueryItem>
 
       <MeQueryItem label="性别" :label-width="50">
-        <n-select v-model:value="queryItems.gender" clearable :options="genders" />
+        <n-select v-model:value="queryItems.gender" clearable :options="GENDERS" />
       </MeQueryItem>
 
       <MeQueryItem label="状态" :label-width="50">
@@ -59,85 +59,34 @@
 </template>
 
 <script setup lang="ts">
-import type { DataTableColumn } from 'naive-ui'
-import type { UserInfo } from '@/types/models'
-import { NAvatar, NButton, NSwitch, NTag } from 'naive-ui'
+import type { UserTableColumn } from '@/composables'
+import type { UserInfoQuery } from '@/types/models'
+import { NButton, NSwitch, NTag } from 'naive-ui'
 import { h } from 'vue'
-import { MeCrud, MeQueryItem } from '@/components'
-import { formatDateTime } from '@/utils'
+import { MeCrud } from '@/components'
+import { GENDERS, getBaseUserColumns } from '@/composables'
 import api from './api'
 
 defineOptions({ name: 'RoleUser' })
 const route = useRoute()
 
-/** 行数据：UserInfo + 列表接口返回的 createTime */
-type UserRow = UserInfo & { enableLoading?: boolean, createTime?: string }
-
 const $table = ref<{ handleSearch: (keepCurrentPage?: boolean) => void } | null>(null)
-/** QueryBar筛选参数（可选） */
-const queryItems = ref<Record<string, any>>({})
+const queryItems = ref<UserInfoQuery>({})
 
 onMounted(() => {
   $table.value?.handleSearch()
 })
 
-const genders = [
-  { label: '男', value: 1 },
-  { label: '女', value: 2 },
-]
-
-// hideInExcel 是 MeCrud 导出 Excel 的自定义字段，naive-ui 列类型上没有，交叉类型补上
-const columns: Array<DataTableColumn<UserRow> & { hideInExcel?: boolean }> = [
+// 基础展示列来自共享的 getBaseUserColumns；本页加多选列、只读状态列与授权操作列
+const columns: UserTableColumn[] = [
   { type: 'selection', fixed: 'left' },
-  {
-    title: '头像',
-    key: 'avatar',
-    width: 80,
-    render: ({ avatar }: UserRow) =>
-      h(NAvatar, {
-        size: 'medium',
-        src: avatar,
-      }),
-  },
-  { title: '用户名', key: 'username', width: 150, ellipsis: { tooltip: true } },
-  {
-    title: '角色',
-    key: 'roles',
-    width: 200,
-    ellipsis: { tooltip: true },
-    render: ({ roles }: UserRow) => {
-      if (roles?.length) {
-        return roles.map((item, index) =>
-          h(
-            NTag,
-            { type: 'success', style: index > 0 ? 'margin-left: 8px;' : '' },
-            { default: () => item.name },
-          ),
-        )
-      }
-      return '暂无角色'
-    },
-  },
-  {
-    title: '性别',
-    key: 'gender',
-    width: 80,
-    render: ({ gender }: UserRow) => genders.find(item => gender === item.value)?.label ?? '',
-  },
-  {
-    title: '创建时间',
-    key: 'createDate',
-    width: 180,
-    render(row: UserRow) {
-      return h('span', formatDateTime(row.createTime))
-    },
-  },
+  ...getBaseUserColumns(),
   {
     title: '状态',
     key: 'enable',
     width: 100,
 
-    render: (row: UserRow) =>
+    render: row =>
       h(
         NSwitch,
         {
@@ -158,8 +107,8 @@ const columns: Array<DataTableColumn<UserRow> & { hideInExcel?: boolean }> = [
     align: 'right',
     fixed: 'right',
     hideInExcel: true,
-    render(row: UserRow) {
-      return row.roles?.some(item => item.id === +route.params.roleId)
+    render(row) {
+      return row.roles?.some(item => item.id === Number(route.params.roleId))
         ? h(
             NButton,
             {
@@ -192,7 +141,7 @@ const columns: Array<DataTableColumn<UserRow> & { hideInExcel?: boolean }> = [
 
 const userIds = ref<number[]>([])
 function onChecked(rowKeys: Array<string | number>) {
-  // 行 key 是 id（number），MeCrud 事件类型是 string | number 的宽联合
+  // 行 key 是 id（number，见 :get-data 数据与默认 rowKey），MeCrud 事件类型是 string | number 的宽联合
   userIds.value = (rowKeys || []) as number[]
 }
 

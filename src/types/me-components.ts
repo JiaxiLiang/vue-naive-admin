@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'vue'
+
 /**
  * "组件暴露类型"共享定义（useModal 与 MeModal 组件两边引用，避免循环依赖）
  */
@@ -12,21 +14,21 @@ export interface ModalOptions {
   showFooter?: boolean
   showCancel?: boolean
   showOk?: boolean
-  modalStyle?: Record<string, any>
-  contentStyle?: Record<string, any>
+  modalStyle?: CSSProperties
+  contentStyle?: CSSProperties
   /** 返回 false 可阻止弹窗关闭 */
-  onOk?: (data?: any) => Promise<unknown> | unknown
-  onCancel?: (data?: any) => Promise<unknown> | unknown
+  onOk?: (data?: unknown) => Promise<unknown> | unknown
+  onCancel?: (data?: unknown) => Promise<unknown> | unknown
   /** 运行时内部字段（open 时由 modal 管理） */
   okLoading?: boolean
 }
 
-/** MeModal defineExpose 的形状（阶段 6 组件迁移时必须满足它） */
+/** MeModal defineExpose 的形状（MeModal 组件必须满足它） */
 export interface MeModalExposed {
   open: (options?: Partial<ModalOptions>) => Promise<void>
   close: () => void
-  handleOk: (data?: any) => Promise<void>
-  handleCancel: (data?: any) => Promise<void>
+  handleOk: (data?: unknown) => Promise<void>
+  handleCancel: (data?: unknown) => Promise<void>
   okLoading: boolean
   options: ModalOptions
 }
