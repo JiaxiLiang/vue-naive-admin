@@ -18,12 +18,14 @@ export interface RequestError {
   error: unknown
 }
 
-/** 扩展 axios 配置：本项目的两个自定义字段 */
+/** 扩展 axios 配置：本项目的自定义字段 */
 export interface RequestConfig extends AxiosRequestConfig {
   /** 本次请求是否携带 token（默认 true） */
   needToken?: boolean
   /** 业务失败时是否弹全局错误提示（默认 true） */
   needTip?: boolean
+  /** 本次请求跳过无感刷新：刷新接口自身带此标记防自触发；重放请求带此标记防乒乓 */
+  skipAuthRefresh?: boolean
 }
 
 /**
@@ -38,10 +40,15 @@ export interface HttpClient {
   delete: <T = unknown>(url: string, config?: RequestConfig) => Promise<ApiResult<T>>
 }
 
-/** http 层所需的认证能力（token 读取 + 过期登出），由应用入口注入，保持 utils 不反向依赖 store */
+/** http 层所需的认证能力（token 读取 + 过期登出 + 静默刷新），由应用入口注入，保持 utils 不反向依赖 store/api */
 export interface HttpAuthHandlers {
   getAccessToken: () => string | undefined
   logout: () => void
+  /**
+   * 静默换新 token（A1 无感刷新）：调刷新接口并写入认证仓库，resolve 新 accessToken；reject 表示刷新失败。
+   * 未注入时无刷新能力，token 过期直接走登出兜底
+   */
+  refreshToken?: () => Promise<string>
 }
 
 let authHandlers: HttpAuthHandlers | undefined

@@ -2,14 +2,15 @@
 // {}是目标文件里面的具体函数或者变量 无{}就是默认导出
 import { darkTheme } from 'naive-ui' // Naive UI 暗黑主题（离散 API 主题跟随 app store 用）
 import { createApp } from 'vue' // 从Vue框架导入createApp函数，用于创建Vue应用实例
-import App from './App.vue' // 导入根组件App.vue，这是整个应用的入口组件
+// 用于设置Pinia状态管理
+import api from './api' // api 层：A1 无感刷新的刷新接口经下方注入缝提供给 http 层
 
+import App from './App.vue' // 导入根组件App.vue，这是整个应用的入口组件
 import { setupDirectives } from './directives' // 从directives目录导入setupDirectives函数
 // 用于注册自定义指令，如权限控制、权限码等
 import { setupRouter } from './router' // 从router目录导入setupRouter函数
 // 用于设置路由配置和路由守卫
 import { setupStore, useAppStore, useAuthStore } from './store' // 从store目录导入setupStore函数与所需仓库
-// 用于设置Pinia状态管理
 import { setupHttpAuth, setupNaiveDiscreteApi } from './utils' // 从utils导入 http 认证注入与 NaiveUI 离散 API 装配
 // utils 层不反向依赖 store，认证能力与主题都由入口在此注入
 
@@ -30,10 +31,16 @@ async function bootstrap() { // 定义异步bootstrap函数，作为应用的启
   // mount 方法会将 Vue 实例的模板渲染到指定的 DOM 元素中，并启动应用的生命周期。
   // NaiveUI 离散 API：主题以 ComputedRef 注入，跟随 app store 的暗黑/主题色变化（装配须在 store 就绪后）
 
-  // 认证能力注入 http 层（token 读取 + 过期登出），保持 utils 不反向依赖 store
+  // 认证能力注入 http 层（token 读取 + 过期登出 + 静默刷新），保持 utils 不反向依赖 store/api
   setupHttpAuth({
     getAccessToken: () => useAuthStore().accessToken,
     logout: () => useAuthStore().logout(),
+    // A1 无感刷新：调刷新接口并把新 token 写入仓库，resolve 新 accessToken 供 http 层确认成功
+    refreshToken: async () => {
+      const { data } = await api.refreshToken()
+      useAuthStore().setToken(data)
+      return data.accessToken
+    },
   })
 
   const appStore = useAppStore()

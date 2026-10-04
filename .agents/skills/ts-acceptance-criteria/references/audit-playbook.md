@@ -114,6 +114,7 @@ C8 边界矩阵（每格核对"代码有处理 + 有单测"；单测证据与 T6
 | 11 | 其他 | KeepAlive 演示、上传演示、新手引导、切换角色（RoleSelect） |
 | 12 | useRequest 请求标准件（3a-A2 新增） | user/role 页下拉与权限树走 useRequest：组件卸载自动中止在途请求；连发请求只采纳最后一次结果；失败时 error 有值、loading 复位、旧 data 不被清 |
 | 13 | 列表筛选同步 URL（3a-C3 新增） | user/role 页筛选状态经 useRouteQuery 双向同步：筛选后刷新/分享直开条件保留（enable=0 数字还原）；重置同步清 URL（无残留脏键）；非自有 query 键（redirect）不受影响 |
+| 14 | Token 无感刷新（3a-A1 新增） | 401/11007/11008 触发静默刷新：一屏并发过期只调一次刷新接口并重放全部失败请求（含刷新期间的新请求）；刷新失败回退"重新登录"弹窗登出；登录等 needToken:false 请求不触发刷新；页面代码零改动。apifox mock 无 /auth/refresh/token 接口（404 实测），机制经 vitest 受控时序全矩阵验证，联调受 mock 限制 |
 
 ## §F 测试标准与执行（支柱 D 命令与协议）
 

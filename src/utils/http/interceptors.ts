@@ -1,6 +1,7 @@
 import type { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios'
-import type { ApiResult, RequestConfig, RequestError } from './index'
+import type { ApiResult, RequestConfig } from './index'
 import { isObject } from '@/utils/is'
+import { handleTokenExpired, isAuthExpiredCode } from './auth-refresh'
 import { resolveResError } from './helpers'
 import { getHttpAuth } from './index'
 
@@ -24,6 +25,16 @@ export function setupInterceptors(axiosInstance: AxiosInstance): void {
       const code = bizCode ?? status
       const needTip = (config as RequestConfig)?.needTip !== false
 
+      // 401/11007/11008 改道无感刷新（锁+队列+重放）；刷新失败在其内部回落到原弹窗路径
+      if (isAuthExpiredCode(code)) {
+        return handleTokenExpired(
+          axiosInstance,
+          config,
+          { code, message: payload?.message ?? statusText, error: data ?? response },
+          needTip,
+        )
+      }
+
       // 根据code处理对应的操作，并返回处理后的message
       const message = resolveResError(code, payload?.message ?? statusText, needTip)
 
@@ -37,7 +48,7 @@ export function setupInterceptors(axiosInstance: AxiosInstance): void {
   // 运行时 resolve 的是 HttpClient 契约的响应体，该桥接已在验收报告登记豁免
   axiosInstance.interceptors.response.use(
     resResolve as (response: AxiosResponse) => Promise<AxiosResponse>,
-    resReject,
+    error => resReject(error, axiosInstance),
   )
 }
 
@@ -61,7 +72,7 @@ function reqReject(error: unknown): Promise<never> {
   return Promise.reject(error)
 }
 
-async function resReject(error: AxiosError<unknown>): Promise<RequestError> {
+async function resReject(error: AxiosError<unknown>, service: AxiosInstance): Promise<unknown> {
   if (!error || !error.response) {
     const code = error?.code
     /** 根据code处理对应的操作，并返回处理后的message */
@@ -74,6 +85,17 @@ async function resReject(error: AxiosError<unknown>): Promise<RequestError> {
   const code = payload?.code ?? status
 
   const needTip = (config as RequestConfig)?.needTip !== false
+
+  // HTTP 401 与业务码路径同归无感刷新入口（双路径接入）
+  if (isAuthExpiredCode(code)) {
+    return handleTokenExpired(
+      service,
+      config,
+      { code, message: payload?.message ?? error.message, error: data || error.response },
+      needTip,
+    )
+  }
+
   const message = resolveResError(code, payload?.message ?? error.message, needTip)
   return Promise.reject({ code, message, error: data || error.response })
 }

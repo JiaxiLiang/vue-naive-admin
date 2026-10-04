@@ -22,8 +22,8 @@ export function createCrudApi<T extends { id: number }, Q extends PageParams & R
 export default {
   // 获取用户信息（后端原始形状含嵌套 profile，由 store/helper.ts 重组为前端 UserInfo）
   getUser: () => request.get<RawUserInfo>('/user/detail'),
-  // 刷新token
-  refreshToken: () => request.get('/auth/refresh/token'),
+  // 刷新token（A1 无感刷新：经 setupHttpAuth 注入 http 层调用；skipAuthRefresh 防自身 401 再触发刷新死循环）
+  refreshToken: () => request.get<LoginToken>('/auth/refresh/token', { skipAuthRefresh: true }),
   // 登出
   logout: () => request.post('/auth/logout', {}, { needTip: false }),
   // 切换当前角色（后端返回切换后账号的新 token 载荷）
