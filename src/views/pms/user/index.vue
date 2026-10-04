@@ -106,7 +106,7 @@ import type { UserRow, UserTableColumn } from '@/composables'
 import type { Role, UserInfoQuery } from '@/types/models'
 import { NButton, NSwitch } from 'naive-ui'
 import { MeCrud, MeModal, MeQueryItem } from '@/components'
-import { GENDERS, getBaseUserColumns, useCrud, useEnableRow, useRequest } from '@/composables'
+import { GENDERS, getBaseUserColumns, useCrud, useEnableRow, useRequest, useRouteQuery } from '@/composables'
 import { withPermission } from '@/directives'
 import api from './api'
 
@@ -116,7 +116,9 @@ defineOptions({ name: 'UserMgt' })
 type UserForm = Partial<UserRow> & { password?: string, roleIds?: number[] }
 
 const $table = ref<{ handleSearch: (keepCurrentPage?: boolean) => void } | null>(null)
-const queryItems = ref<UserInfoQuery>({})
+// 筛选状态同步 URL（useRouteQuery）：筛选后刷新/分享/直开不丢条件；undefined 全部声明在册，
+// axios 序列化时本就丢弃 undefined 参数，行为与旧版 queryItems = ref({}) 一致
+const queryItems = useRouteQuery<UserInfoQuery>({ username: undefined, gender: undefined, enable: undefined })
 
 onMounted(() => {
   $table.value?.handleSearch()

@@ -113,6 +113,7 @@ C8 边界矩阵（每格核对"代码有处理 + 有单测"；单测证据与 T6
 | 10 | 路由权限 | 刷新后路由补录、无 token 跳登录且登录后 redirect 回跳、已登录访问 /login 跳首页、403/404、外链内嵌 iframe 与新窗打开二选一、菜单折叠 |
 | 11 | 其他 | KeepAlive 演示、上传演示、新手引导、切换角色（RoleSelect） |
 | 12 | useRequest 请求标准件（3a-A2 新增） | user/role 页下拉与权限树走 useRequest：组件卸载自动中止在途请求；连发请求只采纳最后一次结果；失败时 error 有值、loading 复位、旧 data 不被清 |
+| 13 | 列表筛选同步 URL（3a-C3 新增） | user/role 页筛选状态经 useRouteQuery 双向同步：筛选后刷新/分享直开条件保留（enable=0 数字还原）；重置同步清 URL（无残留脏键）；非自有 query 键（redirect）不受影响 |
 
 ## §F 测试标准与执行（支柱 D 命令与协议）
 

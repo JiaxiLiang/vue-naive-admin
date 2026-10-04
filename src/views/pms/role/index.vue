@@ -91,7 +91,7 @@ import type { DataTableColumns } from 'naive-ui'
 import type { PermissionItem, Role, RoleQuery } from '@/types/models'
 import { NButton, NSwitch } from 'naive-ui'
 import { MeCrud, MeModal, MeQueryItem } from '@/components'
-import { useCrud, useEnableRow, useRequest } from '@/composables'
+import { useCrud, useEnableRow, useRequest, useRouteQuery } from '@/composables'
 import api from './api'
 
 defineOptions({ name: 'RoleMgt' })
@@ -104,7 +104,8 @@ type RoleRow = Role & { enableLoading?: boolean }
 type RoleForm = Partial<RoleRow> & { permissionIds?: number[] }
 
 const $table = ref<{ handleSearch: (keepCurrentPage?: boolean) => void } | null>(null)
-const queryItems = ref<RoleQuery>({})
+// 筛选状态同步 URL（useRouteQuery）：与用户管理页同一接入方式，条件全量声明在册
+const queryItems = useRouteQuery<RoleQuery>({ name: undefined, enable: undefined })
 
 onMounted(() => {
   $table.value?.handleSearch()
