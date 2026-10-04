@@ -1,5 +1,4 @@
 import type { Ref } from 'vue'
-import type { Router } from 'vue-router'
 import { describe, expect, it } from 'vitest'
 import { createApp, h, nextTick } from 'vue'
 import { createMemoryHistory, createRouter } from 'vue-router'
@@ -12,7 +11,6 @@ function flush(): Promise<void> {
 
 interface Harness<T extends Record<string, unknown>> {
   state: Ref<T>
-  router: Router
   unmount: () => void
 }
 
@@ -38,13 +36,13 @@ async function mountWithQuery<T extends Record<string, unknown>>(query: Record<s
   app.mount(container)
   return {
     state,
-    router,
     unmount: () => app.unmount(),
   }
 }
 
-function currentQuery(router: Router): Record<string, unknown> {
-  return router.currentRoute.value.query
+/** 同步改走原生 replaceState，不触发路由导航——断言以地址栏 URL 为准 */
+function currentQuery(): URLSearchParams {
+  return new URL(window.location.href).searchParams
 }
 
 describe('useRouteQuery 筛选状态同步 URL', () => {
@@ -80,7 +78,7 @@ describe('useRouteQuery 筛选状态同步 URL', () => {
   })
 
   it('同步：状态变化写回 URL（JSON 序列化）', async () => {
-    const { state, router, unmount } = await mountWithQuery(
+    const { state, unmount } = await mountWithQuery(
       {},
       { username: undefined, enable: undefined },
     )
@@ -89,12 +87,13 @@ describe('useRouteQuery 筛选状态同步 URL', () => {
     await nextTick()
     await flush()
 
-    expect(currentQuery(router).username).toBe('"bar"')
+    expect(currentQuery().get('name')).toBeNull()
+    expect(currentQuery().get('username')).toBe('"bar"')
     unmount()
   })
 
   it('同步：undefined / 空串从 URL 删除该键，不留脏值', async () => {
-    const { state, router, unmount } = await mountWithQuery(
+    const { state, unmount } = await mountWithQuery(
       { enable: '0' },
       { username: undefined, enable: undefined },
     )
@@ -104,13 +103,13 @@ describe('useRouteQuery 筛选状态同步 URL', () => {
     await nextTick()
     await flush()
 
-    expect('enable' in currentQuery(router)).toBe(false)
-    expect('username' in currentQuery(router)).toBe(false)
+    expect(currentQuery().get('enable')).toBeNull()
+    expect(currentQuery().get('username')).toBeNull()
     unmount()
   })
 
   it('边界：非自有键（redirect）保留在 URL，也不进状态', async () => {
-    const { state, router, unmount } = await mountWithQuery(
+    const { state, unmount } = await mountWithQuery(
       { redirect: '/home', enable: '1' },
       { enable: undefined },
     )
@@ -122,13 +121,13 @@ describe('useRouteQuery 筛选状态同步 URL', () => {
     await nextTick()
     await flush()
 
-    expect(currentQuery(router).redirect).toBe('/home')
-    expect(currentQuery(router).enable).toBe('0')
+    expect(currentQuery().get('redirect')).toBe('/home')
+    expect(currentQuery().get('enable')).toBe('0')
     unmount()
   })
 
   it('边界：MeCrud 重置链路——整体替换状态对象同样触发 URL 同步', async () => {
-    const { state, router, unmount } = await mountWithQuery(
+    const { state, unmount } = await mountWithQuery(
       { username: '"foo"', enable: '0' },
       { username: undefined, enable: undefined },
     )
@@ -138,8 +137,8 @@ describe('useRouteQuery 筛选状态同步 URL', () => {
     await nextTick()
     await flush()
 
-    expect('username' in currentQuery(router)).toBe(false)
-    expect('enable' in currentQuery(router)).toBe(false)
+    expect(currentQuery().get('username')).toBeNull()
+    expect(currentQuery().get('enable')).toBeNull()
     unmount()
   })
 })

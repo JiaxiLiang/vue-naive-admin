@@ -6,7 +6,7 @@ import type { LocationQueryRaw, LocationQueryValue } from 'vue-router'
 /**
  * 把一个筛选状态对象双向同步到路由 query：
  * - 初始化：从 route.query 读参数（类型还原）合并进初始值，URL 是进入页面那一刻的事实源
- * - 同步：状态变化 → router.replace 更新 URL（replace 不污染历史记录，后退键回退的是页面而非筛选的中间态）
+ * - 同步：状态变化 → 就地改写地址栏 URL（replaceState 不新增历史记录，后退键回退的是页面而非筛选的中间态）
  * 页面侧一行接入：const queryItems = useRouteQuery({ username: undefined, enable: undefined })
  */
 export function useRouteQuery<T extends Record<string, unknown>>(initial: T): Ref<T> {
@@ -36,7 +36,12 @@ export function useRouteQuery<T extends Record<string, unknown>>(initial: T): Re
         query[key] = JSON.stringify(v)
       }
     }
-    router.replace({ query: query as LocationQueryRaw })
+    // 用原生 replaceState 就地改写地址栏、不发起路由导航：
+    // App.vue 的路由组件以 curRoute.fullPath 为 key，router.replace 改 query 会触发整页重挂载
+    // （输入焦点丢失、按需请求重复发起）；resolve().href 兼容 history/hash 两种模式的 URL 形状，
+    // history.state 原样透传（vue-router 的位置指针存在这里，覆盖会破坏后退语义）
+    const href = router.resolve({ path: route.path, hash: route.hash, query: query as LocationQueryRaw }).href
+    window.history.replaceState(window.history.state ?? null, '', href)
   }, { deep: true })
 
   return state
