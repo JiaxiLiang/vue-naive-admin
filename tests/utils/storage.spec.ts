@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createSessionStorage, lStorage, sStorage } from '@/utils/storage'
 import { createStorage } from '@/utils/storage/storage'
 
 describe('storage 封装', () => {
@@ -56,5 +57,44 @@ describe('storage 封装', () => {
     expect(store.get('b')).toBe(2)
     store.clear()
     expect(store.get('b')).toBeUndefined()
+  })
+})
+
+describe('storage 实例（预置底座：lStorage / sStorage / createSessionStorage）', () => {
+  beforeEach(() => {
+    localStorage.clear()
+    sessionStorage.clear()
+  })
+
+  it('lStorage 挂在 localStorage，key 带 vue-naive-admin_ 前缀', () => {
+    lStorage.set('user', { id: 1 })
+    expect(localStorage.getItem('vue-naive-admin_user')).not.toBeNull()
+    expect(lStorage.get<{ id: number }>('user')).toEqual({ id: 1 })
+    lStorage.remove('user')
+    expect(localStorage.getItem('vue-naive-admin_user')).toBeNull()
+  })
+
+  it('sStorage 挂在 sessionStorage，与 lStorage 互不串台', () => {
+    sStorage.set('session', 's值')
+    lStorage.set('session', 'l值')
+    expect(sStorage.get('session')).toBe('s值')
+    expect(lStorage.get('session')).toBe('l值')
+    expect(sessionStorage.getItem('vue-naive-admin_session')).toContain('s值')
+  })
+
+  it('createSessionStorage 支持自定义前缀', () => {
+    const custom = createSessionStorage({ prefixKey: 'custom_' })
+    custom.set('k', 123)
+    expect(sessionStorage.getItem('custom_k')).not.toBeNull()
+    expect(custom.get<number>('k')).toBe(123)
+  })
+
+  it('sStorage 的过期键走默认值分支（与底层封装一致）', () => {
+    vi.useFakeTimers()
+    sStorage.set('temp', 'v', 5)
+    vi.advanceTimersByTime(5 * 1000 + 1)
+    expect(sStorage.get('temp', '过期')).toBe('过期')
+    expect(sessionStorage.getItem('vue-naive-admin_temp')).toBeNull()
+    vi.useRealTimers()
   })
 })

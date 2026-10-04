@@ -10,4 +10,14 @@ export function createLocalStorage(option: { prefixKey?: string } = {}) {
   })
 }
 
+// 会话级存储工厂（2026-10-04 用户决策恢复：为后续功能预留的底座，配套单测见 tests/utils/storage.spec.ts）
+export function createSessionStorage(option: { prefixKey?: string } = {}) {
+  return createStorage({
+    prefixKey: option.prefixKey || '',
+    storage: sessionStorage,
+  })
+}
+
 export const lStorage = createLocalStorage({ prefixKey })
+
+export const sStorage = createSessionStorage({ prefixKey })

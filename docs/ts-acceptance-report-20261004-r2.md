@@ -121,6 +121,20 @@
 2. **P2** 上传演示页（views/demo/upload）未逐项实测（基础功能子菜单注册 ✓）；IAB 文件选择能力不支持（capability_unsupported），需人工验证。
 3. **P2** auth persist key `'naivue'` 与 App.vue 旧布局值兼容分支为"论证保留"（用户数据迁移决策），如需更名/清理须连同旧键迁移一起做。
 
+## 附录：r2 之后的变更（2026-10-04 · 用户决策）
+
+**预置工具底座恢复**：用户确认将 B10 删除项中的三个工具模块恢复为"后续功能预留的底座"（B10 规则中"经用户确认后再处理"路径）。恢复内容：
+
+- `src/utils/is.ts`：+12（isNumber/isBoolean/isDate/isRegExp/isPromise/isElement/isWindow/isEmpty/ifNull/isUrl/isServer/isClient）
+- `src/utils/common.ts`：+3（debounce/formatDate/useResize）
+- `src/utils/storage/index.ts`：+2（createSessionStorage/sStorage）
+
+配套 L1 单测 +20 例（is 正反例 9 组、debounce 三模式、formatDate、useResize 桩测+冒烟、storage 实例 4 例），`pnpm test` 80 → **100** 全绿；is.ts/common.ts/storage 行覆盖 **100%**。
+
+**行为差异登记（isPromise 修正）**：原实现 `is(val,'Promise') && isObject(val) && …` 的交集对任何输入恒为 false（`'[object Promise]'` 与 `'[object Object]'` 两种 toString tag 互斥）——该函数零调用方，缺陷从未暴露。恢复为底座时修正为并集语义（真 Promise ∥ thenable），已在行内注释说明。其余 16 项恢复项与原实现行为完全一致（仅 any→unknown 的类型强化）。
+
+**结论维持**：本次变更不触及任何业务调用方（恢复项此前零调用），C9 功能等价不受影响；基线五项（typecheck 双工程 / build / lint / test 100 / test:type）复验全绿。
+
 ## 结论
 
 首轮验收（P0×8 / P1×14 / P2×4，不通过）→ 按整改清单全部执行 → r2 复验 **P0×0、P1×3（均为登记豁免/人工复核）、P2×3 → 有条件通过**。原 JS 项目功能经 §E 11 组浏览器 GUI 复验一项不少；四条铁律（等价重构、无脑删除禁令、质量只升不降、测试同步）执行留痕于首轮报告与本报告。

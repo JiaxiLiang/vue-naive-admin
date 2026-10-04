@@ -255,7 +255,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:4173/    # 预期 200
 2. **B2**：`grep -rn "as any|: any|<any>|AxiosError<any>" src` 输出为**空**。
 3. **B3**：`as unknown as` 仅 1 处（http/index.ts request 桥接，登记豁免）；模板内 as any 为空；`@ts-ignore/@ts-nocheck/@ts-expect-error` 为空。
 4. **B1**：tsconfig 开启 `strict + noUncheckedIndexedAccess + noImplicitOverride`；exactOptionalPropertyTypes 注释论证不开。
-5. **B10**：首轮 17 个死导出（mockRequest、sStorage、debounce、formatDate、useResize、isEmpty、ifNull、isUrl、isPromise、isElement、isWindow、isDate、isRegExp、isBoolean、isNumber、isClient、getComponents）+ useAliveData + login/api toggleRole、getUser 均已删除，grep 定义应为空。
+5. **B10**：首轮 17 个死导出 + useAliveData + login/api toggleRole、getUser 均已删除；其中 is/common/storage 三模块的 17 项经**用户决策（2026-10-04）恢复为预置工具底座**（isNumber/isBoolean/isDate/isRegExp/isPromise/isElement/isWindow/isEmpty/ifNull/isUrl/isServer/isClient、debounce/formatDate/useResize、createSessionStorage/sStorage，见 r2 报告附录）——恢复项以 tests/ 单测为消费方，grep src 调用方为 0 属预期；其余（useAliveData、mockRequest、toggleRole、login getUser、getComponents）保持删除，grep 定义应为空。
 6. **B9**：疤痕关键词扫描仅剩"论证保留"类（auth.ts 'naivue' 键、App.vue LEGACY_LAYOUT_VALUES——均为有意设计措辞，无 TODO/FIXME）；`docs/ts-migration-progress.md` 已归档至 docs/archive/。
 7. **C1/B11**：`createCrudApi<T, Q>` 存在于 src/api/index.ts；查询契约 PageParams/EnabledQuery/UserInfoQuery/RoleQuery 收口 models.ts。
 8. **C7**：eslint.config.ts 含 no-restricted-imports 分层规则；故意在 src/utils 下写 `import { useAppStore } from '@/store'` 必须 lint 报错（验证后删除）。
