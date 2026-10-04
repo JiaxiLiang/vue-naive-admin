@@ -10,5 +10,6 @@ export default {
   ...crud,
   resetPwd: (id: number, data: { password: string }) => request.patch(`/user/password/reset/${id}`, data),
 
-  getAllRoles: () => request.get<Role[]>('/role?enable=1'),
+  // signal 供 useRequest 的 AbortController 透传（axios 原生 config.signal），不传时行为与旧版一致
+  getAllRoles: (signal?: AbortSignal) => request.get<Role[]>('/role?enable=1', { signal }),
 }

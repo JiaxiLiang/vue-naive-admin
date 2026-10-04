@@ -91,7 +91,7 @@ import type { DataTableColumns } from 'naive-ui'
 import type { PermissionItem, Role, RoleQuery } from '@/types/models'
 import { NButton, NSwitch } from 'naive-ui'
 import { MeCrud, MeModal, MeQueryItem } from '@/components'
-import { useCrud, useEnableRow } from '@/composables'
+import { useCrud, useEnableRow, useRequest } from '@/composables'
 import api from './api'
 
 defineOptions({ name: 'RoleMgt' })
@@ -201,6 +201,14 @@ const columns: DataTableColumns<RoleRow> = [
   },
 ]
 
+// 权限树数据走 useRequest 标准件：自带竞态防护与组件卸载自动取消（旧写法为裸 .then 直写）
+// data 是请求标准件的事实源，permissionTree 是视图别名；过期/中止的响应到不了 data，也就不会写入树
 const permissionTree = ref<PermissionItem[]>([])
-api.getAllPermissionTree().then(({ data = [] }) => (permissionTree.value = data))
+const { data: treeData, run: fetchPermissionTree } = useRequest<PermissionItem[]>(
+  signal => api.getAllPermissionTree(signal).then(({ data = [] }) => data),
+)
+watch(treeData, (value) => {
+  permissionTree.value = value ?? []
+})
+fetchPermissionTree()
 </script>

@@ -38,6 +38,7 @@ export default antfu({
       markRaw: 'readonly',
       defineAsyncComponent: 'readonly',
       nextTick: 'readonly',
+      onScopeDispose: 'readonly',
       useRoute: 'readonly',
       useRouter: 'readonly',
       Message: 'readonly',

@@ -106,7 +106,7 @@ import type { UserRow, UserTableColumn } from '@/composables'
 import type { Role, UserInfoQuery } from '@/types/models'
 import { NButton, NSwitch } from 'naive-ui'
 import { MeCrud, MeModal, MeQueryItem } from '@/components'
-import { GENDERS, getBaseUserColumns, useCrud, useEnableRow } from '@/composables'
+import { GENDERS, getBaseUserColumns, useCrud, useEnableRow, useRequest } from '@/composables'
 import { withPermission } from '@/directives'
 import api from './api'
 
@@ -122,8 +122,16 @@ onMounted(() => {
   $table.value?.handleSearch()
 })
 
+// 角色下拉数据走 useRequest 标准件：自带竞态防护与组件卸载自动取消（旧写法为裸 .then 直写）
+// data 是请求标准件的事实源，roles 是视图别名；过期/中止的响应到不了 data，也就不会写入 roles
 const roles = ref<Role[]>([])
-api.getAllRoles().then(({ data = [] }) => (roles.value = data))
+const { data: rolesData, run: fetchRoles } = useRequest<Role[]>(
+  signal => api.getAllRoles(signal).then(({ data = [] }) => data),
+)
+watch(rolesData, (value) => {
+  roles.value = value ?? []
+})
+fetchRoles()
 
 const {
   modalRef,
