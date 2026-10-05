@@ -1,5 +1,5 @@
 <template>
-  <SideLogo border-b="1px solid light_border dark:dark_border" />
+  <SideLogo />
   <SideMenu class="cus-scroll-y mt-4 h-0 flex-1" />
 </template>
 

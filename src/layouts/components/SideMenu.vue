@@ -2,6 +2,7 @@
   <n-menu
     ref="menu"
     class="side-menu"
+    inverted
     accordion
     :indent="18"
     :collapsed-icon-size="22"
@@ -66,8 +67,12 @@ function handleMenuSelect(key: string, item: MenuOption | null) {
       right: 8px;
     }
     &.n-menu-item-content--selected::before {
-      border-left: 4px solid rgb(var(--primary-color));
+      background-color: rgb(var(--primary-color));
     }
   }
+}
+/* inverted 菜单选中态：品牌色高亮块上文字/图标反白（覆盖 naive 反色主题的选中前景色） */
+.side-menu .n-menu-item-content--selected :is(.n-menu-item-content-header, .n-menu-item-content-icon) {
+  color: #fff !important;
 }
 </style>
