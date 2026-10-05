@@ -71,7 +71,6 @@ function handleMenuSelect(key: string, item: MenuOption | null) {
     }
   }
 }
-/* inverted 菜单选中态：品牌色高亮块上文字/图标反白（覆盖 naive 反色主题的选中前景色） */
 .side-menu .n-menu-item-content--selected :is(.n-menu-item-content-header, .n-menu-item-content-icon) {
   color: #fff !important;
 }

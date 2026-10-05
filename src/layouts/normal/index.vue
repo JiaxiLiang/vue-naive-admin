@@ -21,9 +21,3 @@ import SideBar from './sidebar/index.vue'
 
 const appStore = useAppStore()
 </script>
-
-<style>
-.collapsed {
-  width: 64px;
-}
-</style>
