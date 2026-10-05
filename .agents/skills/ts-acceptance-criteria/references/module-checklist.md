@@ -57,7 +57,7 @@
 - **验收动作**：通读 naiveTools.ts + global.d.ts；核对豁免登记。
 
 ### 8. api 层 `src/api/index.ts` + `src/views/*/api.ts`
-- **必须体现**：CRUD 工厂 `createCrudApi<T>(resource)` 消灭 4 份样板；`PageQuery<T>` 共享类型收口 `Partial<X> & { pageNo, pageSize, enable }`；每个端点请求/响应类型显式；无调用方的导出清零。
+- **必须体现**：CRUD 工厂 `createCrudApi<T>(resource)` 消灭 4 份样板；`PageQuery<T>` 共享类型收口 `Partial<X> & { pageNo, pageSize, enable }`；每个端点请求/响应类型显式；无低效重复/低质量导出（高质量暂无调用的"预留能力"保留并登记，见 B10 修订标准）。
 - **典型违规快照**：user/role/resource 三份 create/read/update/delete 仅资源名不同（C1）；`Partial<...> & { pageNo?: number... }` 重复 4 处；`toggleRole` 死代码（login/api.ts）。
 - **验收动作**：通读 5 份 api.ts 对比重复度；核对工厂化后的类型推导链。
 
@@ -67,7 +67,7 @@
 - **验收动作**：通读 useCrud.ts、useForm.ts、useModal.ts、useAliveData.ts；核对并发保存/未挂载边界单测。
 
 ### 10. `src/store/`
-- **必须体现**：options store getter 用 state 参数式；persist 配置类型完整（无 as any）；类型谓词；persist key 无拼写错误；零死代码。
+- **必须体现**：options store getter 用 state 参数式；persist 配置类型完整（无 as any）；类型谓词；persist key 无拼写错误；无低效重复/低质量代码（高质量暂无调用的"预留能力"保留并登记，见 B10 修订标准）。
 - **典型违规快照**：app.ts:80 persist 整体 `as any`（TS2589）；auth.ts persist key `'naivue'` 拼写（TODO 保留）；permission.ts `layout as LayoutMode` 契约妥协。
 - **验收动作**：通读 6 个 store + helper.ts；TS2589 须论证重构（如收窄 persist pick 类型）而非豁免。
 

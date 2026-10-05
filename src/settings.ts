@@ -39,16 +39,6 @@ export const basePermissions = [
     show: true,
     children: [
       {
-        code: 'ShowDocs',
-        name: '项目文档',
-        type: 'MENU',
-        path: 'https://isme.top',
-        icon: 'i-me:docs',
-        order: 1,
-        enable: true,
-        show: true,
-      },
-      {
         code: 'ApiFoxDocs',
         name: '接口文档',
         type: 'MENU',
@@ -65,16 +55,6 @@ export const basePermissions = [
         path: 'https://www.naiveui.com/zh-CN/os-theme',
         icon: 'i-me:naiveui',
         order: 3,
-        enable: true,
-        show: true,
-      },
-      {
-        code: 'MyBlog',
-        name: '博客-掘金',
-        type: 'MENU',
-        path: 'https://juejin.cn/user/1961184475483255/posts',
-        icon: 'i-simple-icons:juejin',
-        order: 4,
         enable: true,
         show: true,
       },

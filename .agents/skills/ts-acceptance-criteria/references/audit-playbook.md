@@ -50,15 +50,19 @@ B5 类型连通抽测（做完必须还原，git status 确认干净）：
 - **链路 2（写路径）**：把 `useCrud` 调用处的 `doUpdate` 实参换成缺 `id` 的对象，或把 `api.update` 的 data 类型改宽 → typecheck 必须报错。
 - **链路 3（分支穷举）**：在 http 错误处理或 ModalAction 分支新增一个字面量成员不处理 → 若无 never 穷举检查则该项 fail（B7）。
 
-## §C 疤痕与死代码（支柱 B 命令：B9、B10）
+## §C 疤痕与低质/冗余代码（支柱 B 命令：B9、B10）
 
 ```bash
 # B9 疤痕关键词（每条命中登记：修复 or 论证为有意设计并改写措辞）
 grep -rn "保持原实现\|行为不变\|迁移妥协\|基线\|老 bug\|兼容旧\|遗留\|TODO\|FIXME\|暂时\|临时" \
   src build vite.config.* uno.config.* eslint.config.* --include="*.ts" --include="*.vue"
 
-# B10 死代码（建议引入 knip：pnpm dlx knip --include exports,types）
-grep -rn "toggleRole" src   # 快照已知死代码示例
+# B10 无调用导出评估（knip 输出是"评估清单"，不是"删除清单"——逐个质量定性：
+#   高质量可复用 = 预留能力保留并登记（允许以单测为消费方）；
+#   低效重复 = 收口到唯一实现；低质量坏味道 = 删除。
+#   仅"无调用"不构成删除理由，见 SKILL.md B10 修订标准）
+pnpm dlx knip --include exports,types
+grep -rn "toggleRole" src   # 历史示例（r2 已删；新标准下仅触发评估，不直接判定违规）
 ```
 
 B9 附带核对：`docs/ts-migration-progress.md` 的"遗留项"清单逐条闭环（修复，或在报告中论证为有意设计）；验收通过后该文档应归档或删除——留着就是新的疤痕。
@@ -145,7 +149,7 @@ grep -rn "\.skip(\|\.only(\|expect(true)\|xit(\|xdescribe(" tests --include="*.t
 - `utils/http/helpers.ts` + `interceptors.ts`——成功放行、业务码失败 reject 形状、HTTP 401/403/500、断网、needTip 开关、handleAuthExpired 防重复弹窗锁。
 - `utils/naiveTools.ts`——Message 类的 key 复用/数组批量/延时销毁；setupDialog 的 confirm/cancel 回调透传。
 - `composables/useCrud`——状态机（add/edit/view）、非 add/edit 守卫分支、okLoading 置位与复位、空 id 删除守卫。
-- `composables/useForm`、`useModal`、`useAliveData`——各自契约（validation 返回、未挂载 setter 行为、key 归一化）。
+- `composables/useForm`、`useModal`——各自契约（validation 返回、未挂载 setter 行为）。
 - `store/modules/tab`——addTab 重复替换、removeTab 关到最后一个、removeLeft/Right/Other 越界。
 - `store/modules/permission`——generateRoute/getMenuItem 纯计算（外链改写、按钮提取、隐藏菜单返回 null）。
 - `settings.ts`——静态数据形状用 satisfies 校验的类型测试。
@@ -258,7 +262,7 @@ curl -s -o /dev/null -w "%{http_code}\n" http://localhost:4173/    # 预期 200
 2. **B2**：`grep -rn "as any|: any|<any>|AxiosError<any>" src` 输出为**空**。
 3. **B3**：`as unknown as` 仅 1 处（http/index.ts request 桥接，登记豁免）；模板内 as any 为空；`@ts-ignore/@ts-nocheck/@ts-expect-error` 为空。
 4. **B1**：tsconfig 开启 `strict + noUncheckedIndexedAccess + noImplicitOverride`；exactOptionalPropertyTypes 注释论证不开。
-5. **B10**：首轮 17 个死导出 + useAliveData + login/api toggleRole、getUser 均已删除；其中 is/common/storage 三模块的 17 项经**用户决策（2026-10-04）恢复为预置工具底座**（isNumber/isBoolean/isDate/isRegExp/isPromise/isElement/isWindow/isEmpty/ifNull/isUrl/isServer/isClient、debounce/formatDate/useResize、createSessionStorage/sStorage，见 r2 报告附录）——恢复项以 tests/ 单测为消费方，grep src 调用方为 0 属预期；其余（useAliveData、mockRequest、toggleRole、login getUser、getComponents）保持删除，grep 定义应为空。
+5. **B10**：首轮 17 个死导出 + useAliveData + login/api toggleRole、getUser 均已删除；其中 is/common/storage 三模块的 17 项经**用户决策（2026-10-04）恢复为预置工具底座**（isNumber/isBoolean/isDate/isRegExp/isPromise/isElement/isWindow/isEmpty/ifNull/isUrl/isServer/isClient、debounce/formatDate/useResize、createSessionStorage/sStorage，见 r2 报告附录）——恢复项以 tests/ 单测为消费方，grep src 调用方为 0 属预期；其余（useAliveData、mockRequest、toggleRole、login getUser、getComponents）保持删除，grep 定义应为空。（**2026-10-05 起此决策固化为 B10 修订标准**："无调用方"不等于"没有用"，高质量预留能力一律保留——见 SKILL.md 支柱 B 表 B10。）
 6. **B9**：疤痕关键词扫描仅剩"论证保留"类（auth.ts 'naivue' 键、App.vue LEGACY_LAYOUT_VALUES——均为有意设计措辞，无 TODO/FIXME）；`docs/ts-migration-progress.md` 已归档至 docs/archive/。
 7. **C1/B11**：`createCrudApi<T, Q>` 存在于 src/api/index.ts；查询契约 PageParams/EnabledQuery/UserInfoQuery/RoleQuery 收口 models.ts。
 8. **C7**：eslint.config.ts 含 no-restricted-imports 分层规则；故意在 src/utils 下写 `import { useAppStore } from '@/store'` 必须 lint 报错（验证后删除）。

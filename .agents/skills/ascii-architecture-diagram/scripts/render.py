@@ -7,6 +7,8 @@
 2. 盒内每一行都带左右边框——不允许裸行拼接（那是"边框缺失"的根源）
 3. 连接线注释显示宽度不得超过盒宽，超宽则 stderr 报警并以退出码 1 结束
 
+item 类型：layer（全边框层盒，lines 可嵌 table / text+at 汇流定位）、
+conn（层间连线）、tree（无右边框树状图，注释列对齐，豁免盒宽检查）、blank。
 spec 结构见同级 SKILL.md。
 """
 import json
@@ -38,12 +40,49 @@ def patch(line, col, ch):
             return line
     return line
 
+def patch_at(line, col, ch):
+    """同 patch，但落在字符中间时 stderr 警告（汇流线错位的常见根源）"""
+    cur = 0
+    for i, c in enumerate(line):
+        if cur == col:
+            return line[:i] + ch + line[i + 1:], True
+        cur += w(c)
+        if cur > col:
+            print(f'WARN: 汇流标记 {ch!r} 的列 {col} 落在字符中间——汇流列错位', file=sys.stderr)
+            return line, False
+    print(f'WARN: 汇流标记 {ch!r} 的列 {col} 超出该行宽度', file=sys.stderr)
+    return line, False
+
+def build_tree(col, rows):
+    """树状图（无右边框）：rows 元素为 {"p","n","c"} 或 {"sep":true} / {"blank":true}。
+    p+n 按显示宽补齐到 col 后接 '// c'；数据必须实测（find/wc），禁止编造。"""
+    out = []
+    for r in rows:
+        if r.get('sep'):
+            out.append('│')
+            continue
+        if r.get('blank'):
+            out.append('')
+            continue
+        s = r.get('p', '') + r.get('n', '')
+        c = r.get('c', '')
+        if c:
+            s = s + ' ' * max(1, col - w(s)) + '// ' + c
+        out.append(s.rstrip())
+    return out
+
 def build_table(widths, headers, rows, indent=2):
-    """小表格：widths 为各列内宽，行/表头由渲染器自动补齐，保证内竖线对齐"""
+    """小表格：widths 为各列内宽，行/表头由渲染器自动补齐，保证内竖线对齐。
+    width 必须按"最宽单元格显示宽 + 2"设定，否则直接报错（防静默错位）"""
     def sep(l, m, r):
         return ' ' * indent + l + m.join('─' * x for x in widths) + r
     def row(cells):
         cells = list(cells) + [''] * (len(widths) - len(cells))
+        for i, c in enumerate(cells):
+            if w(c) > widths[i] - 2:
+                raise SystemExit(
+                    f'TABLE CELL OVERFLOW: 第 {i} 列内宽 {widths[i]}，'
+                    f'单元格 {c!r} 显示宽 {w(c)}（需 ≤ {widths[i] - 2}）——加宽 widths')
         body = '│'.join(' ' + c + ' ' * (widths[i] - 2 - w(c)) + ' '
                         for i, c in enumerate(cells))
         return ' ' * indent + '│' + body + '│'
@@ -66,6 +105,13 @@ def build_layer(title, lines, width):
             for tl in build_table(tb['widths'], tb['headers'], tb['rows'],
                                   tb.get('indent', 2)):
                 out.append('│ ' + tl + ' ' * max(0, width - 3 - w(tl)) + '│')
+        elif isinstance(l, dict) and 'text' in l:
+            # 文本行 + at 汇流定位：渲染后把 [显示列, 字符] 逐个打到行上。
+            # col 从行首（含左边框 │）起算；同一列的 ┐│┤▼ 必须用同一 col，否则汇流错位
+            line = '│ ' + l['text'] + ' ' * max(0, width - 3 - w(l['text'])) + '│'
+            for col, ch in l.get('at', []):
+                line, _ = patch_at(line, col, ch)
+            out.append(line)
         else:
             out.append('│ ' + l + ' ' * max(0, width - 3 - w(l)) + '│')
     out.append('└' + '─' * (width - 2) + '┘')
@@ -75,6 +121,7 @@ def render(spec):
     width = spec.get('width', CANVAS_W)
     conn = spec.get('conn', CONN)
     out = []
+    free = set()   # 不受盒宽检查的行（树状图无右边框）
     for it in spec['items']:
         typ = it['type']
         if typ == 'layer':
@@ -88,21 +135,26 @@ def render(spec):
             arrow = it.get('arrow', '▼')
             if arrow:
                 out.append(' ' * conn + arrow)
+        elif typ == 'tree':
+            tree = build_tree(it.get('col', 29), it.get('rows', []))
+            free.update(range(len(out), len(out) + len(tree)))
+            out += tree
         elif typ == 'blank':
             out.append('')
         else:
             raise ValueError(f'未知 item 类型: {typ}')
-    return out
+    return out, free
 
 def main():
     if len(sys.argv) > 1:
         spec = json.load(open(sys.argv[1], encoding='utf-8'))
     else:
         spec = json.load(sys.stdin)
-    lines = render(spec)
+    lines, free = render(spec)
     text = '\n'.join(lines)
     print(text)
-    over = [(i + 1, w(l)) for i, l in enumerate(lines) if w(l) > spec.get('width', CANVAS_W)]
+    over = [(i + 1, w(l)) for i, l in enumerate(lines)
+            if w(l) > spec.get('width', CANVAS_W) and i not in free]
     if over:
         for n, x in over:
             print(f'OVERWIDTH: 第 {n} 行宽 {x}（超出 {spec.get("width", CANVAS_W)}）——精简该行文字',
