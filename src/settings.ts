@@ -13,17 +13,17 @@ export function toLayoutMode(value: string | null | undefined): LayoutMode {
   return LAYOUT_MODES.find(mode => mode === value) ?? defaultLayout
 }
 
-export const defaultPrimaryColor = '#316C72'
+/** 全站唯一定色处：arco 色板派生、naive 主题覆盖、uno primary 均从它单源取值 */
+export const defaultPrimaryColor = '#2F54EB'
 
 // 控制 LayoutSetting 组件是否可见
 export const layoutSettingVisible = true
 
+/** 静态首屏仅声明主色与圆角，hover/pressed 由 naive 自主色推导（运行时仍由 appStore.setThemeColor 按色板覆写） */
 export const naiveThemeOverrides: GlobalThemeOverrides = {
   common: {
-    primaryColor: '#316C72FF',
-    primaryColorHover: '#316C72E3',
-    primaryColorPressed: '#2B4C59FF',
-    primaryColorSuppl: '#316C72E3',
+    primaryColor: `${defaultPrimaryColor}FF`,
+    borderRadius: '8px',
   },
 }
 
