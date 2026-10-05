@@ -1,14 +1,17 @@
 <template>
-  <div class="wh-full flex-col bg-[url(@/assets/images/login_bg.webp)] bg-cover">
-    <div
-      class="m-auto max-w-700 min-w-345 f-c-c rounded-8 auto-bg bg-opacity-20 bg-cover p-12 card-shadow"
-    >
-      <div class="hidden w-380 px-20 py-35 md:block">
-        <img src="@/assets/images/login_banner.webp" class="w-full" alt="login_banner">
+  <div class="login-bg wh-full flex-col">
+    <div class="m-auto max-w-700 min-w-345 f-c-c rounded-8 bg-white/86 p-12 backdrop-blur-14px card-shadow dark:bg-#18181c/86">
+      <div class="hidden w-380 flex-col items-center justify-center rounded-8 from-#2F54EB/8 to-#13C2C2/14 bg-gradient-to-br px-20 py-35 md:flex">
+        <h2 class="brand-gradient-text text-40 font-bold">
+          Vue Naive Admin
+        </h2>
+        <p class="mt-12 text-15 opacity-60">
+          轻量 · 高效 · 开箱即用的后台解决方案
+        </p>
       </div>
 
-      <div class="w-320 flex-col px-20 py-32">
-        <h2 class="f-c-c text-24 text-#6a6a6a font-normal">
+      <div class="login-form w-320 flex-col px-20 py-32">
+        <h2 class="f-c-c text-24 text-#6a6a6a font-normal dark:text-white">
           <img src="@/assets/images/logo.png" class="mr-12 h-50">
           {{ title }}
         </h2>
@@ -40,7 +43,7 @@
         <div class="mt-20 flex items-center">
           <n-input
             v-model:value="loginInfo.captcha"
-            class="h-40 items-center"
+            class="h-40 flex-1 items-center"
             placeholder="请输入验证码"
             :maxlength="4"
             @keydown.enter="handleLogin()"
@@ -54,7 +57,7 @@
             :src="captchaUrl"
             alt="验证码"
             height="40"
-            class="ml-12 w-80 cursor-pointer"
+            class="ml-12 w-80 cursor-pointer rounded-8"
             @click="initCaptcha"
           >
         </div>
@@ -66,9 +69,9 @@
           :on-update:checked="(val) => (isRemember = val)"
         />
 
-        <div class="mt-20 flex items-center">
+        <div class="mt-24 flex items-center gap-12">
           <n-button
-            class="h-40 flex-1 rounded-5 text-16"
+            class="h-40 flex-1 rounded-8 text-16"
             type="primary"
             ghost
             @click="quickLogin()"
@@ -77,7 +80,7 @@
           </n-button>
 
           <n-button
-            class="ml-32 h-40 flex-1 rounded-5 text-16"
+            class="login-btn h-40 flex-1 text-16"
             type="primary"
             :loading="loading"
             @click="handleLogin()"
@@ -91,6 +94,40 @@
     <TheFooter class="py-12" />
   </div>
 </template>
+
+<style>
+.login-bg {
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 15%, rgb(47 84 235 / 14%), transparent),
+    radial-gradient(ellipse 50% 45% at 85% 80%, rgb(19 194 194 / 12%), transparent),
+    linear-gradient(125deg, #eef2ff, #f4f9f8 48%, #eef3ff);
+}
+.dark .login-bg {
+  background: linear-gradient(125deg, #101014, #121a26 55%, #0e1420);
+}
+.login-btn {
+  background: linear-gradient(90deg, #2f54eb, #13c2c2) !important;
+  border: none !important;
+}
+.login-form > * {
+  animation: login-fade-up 0.5s ease both;
+}
+.login-form > *:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.login-form > *:nth-child(3) {
+  animation-delay: 0.16s;
+}
+.login-form > *:nth-child(n + 4) {
+  animation-delay: 0.24s;
+}
+@keyframes login-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+</style>
 
 <script setup lang="ts">
 import type { LoginToken } from '@/types/models'
