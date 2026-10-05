@@ -33,7 +33,6 @@ export default defineConfig({
     ['auto-bg-hover', 'hover:bg-#eaf0f1 hover:dark:bg-#1b2429'],
     ['auto-bg-highlight', 'bg-#eaf0f1 dark:bg-#1b2429'],
     ['text-highlight', 'rounded-4 px-8 py-2 auto-bg-highlight'],
-    // ── soybean 视觉语言资产：浮卡 / 悬浮抬升 / 毛玻璃栏 / 暗色侧栏 / 品牌渐变 ──
     ['f-card', 'auto-bg rounded-8 card-shadow'],
     ['f-card-hover', 'transition-shadow-300 hover:shadow-[0_6px_16px_-4px_#0000001f,0_12px_28px_2px_#00000017]'],
     ['glass-bar', 'bg-white/70 dark:bg-#18181c/72 backdrop-blur-16px'],

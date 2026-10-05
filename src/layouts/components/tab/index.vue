@@ -75,9 +75,6 @@ async function handleContextMenu(e: MouseEvent, tagItem: TabItem) {
     margin-right: 6px;
     border: none !important;
     border-radius: 6px !important;
-    transition:
-      background-color 0.2s,
-      color 0.2s;
     &:hover {
       background-color: rgba(var(--primary-color), 0.12) !important;
     }
