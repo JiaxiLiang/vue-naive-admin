@@ -70,18 +70,24 @@ async function handleContextMenu(e: MouseEvent, tagItem: TabItem) {
 <style scoped>
 :deep(.n-tabs) {
   .n-tabs-tab {
-    padding-left: 16px;
-    height: 36px;
-    background: transparent !important;
-    border-radius: 4px !important;
-    margin-right: 4px;
+    padding: 0 14px;
+    height: 30px;
+    margin-right: 6px;
+    border: none !important;
+    border-radius: 6px !important;
+    transition:
+      background-color 0.2s,
+      color 0.2s;
     &:hover {
-      border: 1px solid rgb(var(--primary-color)) !important;
+      background-color: rgba(var(--primary-color), 0.12) !important;
     }
   }
   .n-tabs-tab--active {
-    border: 1px solid rgb(var(--primary-color)) !important;
-    background-color: rgba(var(--primary-color), 0.1) !important;
+    background-color: rgb(var(--primary-color)) !important;
+    color: #fff !important;
+    .n-base-close {
+      color: #fff;
+    }
   }
   .n-tabs-pad,
   .n-tabs-tab-pad,

@@ -1,5 +1,5 @@
 <template>
-  <AppCard class="flex items-center px-12" border-b="1px solid light_border dark:dark_border">
+  <header class="flex items-center border-b border-light_border glass-bar px-12 dark:border-dark_border">
     <MenuCollapse />
 
     <AppTab class="w-0 flex-1 px-12" />
@@ -14,11 +14,11 @@
       <Fullscreen />
 
       <i
-        class="i-fe:github mr-16 cursor-pointer"
+        class="i-fe:github mr-16 cursor-pointer transition hover:text-primary"
         @click="handleLinkClick('https://github.com/zclzone/vue-naive-admin/tree/2.x')"
       />
       <i
-        class="i-me:gitee mr-16 cursor-pointer"
+        class="i-me:gitee mr-16 cursor-pointer transition hover:text-primary"
         @click="handleLinkClick('https://gitee.com/isme-admin/vue-naive-admin/tree/2.x')"
       />
 
@@ -26,7 +26,7 @@
 
       <UserAvatar />
     </div>
-  </AppCard>
+  </header>
 </template>
 
 <script setup lang="ts">
