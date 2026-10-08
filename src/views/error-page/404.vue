@@ -18,5 +18,6 @@
 </template>
 
 <script setup lang="ts">
+// 404 页面：未匹配到任何路由时的兜底展示，仅提供返回首页入口
 const { replace } = useRouter()
 </script>

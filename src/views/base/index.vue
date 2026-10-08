@@ -88,8 +88,10 @@
 </template>
 
 <script setup lang="ts">
+// 基础组件演示页：集中展示按钮、通知、确认弹窗、消息提醒等常用 UI 能力，供开发时参考调用方式
 import { sleep } from '@/utils'
 
+// 删除确认：演示 $dialog.confirm 用法，确认与取消各给一条反馈消息
 function handleDelete() {
   $dialog.confirm({
     content: '确认删除？',
@@ -103,6 +105,7 @@ function handleDelete() {
 }
 
 const loading = ref(false)
+// 模拟登录请求：用固定 key 的 $message 依次替换 loading/失败/成功状态，演示消息复用效果
 async function handleLogin() {
   loading.value = true
   $message.loading('登录中...', { key: 'login' })
@@ -115,10 +118,12 @@ async function handleLogin() {
   loading.value = false
 }
 
+// 一次弹出多条错误消息，演示 $message 接收数组时的堆叠展示
 function handleMultiMessage() {
   $message.error(['用户名不能为空！', '密码不能为空！', '密码必须大于6位！'])
 }
 
+// 按类型弹出通知，演示 $notification 的四种级别用法
 function notify(type: 'info' | 'success' | 'warning' | 'error') {
   $notification[type]({
     content: '说点啥呢',

@@ -9,6 +9,7 @@
 </template>
 
 <script setup lang="ts">
+// 侧边栏折叠/展开开关：读写 appStore.collapsed，各布局侧栏与菜单据此收放宽度；id 供新手引导定位
 import { useAppStore } from '@/store'
 
 const appStore = useAppStore()

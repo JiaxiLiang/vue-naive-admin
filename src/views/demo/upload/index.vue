@@ -48,6 +48,7 @@
 </template>
 
 <script setup lang="ts">
+// 图片上传演示页：拖拽/点选上传图片，成功后本地预览，并提供 url / Markdown / img 三种格式的地址一键复制
 import type { UploadCustomRequestOptions, UploadFileInfo } from 'naive-ui'
 import { useClipboard } from '@vueuse/core'
 
@@ -55,14 +56,16 @@ defineOptions({ name: 'ImgUpload' })
 
 const { copy, copied } = useClipboard()
 
-/** 已上传图片列表：文件名 + 本地预览 url */
+// 已上传图片列表：文件名 + 本地预览 url
 const imgList = reactive<Array<{ fileName: string, url: string }>>([])
 
+// 复制成功后给出反馈提示
 watch(copied, (val) => {
   if (val)
     $message.success('已复制到剪切板')
 })
 
+// 上传前置校验：非图片类型直接拦截，返回 false 中止上传
 function onBeforeUpload({ file }: { file: UploadFileInfo }) {
   if (!file.file?.type.startsWith('image/')) {
     $message.error('只能上传图片')
@@ -71,12 +74,13 @@ function onBeforeUpload({ file }: { file: UploadFileInfo }) {
   return true
 }
 
+// 自定义上传请求：不走真实接口，延迟 1.5s 后生成本地 blob url 加入预览列表
 async function handleUpload({ file, onFinish }: UploadCustomRequestOptions) {
   if (!file || !file.type) {
     $message.error('请选择文件')
   }
 
-  // 模拟上传
+  // 模拟接口耗时，成功后用 blob url 做本地预览
   $message.loading('上传中...')
   setTimeout(() => {
     $message.success('上传成功')

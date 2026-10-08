@@ -30,9 +30,11 @@
 </template>
 
 <script setup lang="ts">
+// 常规布局顶栏：左侧折叠按钮 + 多页签栏（页签内嵌顶栏是 normal 与 full 布局的主要差异），右侧为工具区（引导/主题/全屏/仓库链接/主题设置/头像）
 import { ToggleTheme } from '@/components'
 import { AppTab, BeginnerGuide, Fullscreen, MenuCollapse, UserAvatar } from '@/layouts/components'
 
+/** 新窗口打开仓库地址 */
 function handleLinkClick(link: string) {
   window.open(link)
 }

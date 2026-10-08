@@ -130,6 +130,8 @@
 </style>
 
 <script setup lang="ts">
+// 登录页：表单校验 → 调用登录接口 → 存 token 到 authStore → 按 redirect 参数或默认路径跳转；
+// 支持"记住我"持久化账号密码、图形验证码（错误后自动刷新）与一键体验快捷登录
 import type { LoginToken } from '@/types/models'
 import { useStorage } from '@vueuse/core'
 import { useAuthStore } from '@/store'
@@ -147,11 +149,13 @@ const loginInfo = ref({
   captcha: '',
 })
 
+// 验证码图片地址：带时间戳绕过浏览器缓存，节流 500ms 防止频繁刷新
 const captchaUrl = ref('')
 const initCaptcha = throttle(() => {
   captchaUrl.value = `${import.meta.env.VITE_AXIOS_BASE_URL}/auth/captcha?${Date.now()}`
 }, 500)
 
+// 回填"记住我"保存的账号密码，并初始化验证码
 const localLoginInfo = lStorage.get<{ username?: string, password?: string }>('loginInfo')
 if (localLoginInfo) {
   loginInfo.value.username = localLoginInfo.username || ''
@@ -159,6 +163,7 @@ if (localLoginInfo) {
 }
 initCaptcha()
 
+// 一键体验：填入演示账号并跳过验证码直接登录
 function quickLogin() {
   loginInfo.value.username = 'admin'
   loginInfo.value.password = '123456'
@@ -167,6 +172,7 @@ function quickLogin() {
 
 const isRemember = useStorage('isRemember', true)
 const loading = ref(false)
+// 提交登录：校验必填项 → 调接口 → 按勾选决定是否记住密码，验证码错误时刷新验证码
 async function handleLogin(isQuick?: boolean) {
   const { username, password, captcha } = loginInfo.value
   if (!username || !password)
@@ -186,9 +192,9 @@ async function handleLogin(isQuick?: boolean) {
     onLoginSuccess(data)
   }
   catch (error) {
-    // 10003为验证码错误专属业务码（reject 的是拦截器构造的 RequestError 形状）
+    // 10003 为验证码错误的专属业务码（reject 的是拦截器构造的 RequestError 形状）
     if ((error as { code?: number }).code === 10003) {
-      // 为防止爆破，验证码错误则刷新验证码
+      // 刷新验证码，防止用旧验证码爆破重试
       initCaptcha()
     }
     $message.destroy('login')
@@ -197,13 +203,14 @@ async function handleLogin(isQuick?: boolean) {
   loading.value = false
 }
 
+// 登录成功后续：写入 token，并优先跳回权限守卫记录的原始目标页
 async function onLoginSuccess(data: LoginToken) {
   authStore.setToken(data)
   $message.loading('登录中...', { key: 'login' })
   try {
     $message.success('登录成功', { key: 'login' })
     if (route.query.redirect) {
-      // redirect 由权限守卫以 to.path（字符串）写入
+      // redirect 由权限守卫以字符串路径写入，这里只回填其余 query
       const path = route.query.redirect as string
       delete route.query.redirect
       router.push({ path, query: route.query })

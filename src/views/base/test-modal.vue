@@ -13,12 +13,14 @@
 </template>
 
 <script setup lang="ts">
+// 弹窗链式演示页：useModal 打开第一个弹窗，提交后继续弹出第二个弹窗，展示多级弹窗的开关与 okLoading 控制
 import { MeModal } from '@/components'
 import { useModal } from '@/composables'
 import { sleep } from '@/utils'
 
 const text = ref('')
 const [$modal1, okLoading1] = useModal()
+// 打开第一个弹窗：onOk 返回 false 表示不自动关闭，由提交流程自行控制
 function openModal1() {
   $modal1.value?.open({
     title: '第一个弹窗',
@@ -28,7 +30,7 @@ function openModal1() {
     async onOk() {
       if (!text.value) {
         $message.warning('请输入内容')
-        return false // 阻止弹窗关闭
+        return false // 校验失败，阻止弹窗关闭
       }
       okLoading1.value = true
       $message.loading('正在提交...', { key: 'modal1' })
@@ -36,7 +38,7 @@ function openModal1() {
       okLoading1.value = false
       $message.success('提交成功', { key: 'modal1' })
       openModal2()
-      return false // 默认关闭弹窗，返回false可让弹窗不关闭
+      return false // 提交后弹出下一级弹窗，本弹窗保持打开
     },
     onCancel: (message: unknown) => {
       $message.info(typeof message === 'string' ? message : '已取消')
@@ -45,6 +47,7 @@ function openModal1() {
 }
 
 const [$modal2, okLoading2] = useModal()
+// 打开第二个弹窗：确认时连同第一个弹窗一并关闭
 function openModal2() {
   $modal2.value?.open({
     cancelText: '关闭当前',
@@ -56,7 +59,7 @@ function openModal2() {
       await sleep(1000)
       okLoading2.value = false
 
-      // 把modal1也关了
+      // 关闭自身的同时把 modal1 也关掉，实现多级弹窗整体收起
       $modal1.value?.close()
       $message.success('已关闭', { key: 'modal2' })
     },

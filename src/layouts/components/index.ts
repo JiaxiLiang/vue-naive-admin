@@ -1,3 +1,4 @@
+// 布局通用部件统一出口：供各布局模板从同一处按需引入，新增部件在此补一行即可被各布局使用
 export { default as BeginnerGuide } from './BeginnerGuide.vue'
 export { default as BreadCrumb } from './BreadCrumb.vue'
 export { default as Fullscreen } from './Fullscreen.vue'

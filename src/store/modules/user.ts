@@ -1,116 +1,29 @@
+// 用户仓库：存当前登录用户的资料与角色
+// 认证凭证在 auth 仓库、可访问路由在 permission 仓库，职责分离
 import type { Role, UserInfo } from '@/types/models'
-import { defineStore } from 'pinia' // 从 pinia 库中导入 defineStore 方法，用于定义状态管理仓库
+import { defineStore } from 'pinia'
 
-export const useUserStore = defineStore('user', { // 定义并导出一个名为 useUserStore 的仓库，id 为 'user'
-  state: () => ({ // 定义 state 函数，返回仓库的初始状态对象
-    userInfo: null as UserInfo | null, // 存储用户信息对象，初始值为 null，登录成功后存入
+export const useUserStore = defineStore('user', {
+  state: () => ({
+    userInfo: null as UserInfo | null,
   }),
-  getters: { // 定义 getters 计算属性，用于基于 state 派生数据
-    // strict 模式下 options store 的 getters 需用 state 参数替代 this（运行时等价）
-    userId: state => state.userInfo?.id, // 定义计算属性 userId，获取用户 ID，可选链防止 userInfo 为 null 时报错
-    username: state => state.userInfo?.username, // 返回用户名
-    nickName: state => state.userInfo?.nickName, // 返回用户昵称
-    avatar: state => state.userInfo?.avatar, // 返回用户头像 URL
-    currentRole: state => state.userInfo?.currentRole ?? ({} as Role), // 返回当前角色对象，若不存在则返回空对象作为默认值（?? 与原 || 对对象等价）
-    roles: state => state.userInfo?.roles || [], // 返回角色数组，若不存在则返回空数组作为默认值
+  getters: {
+    // 各派生值在未登录（userInfo 为 null）时给出安全兜底
+    userId: state => state.userInfo?.id,
+    username: state => state.userInfo?.username,
+    nickName: state => state.userInfo?.nickName,
+    avatar: state => state.userInfo?.avatar,
+    currentRole: state => state.userInfo?.currentRole ?? ({} as Role),
+    roles: state => state.userInfo?.roles || [],
   },
-  actions: { // 定义 actions 方法，用于修改 state 中的状态
-    setUser(user: UserInfo) { // 定义 setUser 方法，接收用户对象作为参数
-      this.userInfo = user // 将传入的用户对象赋值给 state 中的 userInfo
+  actions: {
+    /** 写入用户信息（登录后或刷新页面时由权限守卫调用） */
+    setUser(user: UserInfo) {
+      this.userInfo = user
     },
-    resetUser() { // 定义 resetUser 方法，用于重置用户状态
-      this.$reset() // 调用 Pinia 内置的 $reset 方法，将 state 恢复为初始值
+    /** 清空用户信息（登出/换号时调用） */
+    resetUser() {
+      this.$reset()
     },
   },
 })
-/*
-🚀 Vue 权限系统与页面跳转核心流程图
-(重点突出：路由表动态构建 vs 页面跳转时的查表加载)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📍 第一阶段：初始化 (冷启动)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   🟢 App 启动
-      │
-      ├─ 📦 Pinia 实例创建 (状态仓库就绪，但数据为空)
-      │
-      └─ 🚦 Router 实例创建
-           │
-           └─ 📄 静态路由表 (初始状态)
-                ├─ [ /login ]  登录页
-                ├─ [ /404 ]    空白页
-                └─ [ ... ]     其他公共页面
-
-   ⚡ 关键点：此时"动态路由表"不存在，用户无法访问内部页面。
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📍 第二阶段：登录挂载 (构建地图)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-   👆 用户登录
-      │
-      ▼
-   📡 后端返回权限数据
-      │
-      ├─ 1️⃣ 存入 Pinia (用户信息/权限列表/菜单树) ──> 🔄 触发侧边栏渲染
-      │
-      └─ 2️⃣ Router.addRoutes() (一次性注入动态路由)
-           │
-           └─ 📄 动态路由表 (内存中生成)
-                ├─ [ /dashboard ]  首页
-                ├─ [ /user/list ]  用户管理
-                └─ [ /system ]     系统设置
-
-   ✅ 结果：地图已画好，路已铺通。
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📍 第三阶段：页面跳转 (重点：查表与加载)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   👆 用户点击菜单
-      │
-      ▼
-   🔍 Router 跳转
-      │
-      │  ┌──────────────────────────────────────┐
-      │  │ ⚡ 关键逻辑解析                      │
-      │  │                                      │
-      │  │  1. 【查表】(同步，极快)             │
-      │  │     检查路由表是否存在该路径？       │
-      │  │     -> 存在：继续                    │
-      │  │     -> 不存在：跳转 404              │
-      │  │                                      │
-      │  │  2. 【加载】(异步，网络请求)         │
-      │  │     找到路由记录 -> 懒加载 .vue 文件 │
-      │  │     import('./views/User.vue')       │
-      │  │     -> Webpack 加载 JS 资源          │
-      │  │                                      │
-      │  │  3. 【渲染】(微任务更新)             │
-      │  │     组件挂载 -> DOM 更新             │
-      │  └──────────────────────────────────────┘
-      │
-      ▼
-   🖼️ 内容区 显示新页面
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📍 第四阶段：页面交互 (数据流向对比)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-   A. 🔒 局部交互 (组件内部闭环)
-      👆 点击按钮 -> 📝 localState 变 -> 🎨 视图更新
-      (Pinia 完全不知情，不参与)
-
-   B. 🌐 全局交互 (跨组件共享)
-      👆 点击收藏 -> 📞 Pinia.action() -> 💾 State 变 -> 🎨 多处视图更新
-      (例如：侧边栏收藏数+1，列表页变红)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-📍 第五阶段：退出/切换 (销毁地图)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-   👆 用户退出
-      │
-      ▼
-   🧹 清理现场
-      │
-      ├─ 1️⃣ resetRouter()  -> 移除动态路由表
-      │                    (防止下个用户看到上个用户的路由)
-      │
-      ├─ 2️⃣ Pinia.$reset() -> 清空用户数据/Token
-      │
-      └─ 3️⃣ Router.push('/login') -> 回到起点
-*/

@@ -1,6 +1,5 @@
 /**
- * UnoCSS 图标名的模板字面量类型：必须以 `i-` 前缀开头（对应 presetIcons 的 prefix 配置），
- * 如 'i-fe:activity'、'i-simple-icons:juejin'。构建脚本（build/index.ts）与虚拟模块
- * isme:icons 的内容都受它约束，拼错前缀在编译期报错。
+ * 约束项目全部合法图标名的模板字面量类型：i- 前缀与 presetIcons 的 prefix 配置对应，
+ * 构建脚本与虚拟模块产出的图标名均受此约束，拼错前缀在编译期即报错
  */
 export type IconName = `i-${string}`

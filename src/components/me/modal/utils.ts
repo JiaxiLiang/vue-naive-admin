@@ -1,20 +1,23 @@
-// 获取元素的CSS样式
+// 弹窗拖拽能力：以 bar（弹窗表头）为把手拖动 box（弹窗容器），供 MeModal 每次打开后绑定
+
+// 兼容 IE 的 currentStyle 仅为类型补声明，现代浏览器运行时恒走 getComputedStyle
 interface ElementWithCurrentStyle extends HTMLElement {
-  /** IE 专属属性，现代浏览器走 getComputedStyle */
   currentStyle?: CSSStyleDeclaration
 }
 
 function getCss(element: HTMLElement, key: string): string | undefined {
-  // IE 专属属性分支，现代浏览器走 getComputedStyle；两种风格对象都有 getPropertyValue
   const style = (element as ElementWithCurrentStyle).currentStyle ?? window.getComputedStyle(element, null)
   return style.getPropertyValue(key)
 }
 
-// 初始化拖拽
+/**
+ * 绑定拖拽：bar 为拖动把手（弹窗表头），box 为被移动的弹窗容器，任一为空直接跳过
+ * 注意 document 级监听会被下一次调用覆盖，多弹窗叠层时以最后一次绑定为准
+ */
 export function initDrag(bar: HTMLElement | null | undefined, box: HTMLElement | null | undefined): void {
   if (!bar || !box)
     return
-  // left/top 运行时可能是 '10px' 这类字符串（getCss 的返回值），parseInt 时统一处理
+  // left/top 记录容器当前定位（getCss 返回 '10px' 这类字符串），currentX/Y 记录按下时的鼠标位置
   const params = {
     left: 0 as number | string,
     top: 0 as number | string,
@@ -23,6 +26,7 @@ export function initDrag(bar: HTMLElement | null | undefined, box: HTMLElement |
     flag: false,
   }
 
+  // 容器定位为 auto（尚未定位过）时不记录，避免把 auto 当数值解析
   if (getCss(box, 'left') !== 'auto') {
     params.left = getCss(box, 'left')!
   }
@@ -30,17 +34,17 @@ export function initDrag(bar: HTMLElement | null | undefined, box: HTMLElement |
     params.top = getCss(box, 'top')!
   }
 
-  // 设置触发拖动元素的鼠标样式为移动图标
   bar.style.cursor = 'move'
-  // 鼠标按下事件处理函数
+  // 按下：记录鼠标起点并置拖拽标志
   bar.onmousedown = function (e) {
-    params.flag = true // 设置拖拽标志为true
-    e.preventDefault() // 阻止默认事件
-    params.currentX = e.clientX // 鼠标当前位置的X坐标
-    params.currentY = e.clientY // 鼠标当前位置的Y坐标
+    params.flag = true
+    e.preventDefault() // 防止拖动时选中文本
+    params.currentX = e.clientX
+    params.currentY = e.clientY
   }
+  // 抬起：结束拖拽，并把容器此刻位置存为下次位移的基准
   document.onmouseup = function () {
-    params.flag = false // 设置拖拽标志为false
+    params.flag = false
     if (getCss(box, 'left') !== 'auto') {
       params.left = getCss(box, 'left')!
     }
@@ -48,20 +52,20 @@ export function initDrag(bar: HTMLElement | null | undefined, box: HTMLElement |
       params.top = getCss(box, 'top')!
     }
   }
+  // 移动：仅拖拽中生效，按鼠标位移同步更新容器 left/top
   document.onmousemove = function (e) {
     if (e.target !== bar && !params.flag)
       return
 
-    e.preventDefault() // 阻止默认事件
-    // 如果拖拽标志为true
+    e.preventDefault()
     if (params.flag) {
-      const nowX = e.clientX // 鼠标当前位置的X坐标
-      const nowY = e.clientY // 鼠标当前位置的Y坐标
-      const disX = nowX - params.currentX // 鼠标移动的X距离
-      const disY = nowY - params.currentY // 鼠标移动的Y距离
+      const nowX = e.clientX
+      const nowY = e.clientY
+      const disX = nowX - params.currentX
+      const disY = nowY - params.currentY
 
-      const left = Number.parseInt(params.left as string) + disX // 盒子元素的新left值
-      const top = Number.parseInt(params.top as string) + disY // 盒子元素的新top值
+      const left = Number.parseInt(params.left as string) + disX
+      const top = Number.parseInt(params.top as string) + disY
 
       box.style.left = `${left}px`
       box.style.top = `${top}px`

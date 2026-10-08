@@ -1,5 +1,6 @@
 <template>
   <main class="h-full flex-col flex-1 overflow-hidden bg-#f5f6fb dark:bg-#121212">
+    <!-- 顶栏：header 插槽可整体替换，否则渲染「返回 + 标题（缺省取路由 meta.title）+ action」默认结构 -->
     <AppCard
       v-if="showHeader"
       class="sticky top-0 z-1 min-h-60 flex items-center justify-between px-24"
@@ -41,6 +42,9 @@
 </template>
 
 <script setup lang="ts">
+// 标准页面骨架：吸顶标题栏 + 圆角内容卡片（内容区独立滚动）+ 可选页脚
+// 业务页通常只写默认插槽；action 插槽放「新增/导出」等按钮，title-prefix 可替换返回按钮区
+// back：显示返回按钮（router.back()）；title：缺省取当前路由 meta.title；showHeader：进入纯内容模式
 withDefaults(defineProps<{
   back?: boolean
   showFooter?: boolean

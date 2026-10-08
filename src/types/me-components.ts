@@ -1,10 +1,10 @@
 import type { CSSProperties } from 'vue'
 
 /**
- * "组件暴露类型"共享定义（useModal 与 MeModal 组件两边引用，避免循环依赖）
+ * useModal 与 MeModal 共用的组件类型定义，独立成文件以避免二者循环依赖
  */
 
-/** MeModal.open() 的入参（对应组件 props + 运行时合并的 options） */
+/** MeModal.open() 的入参（组件 props 与运行时 options 合并后的形状） */
 export interface ModalOptions {
   width?: string
   title?: string
@@ -19,11 +19,11 @@ export interface ModalOptions {
   /** 返回 false 可阻止弹窗关闭 */
   onOk?: (data?: unknown) => Promise<unknown> | unknown
   onCancel?: (data?: unknown) => Promise<unknown> | unknown
-  /** 运行时内部字段（open 时由 modal 管理） */
+  /** 运行时内部字段，由 modal 自身维护，调用方不传 */
   okLoading?: boolean
 }
 
-/** MeModal defineExpose 的形状（MeModal 组件必须满足它） */
+/** MeModal 组件 defineExpose 必须满足的形状 */
 export interface MeModalExposed {
   open: (options?: Partial<ModalOptions>) => Promise<void>
   close: () => void

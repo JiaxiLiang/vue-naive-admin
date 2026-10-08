@@ -2,10 +2,8 @@ import type { Linter } from 'eslint'
 import antfu from '@antfu/eslint-config'
 
 /**
- * 分层依赖方向（C7 机器化）：
- *   utils ← api ← composables ← components ← views ← router/layouts
- * 下层禁止反向 import 上层；store 只能被上层引用（api/views/layouts/composables 可用）。
- * 本文件是 tsconfig.node.json 类型工程的检查对象。
+ * 生成 no-restricted-imports 规则，把「下层不得引用上层」的分层依赖约束交给 lint 机器化执行
+ * @param layers 禁止引用的上层目录名（同时拦截 @/<layer> 与 @/<layer>/* 两种导入写法）
  */
 function upperLayerPatterns(layers: string[]): Linter.RulesRecord {
   return {
@@ -21,6 +19,7 @@ export default antfu({
   unocss: true,
   formatters: true,
   stylistic: true,
+  // 关闭与项目现状冲突的默认规则
   rules: {
     'n/prefer-global/process': 'off',
     'no-undef': 'error',
@@ -29,6 +28,7 @@ export default antfu({
     '@typescript-eslint/no-this-alias': 'off',
     'prefer-promise-reject-errors': 'off',
   },
+  // 声明自动导入的 API 与 naive-ui 全局挂载对象，避免 no-undef 误报
   languageOptions: {
     globals: {
       h: 'readonly',
@@ -50,23 +50,23 @@ export default antfu({
     },
   },
 }, {
-  // 最底层 utils：不得引用 store/composables/components/views/api
+  // utils 是最底层，禁止引用任何上层模块
   files: ['src/utils/**'],
   rules: upperLayerPatterns(['store', 'composables', 'components', 'views', 'api']),
 }, {
-  // api 层：不得引用 UI（components/views）、composables 与 store
+  // api 层（含页面内 api.ts）：禁止引用状态层与 UI，保持接口层纯粹
   files: ['src/api/**', 'src/views/*/api.ts'],
   rules: upperLayerPatterns(['store', 'composables', 'components', 'views']),
 }, {
-  // composables：不得引用 components/views
+  // composables 禁止依赖组件与页面
   files: ['src/composables/**'],
   rules: upperLayerPatterns(['components', 'views']),
 }, {
-  // store：不得引用 UI（components/views）
+  // store 禁止依赖组件与页面
   files: ['src/store/**'],
   rules: upperLayerPatterns(['components', 'views']),
 }, {
-  // views 之间禁止横向 import（跨页复用只经 components/composables/api 工厂通道；同页相对路径不受限）
+  // 页面之间禁止横向引用，跨页复用只能走 components/composables/api 通道（同页相对路径不受限）
   files: ['src/views/**'],
   rules: upperLayerPatterns(['views']),
 })

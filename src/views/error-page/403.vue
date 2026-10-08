@@ -23,11 +23,14 @@
 </template>
 
 <script setup lang="ts">
+// 403 无权限页：权限守卫拦截后跳转到此页，可返回来源页或回首页
 const router = useRouter()
 const route = useRoute()
 
+// 来源页地址取自 history.state，供"返回上一页"按钮使用
 const back = history.state.back
 
+// 区分进入方式：由权限守卫转入时留在本页展示提示；带 path 参数访问时直接重定向到目标路由
 if (history.state.from === 'permission-guard') {
   delete history.state.from
 }

@@ -102,6 +102,8 @@
 </template>
 
 <script setup lang="ts">
+// 用户管理页：MeCrud 表格维护用户，弹窗按 modalAction 复用四种形态——新增（含初始密码/角色/状态）、
+// 分配角色（setRole）、重置密码（reset）；"创建新用户"按钮与超管列经 v-permission 按权限点控制显隐
 import type { UserRow, UserTableColumn } from '@/composables'
 import type { Role, UserInfoQuery } from '@/types/models'
 import { NButton, NSwitch } from 'naive-ui'
@@ -112,11 +114,11 @@ import api from './api'
 
 defineOptions({ name: 'UserMgt' })
 
-/** 弹窗表单：用户字段 + 新增时的 password、分配角色时的 roleIds */
+// 弹窗表单：用户字段 + 新增时的 password、分配角色时的 roleIds
 type UserForm = Partial<UserRow> & { password?: string, roleIds?: number[] }
 
 const $table = ref<{ handleSearch: (keepCurrentPage?: boolean) => void } | null>(null)
-// 筛选状态同步 URL（useRouteQuery）：筛选后刷新/分享/直开不丢条件；undefined 全部声明在册，
+// 筛选条件经 useRouteQuery 同步到 URL，刷新/分享/直开不丢；undefined 全部声明在册，
 // axios 序列化时本就丢弃 undefined 参数，行为与旧版 queryItems = ref({}) 一致
 const queryItems = useRouteQuery<UserInfoQuery>({ username: undefined, gender: undefined, enable: undefined })
 
@@ -124,7 +126,7 @@ onMounted(() => {
   $table.value?.handleSearch()
 })
 
-// 角色下拉数据走 useRequest 标准件：自带竞态防护与组件卸载自动取消（旧写法为裸 .then 直写）
+// 角色下拉数据走 useRequest 标准件：自带竞态防护与组件卸载自动取消
 // data 是请求标准件的事实源，roles 是视图别名；过期/中止的响应到不了 data，也就不会写入 roles
 const roles = ref<Role[]>([])
 const { data: rolesData, run: fetchRoles } = useRequest<Role[]>(
@@ -155,7 +157,7 @@ const {
 
 const { handleEnable } = useEnableRow(api.update, () => $table.value?.handleSearch())
 
-// 基础展示列（头像/用户名/角色/性别/创建时间）来自共享的 getBaseUserColumns，本页只组装差异化列
+// 表格列定义：基础列复用共享的 getBaseUserColumns，本页追加邮箱、启停开关与操作列
 const columns: UserTableColumn[] = [
   ...getBaseUserColumns(),
   { title: '邮箱', key: 'email', width: 150, ellipsis: { tooltip: true } },
@@ -245,6 +247,7 @@ const columns: UserTableColumn[] = [
   },
 ]
 
+// 打开"分配角色"弹窗：把用户当前拥有的角色 id 集合回填进多选框
 function handleOpenRolesSet(row: UserRow) {
   const roleIds = row.roles.map(item => item.id)
   handleOpen({
@@ -255,6 +258,7 @@ function handleOpenRolesSet(row: UserRow) {
   })
 }
 
+// 弹窗保存分发：按动作类型选择对应接口——分配角色走 update，重置密码走 resetPwd，其余交给 useCrud 默认保存
 function onSave() {
   if (modalAction.value === 'setRole') {
     // 'setRole' 动作由 handleOpenRolesSet 进入，row 必带 id
@@ -265,7 +269,7 @@ function onSave() {
   }
   else if (modalAction.value === 'reset') {
     const { id, password } = modalForm.value
-    // 'reset' 动作只能从重置密码按钮进入：row 携带 id，password 为必填校验字段，校验通过后两者必有值
+    // 'reset' 动作只能从重置密码按钮进入：row 携带 id，password 必填校验通过后两者必有值
     return handleSave({
       api: () => api.resetPwd(id!, { password } as { password: string }),
       cb: () => $message.success('密码重置成功'),

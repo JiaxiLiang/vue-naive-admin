@@ -97,6 +97,8 @@
 </template>
 
 <script setup lang="ts">
+// 个人中心页：展示当前用户头像与资料，提供三个弹窗操作——修改密码、更改头像（在线链接）、修改资料；
+// 任一保存成功后都会重新拉取用户信息刷新 store 与页面展示
 import { MeModal } from '@/components'
 import { useForm, useModal } from '@/composables'
 import { useUserStore } from '@/store'
@@ -113,6 +115,7 @@ const required = {
 const [pwdModalRef] = useModal()
 const [pwdFormRef, pwdForm, pwdValidation] = useForm<{ oldPassword?: string, newPassword?: string }>({})
 
+// 保存新密码：校验通过后调接口并刷新用户信息
 async function handlePwdSave() {
   await pwdValidation()
   // 两个密码字段均为必填校验，校验通过后必有值
@@ -123,6 +126,7 @@ async function handlePwdSave() {
 
 const newAvatar = ref(userStore.avatar)
 const [avatarModalRef] = useModal()
+// 保存头像：地址为空返回 false 阻止弹窗关闭
 async function handleAvatarSave() {
   if (!newAvatar.value) {
     $message.error('请输入头像地址')
@@ -146,6 +150,7 @@ const [profileFormRef, profileForm, profileValidation] = useForm<{ id?: number, 
   address: userStore.userInfo?.address,
   email: userStore.userInfo?.email,
 })
+// 保存资料：表单以 store 当前值初始化，校验通过后调接口并刷新用户信息
 async function handleProfileSave() {
   await profileValidation()
   // 资料页仅在登录态可达，userId 必有值
@@ -154,6 +159,7 @@ async function handleProfileSave() {
   refreshUserInfo()
 }
 
+// 重新拉取当前用户信息并写回 store，使头像/昵称等全局展示同步更新
 async function refreshUserInfo() {
   const user = await getUserInfo()
   userStore.setUser(user)

@@ -59,6 +59,8 @@
 </template>
 
 <script setup lang="ts">
+// 角色-用户分配页：按路由 roleId 展示全量用户列表，行内/批量对用户执行"授权/取消授权"；
+// 操作列按用户是否已拥有该角色渲染不同按钮，勾选行后可批量操作
 import type { UserTableColumn } from '@/composables'
 import type { UserInfoQuery } from '@/types/models'
 import { NButton, NSwitch, NTag } from 'naive-ui'
@@ -77,7 +79,7 @@ onMounted(() => {
   $table.value?.handleSearch()
 })
 
-// 基础展示列来自共享的 getBaseUserColumns；本页加多选列、只读状态列与授权操作列
+// 列定义：基础列复用共享的 getBaseUserColumns，本页追加多选列、只读状态列与授权操作列
 const columns: UserTableColumn[] = [
   { type: 'selection', fixed: 'left' },
   ...getBaseUserColumns(),
@@ -139,12 +141,14 @@ const columns: UserTableColumn[] = [
   },
 ]
 
+// 表格勾选变化时同步已选用户 id 集合，驱动顶部批量按钮的可用态
 const userIds = ref<number[]>([])
 function onChecked(rowKeys: Array<string | number>) {
   // 行 key 是 id（number，见 :get-data 数据与默认 rowKey），MeCrud 事件类型是 string | number 的宽联合
   userIds.value = (rowKeys || []) as number[]
 }
 
+// 批量授权：默认作用于勾选行，传 ids 时为单行操作；确认后调接口并刷新列表
 function handleBatchAdd(ids: number[] = userIds.value) {
   const roleId = route.params.roleId as string
   if (!roleId)
@@ -159,6 +163,7 @@ function handleBatchAdd(ids: number[] = userIds.value) {
     },
   })
 }
+// 批量取消授权：入参与防护逻辑同批量授权，只是调用移除接口
 function handleBatchRemove(ids: number[] = userIds.value) {
   const roleId = route.params.roleId as string
   if (!roleId)

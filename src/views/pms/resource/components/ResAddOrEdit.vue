@@ -151,6 +151,8 @@
 </template>
 
 <script setup lang="ts">
+// 资源新增/编辑弹窗：统一处理菜单（MENU，含目录级）与按钮权限点（BUTTON）两种资源的表单；
+// 菜单可配路由/组件/图标/layout 等前端路由属性，按钮仅归属某菜单（parentId）作为授权粒度
 import type { TreeSelectOption } from 'naive-ui'
 import type { ModalAction } from '@/composables'
 import type { ModalOptions } from '@/types/me-components'
@@ -163,19 +165,21 @@ import api from '../api'
 import QuestionLabel from './QuestionLabel.vue'
 
 const props = defineProps<{
-  /** 全量菜单树（含按钮） */
+  // 全量菜单树（含按钮），用于"所属菜单"树选择
   menus: PermissionItem[]
 }>()
 const emit = defineEmits<{
   refresh: [data?: PermissionItem]
 }>()
 
-/** 树选择选项：n-tree-select 用 label/key 字段，本项目经 label-field="name" key-field="id" 映射为后端字段 */
+// 树选择选项：n-tree-select 用 label/key 字段，经 label-field="name" key-field="id" 映射为后端字段
 type MenuSelectOption = TreeSelectOption & { name?: string, id?: number | string }
 
+// 顶层加"根菜单"空节点（id 为空串），便于把资源挂到根级
 const menuOptions = computed<MenuSelectOption[]>(() => {
   return [{ name: '根菜单', id: '', children: props.menus || [] }]
 })
+// 组件路径候选项来自构建期扫描的页面路径；图标候选项来自全量图标集合
 const componentOptions = pagePathes.map(path => ({ label: path, value: path }))
 const iconOptions = icons.map(item => ({
   label: () =>
@@ -195,6 +199,7 @@ const required = {
   trigger: ['blur', 'change'],
 }
 
+// 新增时的字段默认值：菜单默认启用且显示
 const defaultForm = { enable: true, show: true, layout: '' }
 const [modalFormRef, modalForm, validation] = useForm<Partial<PermissionItem>>({})
 const [modalRef, okLoading] = useModal()
@@ -207,6 +212,8 @@ interface HandleOpenOptions extends Partial<ModalOptions> {
   row?: Partial<PermissionItem>
 }
 
+// 打开弹窗入口（父组件经 ref 调用）：action 区分新增/编辑，row 为回填数据；
+// 按钮已挂菜单时禁用"所属菜单"选择，防止误改归属
 function handleOpen(options: HandleOpenOptions = {}) {
   const { action, row = {}, ...rest } = options
   modalAction.value = action ?? ''
@@ -215,11 +222,13 @@ function handleOpen(options: HandleOpenOptions = {}) {
   modalRef.value!.open({ ...rest, onOk: onSave })
 }
 
+// 保存：先跑表单校验，再按 action 分流新增/编辑；失败返回 false 让弹窗保持打开
 async function onSave() {
   await validation()
   okLoading.value = true
   try {
     let newFormData
+    // 未选所属菜单视为挂根级，空串转 null 传给后端
     if (!modalForm.value.parentId)
       modalForm.value.parentId = null
     if (modalAction.value === 'add') {
@@ -227,12 +236,12 @@ async function onSave() {
       newFormData = res.data
     }
     else if (modalAction.value === 'edit') {
-      // 编辑动作只能从树节点行进入，行数据携带后端 id，校验通过后必有值
+      // 编辑只能从已有行进入，行数据携带后端 id，校验通过后必有值
       await api.savePermission(modalForm.value.id!, modalForm.value)
     }
     okLoading.value = false
     $message.success('保存成功')
-    // 编辑态表单由树节点行展开而来（code/name/type 必有），新增态直接用后端返回的实体
+    // 保存成功后回传最新实体供父级精准刷新：新增用后端返回值，编辑用表单数据
     emit('refresh', modalAction.value === 'add' ? newFormData : modalForm.value as PermissionItem)
   }
   catch (error) {

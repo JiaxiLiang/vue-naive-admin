@@ -34,11 +34,13 @@
 </template>
 
 <script setup lang="ts">
+// Unocss 图标速查页：网格展示全部可用图标，点击图标复制标签、点击名称复制图标类名，方便开发时取用
 import { useClipboard } from '@vueuse/core'
 import icons from 'isme:icons'
 
 const { copy, copied } = useClipboard()
 
+// 复制成功后给出反馈提示
 watch(copied, (val) => {
   if (val)
     $message.success('已复制到剪切板')

@@ -2,23 +2,25 @@ import type { ConfigType } from 'dayjs'
 import dayjs from 'dayjs'
 
 /**
- * @param time 待格式化的时间（空值时按当前时间兜底，dayjs(undefined) 即 now）
- * @param format 格式
+ * 格式化日期时间
+ * @param time 待格式化的时间（缺省按当前时间，dayjs(undefined) 即 now）
+ * @param format 输出格式
  * @returns 格式化后的时间字符串
  */
 export function formatDateTime(time: ConfigType = undefined, format = 'YYYY-MM-DD HH:mm:ss'): string {
   return dayjs(time).format(format)
 }
 
-/** 只保留日期部分的格式化（formatDateTime 的窄格式包装） */
+/** 只保留日期部分的窄格式（formatDateTime 的包装） */
 export function formatDate(date: ConfigType = undefined, format = 'YYYY-MM-DD'): string {
   return formatDateTime(date, format)
 }
 
 /**
+ * 节流：wait 毫秒内最多执行一次，高频事件（resize/scroll）降频专用
  * @param fn 需要节流的函数
- * @param wait 间隔时间（毫秒）
- * @returns 节流函数
+ * @param wait 间隔毫秒数
+ * @returns 节流后的函数
  */
 export function throttle<T extends (...args: unknown[]) => unknown>(fn: T, wait: number): (...args: Parameters<T>) => void {
   let context: unknown
@@ -29,6 +31,7 @@ export function throttle<T extends (...args: unknown[]) => unknown>(fn: T, wait:
     const now = Date.now()
     context = this
     args = argArr
+    // 距上次执行超过 wait 才放行本次调用
     if (now - previous > wait) {
       fn.apply(context, args)
       previous = now
@@ -36,13 +39,13 @@ export function throttle<T extends (...args: unknown[]) => unknown>(fn: T, wait:
   }
 }
 
-// ── 预置工具（2026-10-04 用户决策恢复：为后续功能预留的工具底座，配套单测见 tests/utils/common.spec.ts）──
-
 /**
+ * 防抖：停止触发 wait 毫秒后才真正执行；immediate 为 true 时改为首次立即执行，
+ * 并在 wait 毫秒冷却期内不再触发（搜索联想、按钮防连点）
  * @param method 需要防抖的函数
- * @param wait 间隔时间（毫秒）
+ * @param wait 间隔毫秒数
  * @param immediate 是否立即执行
- * @returns 防抖函数
+ * @returns 防抖后的函数
  */
 export function debounce<T extends (...args: unknown[]) => unknown>(method: T, wait: number, immediate?: boolean): (...args: Parameters<T>) => void {
   let timeout: ReturnType<typeof setTimeout> | null = null
@@ -51,10 +54,9 @@ export function debounce<T extends (...args: unknown[]) => unknown>(method: T, w
     if (timeout) {
       clearTimeout(timeout)
     }
-    // 立即执行需要两个条件，一是immediate为true，二是timeout未被赋值或被置为null
+    // 立即执行需同时满足：immediate 开启且当前不在冷却期（timeout 已置空）
     if (immediate) {
-      // 如果定时器不存在，则立即执行，并设置一个定时器，wait毫秒后将定时器置为null
-      // 这样确保立即执行后wait毫秒内不会被再次触发
+      // 立即执行后开启 wait 毫秒冷却计时，期间再次触发 callNow 恒为 false，不会重复执行
       const callNow = !timeout
       timeout = setTimeout(() => {
         timeout = null
@@ -64,7 +66,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(method: T, w
       }
     }
     else {
-      // 如果immediate为false，则函数wait毫秒后执行
+      // 尾缘触发：每次触发都重新计时，停下来之后的 wait 毫秒才执行
       timeout = setTimeout(() => {
         method.apply(context, args)
       }, wait)
@@ -73,23 +75,21 @@ export function debounce<T extends (...args: unknown[]) => unknown>(method: T, w
 }
 
 /**
+ * 监听元素尺寸变化
  * @param el 监听的元素
- * @param cb 尺寸变化回调
- * @returns ResizeObserver 实例
+ * @param cb 尺寸变化回调（收到 contentRect）
+ * @returns ResizeObserver 实例（调用方在适当时机自行 disconnect）
  */
 export function useResize(el: HTMLElement, cb: (rect: DOMRectReadOnly) => void): ResizeObserver {
   const observer = new ResizeObserver((entries) => {
-    // ResizeObserver 回调每次触发至少携带一个 entry（运行时事实，编译器不可知），非空收口
+    // 回调每次触发至少携带一个 entry（运行时事实，编译器不可知），非空收口
     cb(entries[0]!.contentRect)
   })
   observer.observe(el)
   return observer
 }
 
-/**
- * @param time 毫秒数
- * @returns 睡一会儿，让子弹暂停一下
- */
+/** 等待指定毫秒的空 Promise（演示/测试中制造时间间隔用） */
 export function sleep(time: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, time))
 }

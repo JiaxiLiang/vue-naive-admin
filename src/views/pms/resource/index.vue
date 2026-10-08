@@ -84,6 +84,8 @@
 </template>
 
 <script setup lang="ts">
+// 资源（菜单/按钮权限）管理页：左侧 MenuTree 选择菜单，右侧展示菜单详情及其下的按钮权限点列表；
+// 支持菜单与按钮的新增、编辑、删除，以及按钮的启用/停用切换
 import type { DataTableColumns } from 'naive-ui'
 import type { PermissionItem } from '@/types/models'
 import { NButton, NSwitch } from 'naive-ui'
@@ -92,13 +94,14 @@ import api from './api'
 import MenuTree from './components/MenuTree.vue'
 import ResAddOrEdit from './components/ResAddOrEdit.vue'
 
-/** 按钮行数据：PermissionItem + 状态开关的行级 loading 态（前端 UI 字段，不来自后端） */
+// 按钮行数据：PermissionItem + 状态开关的行级 loading 态（前端 UI 字段，不来自后端）
 type BtnRow = PermissionItem & { enableLoading?: boolean }
 
 const treeData = ref<PermissionItem[]>([])
 const treeLoading = ref(false)
 const $table = ref<{ handleSearch: (keepCurrentPage?: boolean) => void } | null>(null)
 const currentMenu = ref<PermissionItem | null>(null)
+// 刷新入口：树节点变更时只重查菜单树并回显选中项；按钮节点变更时仅刷新按钮表格
 async function initData(data?: PermissionItem) {
   if (data?.type === 'BUTTON') {
     $table.value!.handleSearch()
@@ -115,6 +118,7 @@ async function initData(data?: PermissionItem) {
 initData()
 
 const modalRef = ref<InstanceType<typeof ResAddOrEdit> | null>(null)
+// 打开编辑菜单弹窗，回填当前菜单数据
 function handleEdit(item: PermissionItem) {
   modalRef.value?.handleOpen({
     action: 'edit',
@@ -124,6 +128,7 @@ function handleEdit(item: PermissionItem) {
   })
 }
 
+// 按钮权限点表格列定义：状态列用开关渲染启停切换，操作列提供编辑/删除
 const btnsColumns: DataTableColumns<BtnRow> = [
   { title: '名称', key: 'name' },
   { title: '编码', key: 'code' },
@@ -186,6 +191,7 @@ const btnsColumns: DataTableColumns<BtnRow> = [
   },
 ]
 
+// 选中菜单变化后，等 MeCrud 拿到新的 parentId 再触发按钮列表查询
 watch(
   () => currentMenu.value,
   async (v) => {
@@ -195,6 +201,7 @@ watch(
   },
 )
 
+// 新增按钮：parentId 挂在当前选中菜单下
 function handleAddBtn() {
   modalRef.value?.handleOpen({
     action: 'add',
@@ -204,6 +211,7 @@ function handleAddBtn() {
   })
 }
 
+// 打开编辑按钮弹窗
 function handleEditBtn(row: BtnRow) {
   modalRef.value?.handleOpen({
     action: 'edit',
@@ -213,6 +221,7 @@ function handleEditBtn(row: BtnRow) {
   })
 }
 
+// 删除按钮权限点：确认后调接口并刷新按钮表格
 function handleDeleteBtn(id: number | string) {
   const d = $dialog.warning({
     content: '确定删除？',
@@ -235,6 +244,7 @@ function handleDeleteBtn(id: number | string) {
   })
 }
 
+// 切换按钮启用/停用：行级 loading 防止重复点击，失败不翻转状态
 async function handleEnable(item: BtnRow) {
   try {
     item.enableLoading = true

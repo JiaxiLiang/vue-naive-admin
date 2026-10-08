@@ -1,229 +1,86 @@
-// 应用状态：侧边栏状态、设备类型（移动/PC）、UI 设置
-// 仓库只管页面状态 不管数据 （是否折叠这种）
+// 应用 UI 状态仓库：侧边栏折叠、布局模式、主题色与明暗。只管界面状态，不碰业务数据
 import type { GlobalThemeOverrides } from 'naive-ui'
 import type { PersistenceOptions } from 'pinia-plugin-persistedstate'
 import type { WritableComputedRef } from 'vue'
 import type { LayoutMode } from '@/settings'
 import { generate, getRgbStr } from '@arco-design/color'
-// 第三方库 引入 Arco Design 的颜色生成与 RGB 格式转换工具
 import { useDark } from '@vueuse/core'
-// 第三方 引入 VueUse 的暗黑模式 Hook，用于管理暗黑模式状态
 import { defineStore } from 'pinia'
-// 引入 Pinia 的状态管理核心方法 defineStore创建仓库  defineStore（）参数1仓库id  参数2仓库配置
 import { defaultLayout, defaultPrimaryColor, naiveThemeOverrides } from '@/settings'
-// 引入全局配置中的默认布局、默认主色调及 Naive UI 主题覆盖对象
-// 里就会初始化页面的各种状态 （初始化就是白色的等）
 
-// 插件对深层主题 state 实例化 Path<State>[] 会触发 TS2589 爆栈（官方递归类型局限），
-// 因此 persist 选项整体以 PersistedStateOptions（非本 store 的 State 实例化）收口，
-// 字段名拼写安全由下面的 keyof AppState 校验兜底
+// 持久化字段名单：以 keyof AppState 校验字段拼写；persist 选项整体收口为 PersistedStateOptions，
+// 是为绕开插件对深层主题 state 的 Path 递归类型爆栈（TS2589）
 const persistedKeys = ['collapsed', 'layout', 'primaryColor', 'naiveThemeOverrides'] as const satisfies ReadonlyArray<keyof AppState>
 
-// pinia仓库三大板块：state：存放数据    getters：存放计算属性  actions：存放修改数据的方法
 interface AppState {
   collapsed: boolean
-  /** state 工厂持有 useDark() 的 computed ref，pinia 对外解包为 boolean */
+  /** state 工厂持有 useDark() 的 computed ref，经 pinia 解包对外表现为 boolean */
   isDark: WritableComputedRef<boolean>
-  /** 布局模式；'' 为历史持久化值的过渡态（见 setupAppLayoutCompat），布局渲染时回退 meta.layout */
+  /** '' 为旧持久化值的兼容过渡态，渲染时回退 meta.layout（见 App.vue） */
   layout: LayoutMode | ''
   primaryColor: string
   naiveThemeOverrides: GlobalThemeOverrides
 }
 
-export const useAppStore = defineStore('app', { // 定义并导出名为 'app' 的仓库 {}把参数2打包成对象
-  state: (): AppState => ({ // 声明 Store 的初始状态工厂函数
-    collapsed: false, // 侧边栏菜单是否折叠（默认不折叠）
-    isDark: useDark(), // 是否开启暗黑模式，初始值由 useDark Hook 根据系统或缓存决定
-    layout: defaultLayout, // 当前系统的布局模式（如侧边菜单、顶部菜单等）
-    primaryColor: defaultPrimaryColor, // 当前系统的主题色（默认主色调）
-    naiveThemeOverrides, // Naive UI 组件库的主题覆盖配置对象
+export const useAppStore = defineStore('app', {
+  // state 用工厂函数：每次初始化都生成全新对象，避免多实例共享同一引用
+  state: (): AppState => ({
+    collapsed: false,
+    isDark: useDark(),
+    layout: defaultLayout,
+    primaryColor: defaultPrimaryColor,
+    naiveThemeOverrides,
   }),
-  // 因为这里{ state: ...} 这里的配置是箭头函数（返回值是对象就得加（））
-  // 如果不是箭头函数 直接用对象来赋值那么就是多个用户操作同一个地址 而用函数就可以每次使用都会开辟不同内存
   actions: {
-    // 声明 Store 的操作方法
-    // 这些函数只是及时跟新仓库的状态并不是真实的修改页面的状态
-    // 路径是 用户点击 组件调用action函数 函数修改pinia仓库数据 vue系统根据仓库改变组件
-    // 路由是负责网址更改之后页面切换这个环节的   单一页面组件的变化是vue响应式系统负责的
-    switchCollapsed() { // 切换侧边栏展开/折叠状态的方法
-      this.collapsed = !this.collapsed // 将当前折叠状态取反并赋值给自身
+    /** 切换侧边栏折叠状态 */
+    switchCollapsed() {
+      this.collapsed = !this.collapsed
     },
-    // this始终是指向仓库 这是例外（正常谁调用函数this就是谁）底层有了bind函数绑定
-    setCollapsed(b: boolean) { // 直接设置侧边栏折叠状态的方法
-      this.collapsed = b // 给组件传入的布尔值赋给 collapsed 状态
+    /** 直接设置侧边栏折叠状态 */
+    setCollapsed(b: boolean) {
+      this.collapsed = b
     },
-    toggleDark() { // 切换暗黑/明亮模式的方法
-      this.isDark = !this.isDark // 将当前暗黑模式状态取反并赋值给自身
+    /** 切换明暗模式（初始值由 useDark 按系统/历史记录决定） */
+    toggleDark() {
+      this.isDark = !this.isDark
     },
-    setLayout(v: LayoutMode) { // 修改系统布局模式的方法
-      this.layout = v // 将传入的布局配置赋值给 layout 状态
+    /** 设置全局默认布局模式 */
+    setLayout(v: LayoutMode) {
+      this.layout = v
     },
-    setPrimaryColor(color: string) { // 修改系统主题色的方法
-      this.primaryColor = color // 将传入的颜色值赋给 primaryColor 状态
+    /** 只记录主题色，色板重算统一由 setThemeColor 触发 */
+    setPrimaryColor(color: string) {
+      this.primaryColor = color
     },
+    /**
+     * 依据主色与明暗生成 arco 色板，同步写入 CSS 变量与 naive 主题覆盖
+     * @param color 缺省取当前主题色
+     * @param isDark 缺省取当前明暗状态
+     */
     setThemeColor(color?: string, isDark?: boolean) {
-      // 与原默认参数 this.primaryColor / this.isDark 等价（strict 下 this 不能用于默认参数位）
+      // strict 下默认参数位不能引用 this，改为函数体内取当前值兜底
       const themeColor = color ?? this.primaryColor
       const dark = isDark ?? this.isDark
-      // 生成并应用主题色到全局 CSS 变量和组件库的方法
-      const colors = generate(themeColor, { // 调用第三方库生成对应的页面的调色板（一个数组存储）
-        list: true, // 以数组形式返回色板
-        dark, // 根据当前是否为暗黑模式生成对应的色板
+      const colors = generate(themeColor, {
+        list: true,
+        dark,
       })
-      document.body.style.setProperty('--primary-color', getRgbStr(colors[5]!)) // setProperty设置样式  参数--primary-color就是css代入颜色
-      // getRgbStr第三方 把十六进制函数转纯数字 [5]一般是最纯的色调（arco list:true 恒返回 10 元素色板，索引必有值）
-      // 将页面的主体的style中的--primary-color设置为[5]
-      // 与原实现等价的拆写：Object.assign 原地修改 common（存在则同一引用），再赋回
+      // 色板第 5 档为标准色，写入 CSS 变量供自写样式取用
+      document.body.style.setProperty('--primary-color', getRgbStr(colors[5]!))
+      // 原地合并 common 区块：hover 用略亮档、pressed 用略暗档，保持主题层次
       const common = this.naiveThemeOverrides.common || {}
       Object.assign(common, {
-        // naiveThemeOverrides Naive UI 的配置对象 .common (通用主题区块)
-        // Object全局对象（所有对象鼻祖）  assign（目标函数,源函数）
-        // Object.assign把参数2的数据给到参数1（参数1没有就增加有就替换 不会清空参数1数据）
-        primaryColor: colors[5], // 设置 Naive UI 组件的默认主色
-        primaryColorHover: colors[4], // 设置鼠标悬停时的主色（比主色略亮）
-        primaryColorSuppl: colors[4], // 设置补充状态的主色
-        primaryColorPressed: colors[6], // 设置鼠标按下时的主色（比主色略暗）
+        primaryColor: colors[5],
+        primaryColorHover: colors[4],
+        primaryColorSuppl: colors[4],
+        primaryColorPressed: colors[6],
       })
       this.naiveThemeOverrides.common = common
     },
   },
-  persist: { // 配置 Pinia 的状态持久化插件
-    // 指定需要被持久化存储的 state 字段（keyof AppState 校验：字段名拼错编译期报错）
+  // 只持久化界面偏好；sessionStorage 会话级隔离，关闭标签页即还原默认
+  persist: {
     pick: [...persistedKeys],
-    // pick是挑选可以保留的数据 数组的形式
     storage: sessionStorage,
-    // 指定持久化存储的媒介为 sessionStorage（关闭浏览器标签页即清空）
-    // storage存储媒介
   } as PersistenceOptions,
 })
-/*
-🎨 浏览器内核层次关系全景知识点 (HTML + CSS + DOM + Vue)
-
-🎯 1. 浏览器窗口
-   │
-   │  🧠 (幕后英雄：渲染引擎 & JS引擎)
-   │     ├── 渲染引擎：负责解析 HTML/CSS，画出页面
-   │     └── JS 引擎：负责执行 JS 代码，操作 DOM
-   │
-   ▼
-🌳 2. DOM 树
-   │  【定义】浏览器将 HTML 代码解析后生成的内存对象树。
-   │  【本质】JS 对象树。JS 想修改页面，必须操作这里的对象。
-   │  【核心概念】
-   │     ├── 节点：树上的每一个点（标签、文本、注释）都叫节点。
-   │     ├── 根节点：document 文档节点，是树的入口。
-   │     └── 元素节点：HTML 标签对应的节点（如 <div>）。
-   │
-   ▼
-📞 document (根节点 / 总指挥)
-   │  (JS 中常用：document.querySelector...)
-   │
-   ▼
-🏢 <html> (根元素节点 / 所有标签的祖宗)
-   │
-   ├── 🏚️ <head> (元数据节点 / 看不见的配置)
-   │     ├── <meta> (编码配置)
-   │     ├── <title> (网页标题 - 浏览器标签页显示)
-   │     │
-   │     ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   │     ┃ 🎨 CSS 样式层 (页面的"皮肤"和"化妆师")
-   │     ┃  ├── <style> (内部样式表)
-   │     ┃  ├── <link rel="stylesheet"> (外部引入的 .css 文件)
-   │     ┃  │
-   │     ┃  ⚡ 作用机制：
-   │     ┃     1. 浏览器解析 CSS 生成 CSSOM 树 (样式规则树)。
-   │     ┃     2. 将 CSSOM 样式 "挂载" 到 DOM 树对应的节点上。
-   │     ┃     3. 最终决定节点在屏幕上的大小、颜色、位置。
-   │     ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   │
-   └── 🏬 <body> (主体节点 / 用户可见区域)
-         │
-         │  (JS 操作示例：document.body.style.background = 'red')
-         │
-         └── 🏢 <div id="app"></div> (挂载点 / Vue 的地皮)
-               │
-               │  ⏳ 【Vue 工作区】(Vue 接管此处，开始异步更新)
-               │     1. 生成 虚拟DOM (Virtual DOM) (JS 对象模拟)。
-               │     2. 数据变化 -> 对比差异 -> 异步更新真实 DOM。
-               │
-               ▼
-             🎄 App.vue (根组件实例 / Vue 大楼主体)
-               │
-               ├── 🪟 组件节点 (Sidebar.vue) -> 渲染为 <aside class="sidebar">...</aside>
-               │     └── 🍃 文本节点: "菜单"
-               │     └── 🍃 属性节点: class="active" (这里受 CSS 样式影响)
-               │
-               ├── 🚪 组件节点 (Navbar.vue) -> 渲染为 <header>...</header>
-               │
-               └── 🛋️ 组件节点 (Content.vue) -> 渲染为 <main>...</main>
-                     │
-                     └── 🖼️ HTML 节点结构
-                           └── 🍃 元素节点 <span class="text">
-                                 └── 🍃 文本节点: "Hello World"
-       ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-       ┃ 💡 关键总结：
-       ┃ 1. DOM 是树，节点是树叶。
-       ┃ 2. HTML 决定树干结构，CSS 决定树叶颜色。
-       ┃ 3. JS 是园丁，通过 document 修剪树叶。
-       ┃ 4. Vue 是自动化园丁，在 id="app" 下面自动管理树枝。
-       ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-*/
-
-/*
- JS 里改变 this 的“三剑客”
-// 1. 准备一个目标对象（我们想让 this 指向它）
-const car = { name: '宝马' }
-// 2. 准备一个普通函数，它内部用到了 this
-function drive(speed, destination) {
-  console.log(`驾驶${this.name}，以${speed}的速度去${destination}`)
-}
-// 3. 使用 call：立即执行，参数一个个传
-drive.call(car, 120, '北京');
-// 打印：驾驶宝马，以120的速度去北京
-
-// 4. 使用 apply：立即执行，参数用数组传
-drive.apply(car, [80, '上海']);
-// 打印：驾驶宝马，以80的速度去上海
-
-// 5. 使用 bind：不立即执行，返回一个绑定了 this 的新函数
-const boundDrive = drive.bind(car, 60, '广州');
-boundDrive(); // 需要手动调用一次
-// 打印：驾驶宝马，以60的速度去广州
-
-*/
-/*
-                           [应用状态Store: useAppStore]
-                                      │
-           ┌──────────────────────────┼──────────────────────────┐
-           │                          │                          │
-           ▼                          ▼                          ▼
-        [初始化State]               [执行Actions]              [持久化Persist]
-           │                          │                          │
-           ▼                          ▼                          ▼
-      ┌────────────┐            [触发具体方法]            [存入sessionStorage]
-      │折叠态:false│                   │                 (折叠/布局/主色/主题)
-      │暗黑:跟随系统│      ┌────────────┴────────────┐           │
-      │布局:默认配置│      │                         │           │
-      │主色:默认配置│      ▼                         ▼           │
-      │主题:初始配置│ [基础状态赋值操作]        [高级复合操作]     │
-      └────────────┘ ├─switchCollapsed        (setThemeColor)   │
-           │         ├─setCollapsed                 │           │
-           │         ├─toggleDark                   ▼           │
-           │         ├─setLayout              ┌──────────────────┐
-           │         └─setPrimaryColor        │ 1.生成色板列表   │
-           │                  │               │  (适配明暗模式)  │
-           │                  │               │ 2.提取RGB字符串  │
-           │                  │               │ 3.设置CSS变量    │
-           │                  │               │ 4.更新UI主题变量 │
-           │                  │               └────────┬─────────┘
-           │                  │                        │
-           │                  └────────────┬───────────┘
-           │                               │
-           └───────────────────────────────┼───────────────────────┐
-                                           │                       │
-                                           ▼                       │
-                                  [状态更新并驱动视图渲染]          │
-                                                                   │
-    <───────────────────────────────────────────────────────────────┘ (闭环：状态变更自动触发持久化与视图更新)
-
-*/

@@ -11,6 +11,7 @@
 </template>
 
 <script setup lang="ts">
+// 侧边栏顶部 Logo：点击回到首页；侧栏折叠时收起文字仅留图标
 import { useAppStore } from '@/store'
 
 const title = import.meta.env.VITE_TITLE

@@ -35,6 +35,7 @@
 </template>
 
 <script setup lang="ts">
+// 角色选择弹窗：多角色用户切换身份用（UserAvatar 下拉触发 open()），确认后调后端切换并让调用方决定是否整页刷新重建权限
 import type { ModalOptions } from '@/types/me-components'
 import api from '@/api'
 import { MeModal } from '@/components'
@@ -48,12 +49,14 @@ const roles = ref(userStore.roles || [])
 const roleCode = ref(userStore.currentRole?.code ?? roles.value[0]?.code ?? '')
 
 const [modalRef, okLoading] = useModal()
+/** 打开弹窗，调用方可经 options 注入 onOk 等回调（如切换成功后刷新页面） */
 function open(options: Partial<ModalOptions> = {}) {
   modalRef.value?.open({
     ...options,
   })
 }
 
+/** 确认切换：请求后端换角色并同步本地角色/权限，handleOk 会触发调用方传入的 onOk 回调 */
 async function setCurrentRole() {
   try {
     okLoading.value = true
@@ -70,6 +73,7 @@ async function setCurrentRole() {
   }
 }
 
+/** 弹窗内快捷退出：调登出接口并清理本地登录态后关闭弹窗 */
 async function logout() {
   await api.logout()
   authStore.logout()

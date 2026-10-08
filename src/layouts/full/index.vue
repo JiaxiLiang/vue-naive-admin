@@ -19,6 +19,7 @@
 </template>
 
 <script setup lang="ts">
+// 全屏布局：亮色侧边栏（Logo + 菜单）通栏到底，右侧为顶栏 + 独立页签栏行 + 内容插槽；与 normal 布局的差异在于页签不挤占顶栏、侧栏不带深色底且用边框分隔
 import { AppTab } from '@/layouts/components'
 import { useAppStore } from '@/store'
 import AppHeader from './header/index.vue'

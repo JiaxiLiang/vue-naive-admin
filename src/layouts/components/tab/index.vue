@@ -28,6 +28,7 @@
 </template>
 
 <script setup lang="ts">
+// 多页签栏：展示已访问路由的页签（数据来自 tab store，由路由守卫 addTab 维护），点击切换路由，右键唤出 ContextMenu 做刷新与批量关闭
 import type { TabItem } from '@/store'
 import { useTabStore } from '@/store'
 import ContextMenu from './ContextMenu.vue'
@@ -35,6 +36,7 @@ import ContextMenu from './ContextMenu.vue'
 const router = useRouter()
 const tabStore = useTabStore()
 
+// 右键菜单状态：坐标与目标页签路径，show 与 ContextMenu 双向同步
 const contextMenuOption = reactive({
   show: false,
   x: 0,
@@ -42,11 +44,13 @@ const contextMenuOption = reactive({
   currentPath: '',
 })
 
+/** 点击页签：同步激活态并跳到对应路由 */
 function handleItemClick(path: string) {
   tabStore.setActiveTab(path)
   router.push(path)
 }
 
+// 菜单显隐与定位的小工具函数，供右键处理复用
 function showContextMenu() {
   contextMenuOption.show = true
 }
@@ -57,7 +61,7 @@ function setContextMenu(x: number, y: number, currentPath: string) {
   Object.assign(contextMenuOption, { x, y, currentPath })
 }
 
-// 右击菜单
+/** 右键页签：先隐藏再在 nextTick 后携新坐标/目标重新显示，避免菜单复用旧定位不刷新 */
 async function handleContextMenu(e: MouseEvent, tagItem: TabItem) {
   const { clientX, clientY } = e
   hideContextMenu()

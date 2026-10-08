@@ -30,6 +30,8 @@
 </template>
 
 <script setup lang="ts">
+// 菜单树组件：左侧展示菜单（目录/菜单）树，支持搜索过滤、选中后向父页同步当前菜单；
+// 树节点尾部可直接新增下级菜单或删除节点，新增/编辑复用 ResAddOrEdit 弹窗
 import type { TreeOption } from 'naive-ui'
 import type { PermissionItem } from '@/types/models'
 import { NButton } from 'naive-ui'
@@ -52,6 +54,7 @@ const emit = defineEmits<{
 const pattern = ref('')
 
 const modalRef = ref<InstanceType<typeof ResAddOrEdit> | null>(null)
+// 打开新增菜单弹窗：携带 parentId 时表示在指定节点下新增下级菜单
 async function handleAdd(data: Partial<PermissionItem> = {}) {
   modalRef.value?.handleOpen({
     action: 'add',
@@ -61,17 +64,19 @@ async function handleAdd(data: Partial<PermissionItem> = {}) {
   })
 }
 
-// n-tree 回调签名对齐 OnUpdateSelectedKeys：第二参数是 option 数组（本处不消费），
-// meta.node 即传入的原始 PermissionItem（:data 直接绑定实体数组），取字段时收窄一次
+// 选中节点时上抛实体数据，取消选中时上抛 null；
+// meta.node 即传入的原始 PermissionItem（:data 直接绑定实体数组），需收窄类型
 function onSelect(keys: Array<string | number>, options: Array<TreeOption | null>, meta: { node: TreeOption | null, action: 'select' | 'unselect' }) {
   emit('update:currentMenu', meta.action === 'select' ? (meta.node as PermissionItem) : null)
 }
 
+// 节点前缀渲染菜单图标
 function renderPrefix({ option }: { option: TreeOption }) {
   const item = option as PermissionItem
   return h('i', { class: `${item.icon}?mask text-16` })
 }
 
+// 节点尾部渲染"新增下级/删除"操作按钮，withModifiers 阻止冒泡避免误触发节点选中
 function renderSuffix({ option }: { option: TreeOption }) {
   const menu = option as PermissionItem
   return [
@@ -101,6 +106,7 @@ function renderSuffix({ option }: { option: TreeOption }) {
   ]
 }
 
+// 删除菜单：确认后调接口，成功后刷新树并清空选中项
 function handleDelete(item: PermissionItem) {
   $dialog.confirm({
     content: `确认删除【${item.name}】？`,

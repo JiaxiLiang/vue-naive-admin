@@ -4,5 +4,6 @@
 </template>
 
 <script setup lang="ts">
+// 全屏布局侧栏：Logo 与菜单纵排，占满侧栏整高；Logo 带底部分隔线配合亮色边框风格
 import { SideLogo, SideMenu } from '@/layouts/components'
 </script>

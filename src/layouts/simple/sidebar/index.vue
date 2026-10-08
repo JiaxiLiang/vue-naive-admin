@@ -8,6 +8,7 @@
 </template>
 
 <script setup lang="ts">
+// 极简布局侧栏：Logo + 菜单之外，底部放用户头像与折叠按钮补位缺失的顶栏；折叠时隐藏头像仅留开关
 import { MenuCollapse, SideLogo, SideMenu, UserAvatar } from '@/layouts/components'
 import { useAppStore } from '@/store'
 

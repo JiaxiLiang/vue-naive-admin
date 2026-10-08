@@ -1,19 +1,17 @@
 import type { Ref } from 'vue'
-// 列表筛选状态与路由 query 的双向桥：URL 是筛选状态的持久层——刷新不丢、链接可分享、直开即筛选后视图。
-// 痛点对照：queryItems 只活在内存，MeCrud 重置/搜索改的只是组件状态，F5 一刷新就归零
 import type { LocationQueryRaw, LocationQueryValue } from 'vue-router'
 
 /**
- * 把一个筛选状态对象双向同步到路由 query：
- * - 初始化：从 route.query 读参数（类型还原）合并进初始值，URL 是进入页面那一刻的事实源
- * - 同步：状态变化 → 就地改写地址栏 URL（replaceState 不新增历史记录，后退键回退的是页面而非筛选的中间态）
- * 页面侧一行接入：const queryItems = useRouteQuery({ username: undefined, enable: undefined })
+ * 列表筛选状态与路由 query 的双向桥：URL 即筛选状态的持久层——刷新不丢、链接可分享、
+ * 直开即筛选后的视图，解决纯内存筛选态（queryItems）F5 即归零的问题。
+ * 初始化时从 route.query 还原各字段（类型还原）合并进初始值；此后状态一变即改写地址栏。
+ * 页面一行接入：const queryItems = useRouteQuery({ username: undefined, enable: undefined })
  */
 export function useRouteQuery<T extends Record<string, unknown>>(initial: T): Ref<T> {
   const route = useRoute()
   const router = useRouter()
 
-  // 初始化只认 initial 里声明过的键：不吞无关参数（如登录回跳携带的 redirect）
+  // 还原只认 initial 里声明过的键：不吞无关参数（如登录回跳携带的 redirect）
   const state = ref({ ...initial }) as Ref<T>
   for (const key of Object.keys(initial) as Array<keyof T & string>) {
     const restored = parseQueryValue(route.query[key])
@@ -21,25 +19,25 @@ export function useRouteQuery<T extends Record<string, unknown>>(initial: T): Re
       state.value[key] = restored as T[keyof T & string]
   }
 
-  // 只 watch 状态（deep）→ 写 URL 的单向流；不 watch route——
-  // 守卫或其它页面改 query 时若再回写状态，会形成互相触发的死循环
+  // 只 watch 状态→写 URL 的单向流；不反向 watch route——守卫或其它页面改 query 时
+  // 若再回写状态，会互相触发形成死循环
   watch(state, (value) => {
     const query: Record<string, unknown> = { ...route.query } // 复制保留非自有键
     for (const key of Object.keys(initial) as Array<keyof T & string>) {
       const v = value[key]
-      // undefined / null / 空串从 query 中删除该键（不留 'undefined' 或 'enable=' 的脏值）
+      // undefined / null / 空串直接从 query 删键，不留 'undefined'、'enable=' 之类的脏值
       if (v === undefined || v === null || v === '') {
         delete query[key]
       }
       else {
-        // URL query 全是字符串：写入统一 JSON 序列化，读取侧 parse 后 number/boolean/string 无损还原
+        // URL query 值只能是字符串：统一 JSON 序列化写入，读取侧 parse 后 number/boolean/string 无损还原
         query[key] = JSON.stringify(v)
       }
     }
-    // 用原生 replaceState 就地改写地址栏、不发起路由导航：
-    // App.vue 的路由组件以 curRoute.fullPath 为 key，router.replace 改 query 会触发整页重挂载
-    // （输入焦点丢失、按需请求重复发起）；resolve().href 兼容 history/hash 两种模式的 URL 形状，
-    // history.state 原样透传（vue-router 的位置指针存在这里，覆盖会破坏后退语义）
+    // 用原生 replaceState 就地改写地址栏、不发起路由导航：App.vue 的路由组件以 curRoute.fullPath
+    // 为 key，router.replace 改 query 会触发整页重挂载（输入焦点丢失、按需请求重复发起）；
+    // resolve().href 兼容 history/hash 两种模式的 URL 形状；history.state 原样透传
+    // （vue-router 的位置指针存在这里，覆盖会破坏后退语义）
     const href = router.resolve({ path: route.path, hash: route.hash, query: query as LocationQueryRaw }).href
     window.history.replaceState(window.history.state ?? null, '', href)
   }, { deep: true })
@@ -47,7 +45,7 @@ export function useRouteQuery<T extends Record<string, unknown>>(initial: T): Re
   return state
 }
 
-/** URL query 值还原：JSON.parse 失败兜底原始字符串——手输的脏参数不崩，按字面量当字符串用 */
+/** URL query 值还原：JSON.parse 失败兜底为原始字符串——手输的脏参数不崩，按字面量当字符串用 */
 function parseQueryValue(raw: LocationQueryValue | LocationQueryValue[] | undefined): unknown {
   const value = Array.isArray(raw) ? raw[0] : raw
   if (value === null || value === undefined)

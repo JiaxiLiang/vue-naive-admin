@@ -1,4 +1,5 @@
 <template>
+  <!-- Unocss 原子化 CSS 演示页：提供官方文档入口，并用纯 class 拼出 1~6 点骰子面，展示原子类的排版能力 -->
   <CommonPage show-footer>
     <p>
       文档：

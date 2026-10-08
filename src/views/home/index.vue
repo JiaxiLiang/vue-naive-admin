@@ -107,6 +107,7 @@
 </template>
 
 <script setup lang="ts">
+// 首页：欢迎横幅 + 项目特性介绍 + 两块 ECharts 图表（技术栈占比饼图、star/fork 趋势折柱混合图）
 import { BarChart, LineChart, PieChart } from 'echarts/charts'
 import { GridComponent, LegendComponent, TooltipComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
@@ -117,6 +118,7 @@ import { useUserStore } from '@/store'
 
 const userStore = useUserStore()
 
+// 按需注册用到的图表类型与组件，减小 echarts 打包体积
 echarts.use([
   TooltipComponent,
   GridComponent,
@@ -128,6 +130,7 @@ echarts.use([
   PieChart,
 ])
 
+// 趋势图配置：star 走左轴折线，fork 走右轴柱状，双 y 轴量级不同
 const trendOption = {
   tooltip: {
     trigger: 'axis',
@@ -186,6 +189,7 @@ const trendOption = {
   ],
 }
 
+// 技术栈占比环形图配置：默认隐藏标签，悬停时在中心放大显示
 const skillOption = {
   tooltip: {
     trigger: 'item',

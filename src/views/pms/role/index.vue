@@ -87,6 +87,8 @@
 </template>
 
 <script setup lang="ts">
+// 角色管理页：MeCrud 表格维护角色（新增/编辑/删除/启停），编辑弹窗内用权限树勾选角色拥有的权限；
+// 超级管理员（SUPER_ADMIN）行禁用编辑/删除/启停，"分配用户"跳转到 role-user 子页
 import type { DataTableColumns } from 'naive-ui'
 import type { PermissionItem, Role, RoleQuery } from '@/types/models'
 import { NButton, NSwitch } from 'naive-ui'
@@ -98,13 +100,13 @@ defineOptions({ name: 'RoleMgt' })
 
 const router = useRouter()
 
-/** 行数据：Role + 状态开关的行级 loading 态（前端 UI 字段，不来自后端） */
+// 行数据：Role + 状态开关的行级 loading 态（前端 UI 字段，不来自后端）
 type RoleRow = Role & { enableLoading?: boolean }
-/** 弹窗表单：角色字段 + 分配权限时用的 permissionIds */
+// 弹窗表单：角色字段 + 分配权限时用的 permissionIds
 type RoleForm = Partial<RoleRow> & { permissionIds?: number[] }
 
 const $table = ref<{ handleSearch: (keepCurrentPage?: boolean) => void } | null>(null)
-// 筛选状态同步 URL（useRouteQuery）：与用户管理页同一接入方式，条件全量声明在册
+// 筛选条件经 useRouteQuery 同步到 URL，刷新/回退不丢
 const queryItems = useRouteQuery<RoleQuery>({ name: undefined, enable: undefined })
 
 onMounted(() => {
@@ -123,6 +125,7 @@ const { modalRef, modalFormRef, modalAction, modalForm, handleAdd, handleDelete,
 
 const { handleEnable } = useEnableRow(api.update, () => $table.value?.handleSearch())
 
+// 表格列定义：状态列用开关渲染（超管行禁用），操作列提供分配用户/编辑/删除
 const columns: DataTableColumns<RoleRow> = [
   { title: '角色名', key: 'name' },
   { title: '角色编码', key: 'code' },
@@ -202,7 +205,7 @@ const columns: DataTableColumns<RoleRow> = [
   },
 ]
 
-// 权限树数据走 useRequest 标准件：自带竞态防护与组件卸载自动取消（旧写法为裸 .then 直写）
+// 权限树数据走 useRequest 标准件：自带竞态防护与组件卸载自动取消
 // data 是请求标准件的事实源，permissionTree 是视图别名；过期/中止的响应到不了 data，也就不会写入树
 const permissionTree = ref<PermissionItem[]>([])
 const { data: treeData, run: fetchPermissionTree } = useRequest<PermissionItem[]>(
